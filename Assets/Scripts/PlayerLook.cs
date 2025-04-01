@@ -5,9 +5,9 @@ using UnityEngine;
 public class PlayerLook : MonoBehaviour
 {
     public Camera cam;
-    private float xRotation = 0f;
-    public float xSensitivity = 100f;
-    public float ySensitivity = 100f;
+    private float xRotation = 10f;
+    public float xSensitivity = 1000f;
+    public float ySensitivity = 1000f;
     // Start is called before the first frame update
     public void ProcessLook(Vector2 input)
     {
