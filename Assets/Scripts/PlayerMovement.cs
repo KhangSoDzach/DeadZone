@@ -22,7 +22,10 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        isGrounded = controller.isGrounded;
+        isGrounded = CheckIfGrounded();
+        Vector2 moveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        ProcessMove(moveInput);
+        Jump();
     }
 
     public void ProcessMove(Vector2 input)
@@ -38,17 +41,27 @@ public class PlayerMovement : MonoBehaviour
         playerVelocity.y += playerGravity * Time.deltaTime;
         if (controller.isGrounded && playerVelocity.y < 0)
         {
-            playerVelocity.y = -2f;
+            playerVelocity.y = -0.1f;
         }
         controller.Move(playerVelocity * Time.deltaTime);
     }
+    private bool CheckIfGrounded()
+        {
+            float groundCheckDistance = 0.2f;
+            Vector3 rayStart = transform.position + Vector3.up * 0.1f; // Xuất phát từ nhân vật
+            bool grounded = Physics.Raycast(rayStart, Vector3.down, groundCheckDistance);
 
+            Debug.DrawRay(rayStart, Vector3.down * groundCheckDistance, grounded ? Color.green : Color.red);
+            return grounded;
+        }
     public void Jump()
     {
-        if (isGrounded && playerVelocity.y < 0)
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
+            //the equation for jumping
             playerVelocity.y = Mathf.Sqrt(playerJumpHeight * -3f * playerGravity);
         }
+     
     }
 
     // Phương thức mới để xử lý trạng thái sprint
