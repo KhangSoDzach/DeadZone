@@ -13,7 +13,7 @@ public class PlayerAnimation : MonoBehaviour
     // Animation parameter names
     private const string IS_WALKING = "IsWalking";
     private const string IS_RUNNING = "IsRunning";
-    private const string IS_JUMPING = "IsJumping";
+    //private const string IS_JUMPING = "IsJumping";
     private const string IS_GROUNDED = "IsGrounded";
     private const string IS_STRAFING_LEFT = "IsStrafingLeft";
     private const string IS_STRAFING_RIGHT = "IsStrafingRight";
@@ -85,7 +85,7 @@ public class PlayerAnimation : MonoBehaviour
         // Gán giá trị cho Animator
         animator.SetBool(IS_WALKING, isMovingForwardOnly);
         animator.SetBool(IS_RUNNING, isRunningForward);
-        animator.SetBool(IS_JUMPING, isJumping);
+        //animator.SetBool(IS_JUMPING, isJumping);
         animator.SetBool(IS_GROUNDED, controller != null && controller.isGrounded);
         animator.SetBool(IS_STRAFING_LEFT, isStrafingLeft && !isBackward);
         animator.SetBool(IS_STRAFING_RIGHT, isStrafingRight && !isBackward);
