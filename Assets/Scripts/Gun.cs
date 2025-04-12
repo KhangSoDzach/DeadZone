@@ -125,7 +125,7 @@ public class Gun : MonoBehaviour
             {
                 target.TakeDamage(damage);
             }
-            // Apply force to the object hit by the raycast
+            
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)
             {
@@ -134,7 +134,7 @@ public class Gun : MonoBehaviour
                 rb.AddForce(forceDirection * impactForce, ForceMode.Impulse);
             }
             GameObject impact = Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
-            Destroy(impact, 2f); // Destroy the impact effect after 2 seconds
+            Destroy(impact, 2f); 
         }
     }
 
