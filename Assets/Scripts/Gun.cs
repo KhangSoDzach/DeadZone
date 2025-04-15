@@ -22,7 +22,6 @@ public class Gun : MonoBehaviour
     public float fireRate = 0.5f; // Rate of fire in seconds
     private float nextFireTime = 0f; // Time when the gun can fire again
     public Text ammoText; // Reference to the UI Text for displaying ammo
-
     void Start()
     {
         currentAmmo = maxAmmo; // Initialize ammo
@@ -120,12 +119,22 @@ public class Gun : MonoBehaviour
         if (Physics.Raycast(transform.position, transform.forward, out hit, range))
         {
             Debug.Log("Hit: " + hit.transform.name);
-            Target target = hit.transform.GetComponent<Target>();
-            if (target != null)
+            Zombie_1 zombie1 = hit.transform.GetComponent<Zombie_1>();
+            Zombie_2 zombie2 = hit.transform.GetComponent<Zombie_2>();
+            Zombie_3 zombie3 = hit.transform.GetComponent<Zombie_3>();
+
+            if (zombie1 != null)
             {
-                target.TakeDamage(damage);
+                zombie1.zombieGotHit(damage);
             }
-            
+            if (zombie2 != null)
+            {
+                zombie2.zombieGotHit(damage);
+            }
+            if (zombie3 != null)
+            {
+                zombie3.zombieGotHit(damage);
+            }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)
             {

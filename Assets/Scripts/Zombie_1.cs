@@ -29,14 +29,19 @@ public class Zombie_1 : MonoBehaviour
     public float attackSpeed;
     public bool prevAttack;
 
+    [Header("Zombie Animations")]
+    public Animator aniZombie;
+        
     [Header("Zombie States")]
     public float observationRadius;
     public float attackingRadius;
     public bool playerExistenceRadius;
     public bool playerInAttackingRadius;
 
-    [Header("Zombie Health")]
+    [Header("Zombie Health and Damage")]
     public float attackDamage = 5f;
+    private float zombieHealth = 100f;
+    private float remainHeath;
 
 
     // Update is called once per frame
@@ -47,9 +52,12 @@ public class Zombie_1 : MonoBehaviour
         if (!playerExistenceRadius && !playerInAttackingRadius) Guard();
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
         if (playerExistenceRadius && playerInAttackingRadius) AttackPlayer();
+
+
     }
     private void Awake()
     {
+        remainHeath = zombieHealth;
         zombieAgent = GetComponent<NavMeshAgent>();
 
     }
@@ -70,7 +78,22 @@ public class Zombie_1 : MonoBehaviour
     }
     private void ChasingPlayer()
     {
-        zombieAgent.SetDestination(playerBody.position);
+       if (zombieAgent.SetDestination(playerBody.position))
+        {
+            zombieAgent.speed = 3;
+            aniZombie.SetBool("isWalking", false);
+            aniZombie.SetBool("isRunning", true);
+            aniZombie.SetBool("isAttacking", false);
+            aniZombie.SetBool("isDead", false);
+
+        }
+        else
+        {
+            aniZombie.SetBool("isWalking", false);
+            aniZombie.SetBool("isRunning", false);
+            aniZombie.SetBool("isAttacking", false);
+            aniZombie.SetBool("isDead", true);
+        }
     }
     private void AttackPlayer()
     {
@@ -82,6 +105,12 @@ public class Zombie_1 : MonoBehaviour
             if (Physics.Raycast(AttackingRaycastArea.transform.position,AttackingRaycastArea.transform.forward ,out hit, attackingRadius))
             {
                 Debug.Log("Attack" + hit.transform.name);
+                //Code the player take damage from player
+
+                aniZombie.SetBool("isAttacking", true);
+                aniZombie.SetBool("isWalking", false);
+                aniZombie.SetBool("isRunning", false);
+                aniZombie.SetBool("isDead", false);
             }
             prevAttack = true;
                 Invoke(nameof(ActiveAttacking), attackSpeed);
@@ -90,5 +119,35 @@ public class Zombie_1 : MonoBehaviour
     private void ActiveAttacking()
     {
         prevAttack = false;
+    }
+    public void zombieGotHit(float takeDamge)
+    {
+        remainHeath -= takeDamge;
+        if (remainHeath <= 0)
+        {
+            zombieDie();
+
+            aniZombie.SetBool("isWalking", false);
+            aniZombie.SetBool("isRunning", false);
+            aniZombie.SetBool("isAttacking", false);
+            aniZombie.SetBool("isDead", true);
+        }
+    }
+
+    private void zombieDie()
+    {
+        transform.LookAt(LookPoint);
+        zombieAgent.SetDestination(transform.position);
+        zombieSpeed = 0;
+        attackingRadius = 0;
+        observationRadius = 0;
+        playerInAttackingRadius=false;
+        playerExistenceRadius=false;
+
+        aniZombie.SetBool("isWalking", false);
+        aniZombie.SetBool("isRunning", false);
+        aniZombie.SetBool("isAttacking", false);
+        aniZombie.SetBool("isDead", true);
+        Object.Destroy(gameObject, 5.0f);
     }
 }
