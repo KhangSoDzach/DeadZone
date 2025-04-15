@@ -1,4 +1,4 @@
-    using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -79,9 +79,27 @@ public class Zombie_1 : MonoBehaviour
         if(!prevAttack)
         {
             RaycastHit hit;
+            Debug.DrawRay(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward * attackingRadius, Color.red, 1f); // Vẽ raycast để kiểm tra
             if (Physics.Raycast(AttackingRaycastArea.transform.position,AttackingRaycastArea.transform.forward ,out hit, attackingRadius))
             {
-                Debug.Log("Attack" + hit.transform.name);
+                Debug.Log($"Raycast hit: {hit.transform.name}"); // Thêm thông báo gỡ lỗi
+                if (hit.transform.CompareTag("Player"))
+                {
+                    Debug.Log("Zombie is attacking Player!");
+                    PlayerHealth playerHealth = hit.transform.GetComponent<PlayerHealth>();
+                    if (playerHealth != null)
+                    {
+                        playerHealth.TakeDamage(attackDamage); // Gây sát thương lên Player
+                    }
+                }
+                else
+                {
+                    Debug.Log("Raycast did not hit the Player.");
+                }
+            }
+            else
+            {
+                Debug.Log("Raycast did not hit anything.");
             }
             prevAttack = true;
                 Invoke(nameof(ActiveAttacking), attackSpeed);
