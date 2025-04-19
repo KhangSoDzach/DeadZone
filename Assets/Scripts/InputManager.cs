@@ -9,6 +9,7 @@ public class InputManager : MonoBehaviour
     public PlayerInput.OnFootActions onFoot;
     private PlayerMovement movement;
     private PlayerLook look;
+    private WeaponManager weaponManager;
     
     // Start is called before the first frame update
     void Awake()
@@ -17,12 +18,20 @@ public class InputManager : MonoBehaviour
         onFoot = playerInput.OnFoot;
         movement = GetComponent<PlayerMovement>();
         look = GetComponent<PlayerLook>();
+        weaponManager = GetComponent<WeaponManager>();
         
         onFoot.Jump.performed += ctx => movement.Jump();
         
         // Thêm xử lý sự kiện Sprint
         onFoot.Sprint.performed += ctx => movement.Sprint(true);
         onFoot.Sprint.canceled += ctx => movement.Sprint(false);
+        
+        // Thêm callbacks cho nhặt và vứt vũ khí nếu có WeaponManager
+        if (weaponManager != null)
+        {
+            // Có thể thêm nút riêng trong InputSystem nếu cần
+            // Hoặc sử dụng các phím mặc định qua Update()
+        }
     }
 
     void FixedUpdate()
@@ -33,6 +42,12 @@ public class InputManager : MonoBehaviour
     void LateUpdate()
     {
         look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
+    }
+    
+    void Update()
+    {
+        // Xử lý nhặt/vứt vũ khí thông qua WeaponManager
+        // Việc này đã được xử lý trong WeaponManager.Update()
     }
     
     private void OnEnable()
