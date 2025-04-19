@@ -6,8 +6,8 @@ public class PlayerMovement : MonoBehaviour
 {
     private CharacterController controller;
     private Vector3 playerVelocity;
-    public float playerSpeed = 3f;
-    public float sprintSpeedMultiplier = 1.5f; // Hệ số tăng tốc khi sprint
+    public float playerSpeed = 5.0f;
+    public float sprintSpeedMultiplier = 10.5f; // Hệ số tăng tốc khi sprint
     public float playerGravity = -9.81f;
     public float playerJumpHeight = 1.0f;
     private bool isGrounded;

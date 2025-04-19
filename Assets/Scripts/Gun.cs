@@ -202,14 +202,22 @@ public class Gun : MonoBehaviour
         if (Physics.Raycast(ray, out hit, range))
         {
             Debug.Log("Hit: " + hit.transform.name);
-            Target target = hit.transform.GetComponent<Target>();
-            if (target != null)
+            Zombie_1 zombie1 = hit.transform.GetComponent<Zombie_1>();
+            Zombie_2 zombie2 = hit.transform.GetComponent<Zombie_2>();
+            Zombie_3 zombie3 = hit.transform.GetComponent<Zombie_3>();
+
+            if (zombie1 != null)
             {
-                target.TakeDamage(damage);
-                score += (int)damage; // Increase score by 10 for each zombie hit
-                UpdateScoreUI(); // Update the score display
+                zombie1.zombieGotHit(damage);
             }
-            
+            if (zombie2 != null)
+            {
+                zombie2.zombieGotHit(damage);
+            }
+            if (zombie3 != null)
+            {
+                zombie3.zombieGotHit(damage);
+            }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)
             {
