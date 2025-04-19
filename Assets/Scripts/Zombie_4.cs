@@ -35,8 +35,8 @@ public class Zombie_4 : MonoBehaviour
     public bool playerInAttackingRadius;
 
     [Header("Zombie Health and Damage")]
-    public float attackDamage = 5f;
-    private float zombieHealth = 100f;
+    public float attackDamage = 3f;
+    private float zombieHealth = 50f;
     private float remainHeath;
 
 
@@ -78,30 +78,23 @@ public class Zombie_4 : MonoBehaviour
         transform.LookAt(LookPoint);
         if (!prevAttack)
         {
-            RaycastHit hit;
-            if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
-            {
-                Debug.Log("Attack" + hit.transform.name);
-                //Code the player take damage from player
-                aniZombie.SetBool("isRunning", false);
-                aniZombie.SetBool("isAttacking", true);
-                
-                // Apply damage to the player
-                HealthManager healthManager = hit.transform.GetComponent<HealthManager>();
-                if (healthManager == null)
-                {
-                    healthManager = hit.transform.GetComponentInParent<HealthManager>();
-                }
-                
-                if (healthManager != null)
-                {
-                    healthManager.TakeDamage(attackDamage);
-                    Debug.Log("Player damaged by zombie: " + attackDamage);
-                }
-            }
+            aniZombie.SetBool("isRunning", false);
+            aniZombie.SetBool("isAttacking", true);
+
+
+            Invoke(nameof(ApplyZombieDamage), 0.2f);
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);
         }
+    }
+    public void ApplyZombieDamage()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
+        {
+            Debug.Log("attac k");
+        }
+
     }
     private void ActiveAttacking()
     {

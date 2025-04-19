@@ -36,7 +36,7 @@ public class Zombie_2 : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 5f;
-    private float zombieHealth = 100f;
+    private float zombieHealth = 70f;
     private float remainHeath;
 
 
@@ -64,7 +64,7 @@ public class Zombie_2 : MonoBehaviour
     {
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 3.5f;
+            zombieAgent.speed = 3f;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);
@@ -77,30 +77,23 @@ public class Zombie_2 : MonoBehaviour
         transform.LookAt(LookPoint);
         if (!prevAttack)
         {
-            RaycastHit hit;
-            if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
-            {
-                Debug.Log("Attack" + hit.transform.name);
-                //Code the player take damage from player
-                aniZombie.SetBool("isRunning", false);
-                aniZombie.SetBool("isAttacking", true);
-                
-                // Apply damage to the player
-                HealthManager healthManager = hit.transform.GetComponent<HealthManager>();
-                if (healthManager == null)
-                {
-                    healthManager = hit.transform.GetComponentInParent<HealthManager>();
-                }
-                
-                if (healthManager != null)
-                {
-                    healthManager.TakeDamage(attackDamage);
-                    Debug.Log("Player damaged by zombie: " + attackDamage);
-                }
-            }
+            aniZombie.SetBool("isRunning", false);
+            aniZombie.SetBool("isAttacking", true);
+
+
+            Invoke(nameof(ApplyZombieDamage), 0.5f);
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);
         }
+    }
+    public void ApplyZombieDamage()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
+        {
+            Debug.Log("attac k");
+        }
+
     }
     private void ActiveAttacking()
     {
