@@ -35,7 +35,7 @@ public class Zombie_4 : MonoBehaviour
     public bool playerInAttackingRadius;
 
     [Header("Zombie Health and Damage")]
-    public float attackDamage = 5f;
+    public float attackDamage = 3f;
     private float zombieHealth = 100f;
     private float remainHeath;
 
@@ -47,7 +47,6 @@ public class Zombie_4 : MonoBehaviour
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
         if (playerExistenceRadius && playerInAttackingRadius) AttackPlayer();
-        Idle();
     }
     private void Awake()
     {
@@ -65,7 +64,7 @@ public class Zombie_4 : MonoBehaviour
     {
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 5;
+            zombieAgent.speed = 5.5f;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);
@@ -78,17 +77,23 @@ public class Zombie_4 : MonoBehaviour
         transform.LookAt(LookPoint);
         if (!prevAttack)
         {
-            RaycastHit hit;
-            if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
-            {
-                Debug.Log("Attack" + hit.transform.name);
-                //Code the player take damage from player
-                aniZombie.SetBool("isRunning", false);
-                aniZombie.SetBool("isAttacking", true);
-            }
+            aniZombie.SetBool("isRunning", false);
+            aniZombie.SetBool("isAttacking", true);
+
+
+            Invoke(nameof(ApplyZombieDamage), 0.3f);
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);
         }
+    }
+    public void ApplyZombieDamage()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
+        {
+            Debug.Log("attac k");
+        }
+
     }
     private void ActiveAttacking()
     {

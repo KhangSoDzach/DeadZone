@@ -64,7 +64,7 @@ public class Zombie_2 : MonoBehaviour
     {
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 3f;
+            zombieAgent.speed = 4f;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);

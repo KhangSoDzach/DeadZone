@@ -39,7 +39,7 @@ public class Zombie_1 : MonoBehaviour
     public bool playerInAttackingRadius;
 
     [Header("Zombie Health and Damage")]
-    public float attackDamage = 20f;
+    public float attackDamage = 15f;
     private float zombieHealth = 100f;
     private float remainHeath;
 

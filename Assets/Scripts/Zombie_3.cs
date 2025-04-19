@@ -38,7 +38,7 @@ public class Zombie_3 : MonoBehaviour
     public bool playerInAttackingRadius;
 
     [Header("Zombie Health and Damage")]
-    public float attackDamage = 5f;
+    public float attackDamage = 20f;
     private float zombieHealth = 100f;
     private float remainHeath;
 
@@ -51,6 +51,8 @@ public class Zombie_3 : MonoBehaviour
         if (!playerExistenceRadius && !playerInAttackingRadius) Guard();
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
         if (playerExistenceRadius && playerInAttackingRadius) AttackPlayer();
+
+
     }
     private void Awake()
     {
@@ -60,34 +62,45 @@ public class Zombie_3 : MonoBehaviour
     }
     private void Guard()
     {
-        if (Vector3.Distance(guardingPoints[currentPosition].transform.position, transform.position) < walkingRadius)
+        if (guardingPoints.Length > 0)
         {
-            currentPosition = Random.Range(0, guardingPoints.Length);
-            if (currentPosition >= guardingPoints.Length)
+            aniZombie.SetBool("isWalking", true);
+            aniZombie.SetBool("isIdle", false);
+            if (Vector3.Distance(guardingPoints[currentPosition].transform.position, transform.position) < walkingRadius)
             {
-                currentPosition = 0;
+                currentPosition = Random.Range(0, guardingPoints.Length);
+                if (currentPosition >= guardingPoints.Length)
+                {
+                    currentPosition = 0;
+                }
             }
-        }
-        transform.position = Vector3.MoveTowards(transform.position, guardingPoints[currentPosition].transform.position, Time.deltaTime * zombieSpeed);
+            transform.position = Vector3.MoveTowards(transform.position, guardingPoints[currentPosition].transform.position, Time.deltaTime * zombieSpeed);
 
-        //change zombie facing
-        transform.LookAt(guardingPoints[currentPosition].transform.position);
+            //change zombie facing
+            transform.LookAt(guardingPoints[currentPosition].transform.position);
+        }
+        else
+        {
+            aniZombie.SetBool("isWalking", false);
+            aniZombie.SetBool("isIdle", true);
+        }
     }
     private void ChasingPlayer()
     {
+        observationRadius = 30f;
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 1;
+            zombieAgent.speed = 1.5f;
+            aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isWalking", true);
-            aniZombie.SetBool("isRunning", false);
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", false);
 
         }
         else
         {
+            aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isWalking", false);
-            aniZombie.SetBool("isRunning", false);
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
@@ -96,24 +109,34 @@ public class Zombie_3 : MonoBehaviour
     {
         zombieAgent.SetDestination(transform.position);
         transform.LookAt(LookPoint);
+
         if (!prevAttack)
         {
-            RaycastHit hit;
-            if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
-            {
-                //Code the player take damage from player
+            //Code the player take damage from player
 
-                aniZombie.SetBool("isAttacking", true);
-                aniZombie.SetBool("isWalking", false);
-                aniZombie.SetBool("isRunning", false);
-                aniZombie.SetBool("isDead", false);
+            aniZombie.SetBool("isAttacking", true);
+            aniZombie.SetBool("isWalking", false);
+            aniZombie.SetBool("isDead", false);
 
-                Debug.Log("Attack" + hit.transform.name);
+            zombieAgent.isStopped = true;
 
-            }
+            Invoke(nameof(EndReaction), 2.4f);
+
+            Invoke(nameof(ApplyZombieDamage), 1.5f);
+
+
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);
         }
+    }
+    public void ApplyZombieDamage()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
+        {
+            Debug.Log("attac k");
+        }
+
     }
     private void ActiveAttacking()
     {
@@ -122,6 +145,7 @@ public class Zombie_3 : MonoBehaviour
     public void zombieGotHit(float takeDamge)
     {
         remainHeath -= takeDamge;
+
         if (remainHeath <= 0)
         {
             zombieDie();
@@ -131,8 +155,22 @@ public class Zombie_3 : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-    }
+        if (remainHeath == 40 || remainHeath == 60 || remainHeath == 80)
+        {
+            //Reaction hit
+            aniZombie.SetTrigger("isHit");
+            zombieAgent.isStopped = true;
 
+            Invoke(nameof(EndReaction), 1f);
+        }
+
+
+
+    }
+    private void EndReaction()
+    {
+        zombieAgent.isStopped = false;
+    }
     private void zombieDie()
     {
         transform.LookAt(LookPoint);
