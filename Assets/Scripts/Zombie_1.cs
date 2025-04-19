@@ -105,6 +105,19 @@ public class Zombie_1 : MonoBehaviour
             if (Physics.Raycast(AttackingRaycastArea.transform.position,AttackingRaycastArea.transform.forward ,out hit, attackingRadius))
             {
                 Debug.Log("Attack" + hit.transform.name);
+                
+                // Apply damage to the player
+                HealthManager healthManager = hit.transform.GetComponent<HealthManager>();
+                if (healthManager == null)
+                {
+                    healthManager = hit.transform.GetComponentInParent<HealthManager>();
+                }
+                
+                if (healthManager != null)
+                {
+                    healthManager.TakeDamage(attackDamage);
+                    Debug.Log("Player damaged by zombie: " + attackDamage);
+                }
             }
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);

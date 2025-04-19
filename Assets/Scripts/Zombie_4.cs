@@ -85,6 +85,19 @@ public class Zombie_4 : MonoBehaviour
                 //Code the player take damage from player
                 aniZombie.SetBool("isRunning", false);
                 aniZombie.SetBool("isAttacking", true);
+                
+                // Apply damage to the player
+                HealthManager healthManager = hit.transform.GetComponent<HealthManager>();
+                if (healthManager == null)
+                {
+                    healthManager = hit.transform.GetComponentInParent<HealthManager>();
+                }
+                
+                if (healthManager != null)
+                {
+                    healthManager.TakeDamage(attackDamage);
+                    Debug.Log("Player damaged by zombie: " + attackDamage);
+                }
             }
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);
