@@ -32337,6 +32337,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c9ec0cf2c9954d144bcfcefa4161913f, type: 3}
+--- !u!4 &261157556 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+  m_PrefabInstance: {fileID: 2082227766}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &261476459 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 472224, guid: adcec9e4c6de5ab48a16647625892f54, type: 3}
@@ -43917,6 +43922,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 591656436638886798, guid: 71fb12a8b93d5dc4faefef596bc99ac6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 591656436638886800, guid: 71fb12a8b93d5dc4faefef596bc99ac6, type: 3}
       propertyPath: m_Layer
       value: 6
@@ -44063,10 +44072,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 591656436638463918, guid: 71fb12a8b93d5dc4faefef596bc99ac6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1910216467}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 71fb12a8b93d5dc4faefef596bc99ac6, type: 3}
 --- !u!4 &356301864 stripped
@@ -51137,7 +51143,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.229
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -51738,7 +51744,10 @@ PrefabInstance:
     - {fileID: 2188921103039579452, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
     - {fileID: 6824270626217292893, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
     - {fileID: 8195627509467801245, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 261157556}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5510950574253476509, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       insertIndex: 1
@@ -232380,8 +232389,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   zombieAgent: {fileID: 1836909001}
-  LookPoint: {fileID: 0}
-  playerBody: {fileID: 0}
+  LookPoint: {fileID: 1943334944}
+  playerBody: {fileID: 1600286387}
   AttackingRaycastArea: {fileID: 484327738}
   guardingPoints:
   - {fileID: 359319752}
@@ -262726,6 +262735,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4884e3768e9a2544a85d07afad356d87, type: 3}
+--- !u!1001 &2082227766
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1836908997}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.3394165
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.41980362
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.016418457
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
+      propertyPath: m_Name
+      value: copzombie_l_actisdato
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 91594c4e06ab0d748a05dc8ec3c0c4c2, type: 3}
 --- !u!4 &2082661253 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 480730, guid: 1893b7edd0ad11b4e9f6f17eeb9455b6, type: 3}
@@ -271085,7 +271151,7 @@ PrefabInstance:
     - target: {fileID: 6064058475578093284, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: playerBody
       value: 
-      objectReference: {fileID: 1910216467}
+      objectReference: {fileID: 0}
     - target: {fileID: 6064058475578093284, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: guardingPoints.Array.data[0]
       value: 
@@ -271118,3 +271184,4 @@ SceneRoots:
   - {fileID: 1863542427}
   - {fileID: 2083861822}
   - {fileID: 140143182}
+  - {fileID: 355124017}
