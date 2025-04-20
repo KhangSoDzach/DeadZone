@@ -39,6 +39,11 @@ public class Zombie_4 : MonoBehaviour
     private float zombieHealth = 100f;
     private float remainHeath;
 
+    [Header("Zombie Sounds")]
+    public AudioSource audioSource;
+    public AudioClip idleGroanSound;
+
+    private float nextSoundTime = 0f;
 
     // Update is called once per frame
     void Update()
@@ -47,6 +52,19 @@ public class Zombie_4 : MonoBehaviour
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
         if (playerExistenceRadius && playerInAttackingRadius) AttackPlayer();
+
+        if (playerExistenceRadius && !playerInAttackingRadius)
+        {
+            if (Time.time >= nextSoundTime)
+            {
+                if (!audioSource.isPlaying)
+                {
+                    audioSource.PlayOneShot(idleGroanSound);
+                }
+
+                nextSoundTime = Time.time + 5f;
+            }
+        }
     }
     private void Awake()
     {
@@ -101,6 +119,7 @@ public class Zombie_4 : MonoBehaviour
     }
     public void zombieGotHit(float takeDamge)
     {
+        observationRadius = 30f;
         remainHeath -= takeDamge;
         if (remainHeath <= 0)
         {
