@@ -205,6 +205,8 @@ public class Gun : MonoBehaviour
             Zombie_1 zombie1 = hit.transform.GetComponent<Zombie_1>();
             Zombie_2 zombie2 = hit.transform.GetComponent<Zombie_2>();
             Zombie_3 zombie3 = hit.transform.GetComponent<Zombie_3>();
+            Zombie_4 zombie4 = hit.transform.GetComponent<Zombie_4>();
+
 
             if (zombie1 != null)
             {
@@ -217,6 +219,10 @@ public class Gun : MonoBehaviour
             if (zombie3 != null)
             {
                 zombie3.zombieGotHit(damage);
+            }
+            if (zombie4 != null)
+            {
+                zombie4.zombieGotHit(damage);
             }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)

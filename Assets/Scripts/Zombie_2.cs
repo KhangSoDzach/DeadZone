@@ -38,7 +38,11 @@ public class Zombie_2 : MonoBehaviour
     public float attackDamage = 5f;
     private float zombieHealth = 70f;
     private float remainHeath;
+    [Header("Zombie Sounds")]
+    public AudioSource audioSource;
+    public AudioClip idleGroanSound;
 
+    private float nextSoundTime = 0f;
 
     // Update is called once per frame
     void Update()
@@ -47,6 +51,19 @@ public class Zombie_2 : MonoBehaviour
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
         if (playerExistenceRadius && playerInAttackingRadius) AttackPlayer();
+
+        if (playerExistenceRadius && !playerInAttackingRadius)
+        {
+            if (Time.time >= nextSoundTime)
+            {
+                if (!audioSource.isPlaying)
+                {
+                    audioSource.PlayOneShot(idleGroanSound);
+                }
+
+                nextSoundTime = Time.time + 10f;
+            }
+        }
     }
     private void Awake()
     {
@@ -64,7 +81,7 @@ public class Zombie_2 : MonoBehaviour
     {
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 3f;
+            zombieAgent.speed = 4f;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);
@@ -101,6 +118,7 @@ public class Zombie_2 : MonoBehaviour
     }
     public void zombieGotHit(float takeDamge)
     {
+        observationRadius = 30f;
         remainHeath -= takeDamge;
         if (remainHeath <= 0)
         {
