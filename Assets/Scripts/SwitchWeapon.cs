@@ -77,8 +77,16 @@ public class SwitchWeapon : MonoBehaviour
             if (weapon.gameObject.activeSelf != shouldBeActive)
             {
                 weapon.gameObject.SetActive(shouldBeActive);
+                
                 if (shouldBeActive)
                 {
+                    // Thông báo cho vũ khí rằng nó đã được kích hoạt
+                    Gun gunComponent = weapon.GetComponent<Gun>();
+                    if (gunComponent != null)
+                    {
+                        gunComponent.OnWeaponEnabled();
+                    }
+                    
                     Debug.Log($"Đã kích hoạt vũ khí: {weapon.name} tại vị trí {i}");
                 }
             }

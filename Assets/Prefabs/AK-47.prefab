@@ -5152,9 +5152,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponIndex: 0
   weaponName: AK-47
-  rotationSpeed: 50
-  bounceHeight: 0.2
-  bounceSpeed: 1
+  remainingAmmo: 0
+  isPistol: 0
+  isAutomatic: 1
+  damage: 10
+  recoilAmount: 0
+  baseSpread: 0
+  impactEffect: {fileID: 100002, guid: 99c73c92ac40473459640b165473206f, type: 3}
+  animatorController: {fileID: 0}
+  gunshotClip: {fileID: 0}
+  gunVolume: 0
+  ammoTextPath: 
+  scoreTextPath: 
+  originalWeaponPrefab: {fileID: 0}
+  originalWeaponIndex: -1
 --- !u!4 &3420884430218817577 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 33269b2b610f4c245a712795c1927939, type: 3}

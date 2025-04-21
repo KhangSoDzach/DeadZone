@@ -129,6 +129,7 @@ public class Zombie_3 : MonoBehaviour
         if (!prevAttack)
         {
             //Code the player take damage from player
+            ApplyZombieDamage();
 
             aniZombie.SetBool("isAttacking", true);
             aniZombie.SetBool("isWalking", false);
@@ -145,14 +146,20 @@ public class Zombie_3 : MonoBehaviour
             Invoke(nameof(ActiveAttacking), attackSpeed);
         }
     }
-    public void ApplyZombieDamage()
+    private void ApplyZombieDamage()
     {
         RaycastHit hit;
         if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
         {
-            Debug.Log("attac k");
+            // Check if we hit the player
+            HealthManager playerHealth = hit.transform.GetComponent<HealthManager>();
+            if (playerHealth != null)
+            {
+                // Apply damage to the player
+                playerHealth.TakeDamage(attackDamage);
+                Debug.Log("Player hit for " + attackDamage + " damage");
+            }
         }
-
     }
     private void ActiveAttacking()
     {

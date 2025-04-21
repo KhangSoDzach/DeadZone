@@ -138,7 +138,7 @@ public class Zombie_1 : MonoBehaviour
             aniZombie.SetBool("isWalking", false);
             aniZombie.SetBool("isRunning", false);
             aniZombie.SetBool("isDead", false);
-
+            aniZombie.SetTrigger("isAttack");
             zombieAgent.isStopped = true;
 
             Invoke(nameof(EndReaction), 2.4f);
@@ -156,6 +156,12 @@ public class Zombie_1 : MonoBehaviour
         if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
         {
             Debug.Log("attac k");
+            HealthManager playerHealth = hit.transform.GetComponent<HealthManager>();
+            if (playerHealth != null)
+            {
+                // Apply damage to the player
+                playerHealth.TakeDamage(attackDamage);
+            }
         }
 
     }
