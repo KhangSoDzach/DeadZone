@@ -60,36 +60,9 @@ public class PickupPrompt : MonoBehaviour
     {
         if (promptText != null)
         {
-            WeaponPickup pickup = FindPickupInFront();
-            if (pickup != null)
-            {
-                string ammoInfo = pickup.remainingAmmo > 0 ? $" | Đạn: {pickup.remainingAmmo}" : "";
-                string damageInfo = pickup.damage > 0 ? $" | Sát thương: {pickup.damage}" : "";
-                string typeInfo = pickup.isAutomatic ? " | Tự động" : " | Bán tự động";
-                
-                promptText.text = $"Nhấn [{pickupKey}] để nhặt {weaponName}{ammoInfo}{damageInfo}{typeInfo}";
-            }
-            else
-            {
-                promptText.text = $"Nhấn [{pickupKey}] để nhặt {weaponName}";
-            }
+            promptText.text = $"Nhấn [{pickupKey}] để nhặt {weaponName}";
             promptText.gameObject.SetActive(true);
         }
-    }
-    
-    // Phương thức helper để tìm WeaponPickup đang được nhìn
-    private WeaponPickup FindPickupInFront()
-    {
-        if (weaponManager != null)
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, 
-                                out hit, weaponManager.pickupRange, weaponManager.pickupLayer))
-            {
-                return hit.collider.GetComponent<WeaponPickup>();
-            }
-        }
-        return null;
     }
     
     // Hiển thị thông báo vứt vũ khí

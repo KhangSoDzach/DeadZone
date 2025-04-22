@@ -17706,10 +17706,6 @@ PrefabInstance:
       propertyPath: damageVignette
       value: 
       objectReference: {fileID: 1966735361}
-    - target: {fileID: 1718626018517218271, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
-      propertyPath: globalScoreText
-      value: 
-      objectReference: {fileID: 457447113}
     - target: {fileID: 4245544905193815517, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: m_LocalPosition.x
       value: 520.145
@@ -17761,7 +17757,7 @@ PrefabInstance:
     - target: {fileID: 5438874233553696478, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: scoreText
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 457447113}
     - target: {fileID: 5438874233553696478, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: recoilAmount
       value: 0
@@ -17769,10 +17765,6 @@ PrefabInstance:
     - target: {fileID: 5438874233553696478, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: recoilRecoverySpeed
       value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7905224524535552622, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
-      propertyPath: m_Volume
-      value: 0.462
       objectReference: {fileID: 0}
     - target: {fileID: 8388502626287248504, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: ammoText
@@ -17785,7 +17777,7 @@ PrefabInstance:
     - target: {fileID: 8388502626287248504, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: scoreText
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 457447113}
     - target: {fileID: 8388502626287248504, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
       propertyPath: recoilAmount
       value: 0
@@ -17801,10 +17793,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 801248968971861245, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 876651639}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
 --- !u!1001 &141027471
 PrefabInstance:
@@ -103585,7 +103574,7 @@ Transform:
   m_GameObject: {fileID: 845855198}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 519.31, y: 16.599651, z: 405.45773}
+  m_LocalPosition: {x: 515.37, y: 16.599651, z: 405.45773}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -103641,7 +103630,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 100
+  Priority: 203
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -107659,32 +107648,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 405850, guid: 5601521e5fc5f7743993db1ebd891042, type: 3}
   m_PrefabInstance: {fileID: 1256644816}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &876651633 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 801248968971861245, guid: 4925f6ee52ec44345b49c3a5276b3050, type: 3}
-  m_PrefabInstance: {fileID: 140143182}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &876651639
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 876651633}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &876772653 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 481948, guid: 1e627c2e1810cde4897b566ba90fd986, type: 3}
@@ -138046,7 +138009,7 @@ MonoBehaviour:
   attackingRadius: 2
   playerExistenceRadius: 0
   playerInAttackingRadius: 0
-  attackDamage: 20
+  attackDamage: 5
   audioSource: {fileID: 1121241803}
   idleGroanSound: {fileID: 8300000, guid: 5674ae0b8829ada46ab97ae9acc23de6, type: 3}
 --- !u!195 &1121241801
@@ -138112,7 +138075,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 100
+  Priority: 170
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -144314,7 +144277,7 @@ Transform:
   m_GameObject: {fileID: 1172809381}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 498.27, y: 20.064, z: 376.07654}
+  m_LocalPosition: {x: 487.87, y: 20.064, z: 376.07654}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -173808,7 +173771,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 100
+  Priority: 106
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -203554,7 +203517,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 100
+  Priority: 147
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -262504,7 +262467,7 @@ Transform:
   m_GameObject: {fileID: 2083861821}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 506.82, y: 20.101, z: 376.07654}
+  m_LocalPosition: {x: 497.96, y: 20.101, z: 376.07654}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -270671,11 +270634,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -13.8
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.14
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -270738,10 +270701,6 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6064058475578093284, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
-      propertyPath: attackDamage
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 6064058475578093284, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: idleGroanSound
       value: 
       objectReference: {fileID: 8300000, guid: 7269efdf89708014d87480bdab732ec3, type: 3}
@@ -270771,7 +270730,6 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 355124017}
   - {fileID: 1776754035}
   - {fileID: 1282388401}
   - {fileID: 414495274}
@@ -270781,3 +270739,4 @@ SceneRoots:
   - {fileID: 1863542427}
   - {fileID: 2083861822}
   - {fileID: 140143182}
+  - {fileID: 355124017}

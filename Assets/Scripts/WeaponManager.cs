@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 public class WeaponManager : MonoBehaviour
 {
@@ -21,11 +20,6 @@ public class WeaponManager : MonoBehaviour
     [Header("Prefabs")]
     public List<GameObject> weaponPrefabs; // Prefabs của vũ khí không có script (để vứt xuống)
     public List<GameObject> weaponGameplayPrefabs; // Prefabs của vũ khí có đầy đủ script
-    
-    // Remove the cached score text references - we now use ScoreManager
-    // [Header("UI References")]
-    // public Text globalScoreText; 
-    // private Text cachedScoreText;
     
     // Dictionary để map giữa tên vũ khí và index trong mảng prefab
     private Dictionary<string, int> weaponNameToIndex = new Dictionary<string, int>();
@@ -97,23 +91,6 @@ public class WeaponManager : MonoBehaviour
             dropPointObj.transform.localPosition = new Vector3(0, -0.5f, 1f);
             dropPoint = dropPointObj.transform;
         }
-        
-        // Remove score text caching code
-        // if (globalScoreText != null) {
-        //    cachedScoreText = globalScoreText;
-        //    Debug.Log("Using inspector-assigned score text: " + cachedScoreText.name);
-        // }
-        // Try to find score text if it wasn't assigned
-        // if (cachedScoreText == null) {
-        //    Text[] texts = FindObjectsOfType<Text>();
-        //    foreach (Text text in texts) {
-        //        if (text.name.ToLower().Contains("score")) {
-        //            cachedScoreText = text;
-        //            Debug.Log("Found and cached scoreText: " + text.name);
-        //            break;
-        //        }
-        //    }
-        // }
     }
     
     private void Update()
@@ -277,28 +254,17 @@ public class WeaponManager : MonoBehaviour
             droppedWeapon.AddComponent<BoxCollider>();
         }
         
-        // Thêm WeaponPickup component và lưu lại thông tin chi tiết về vũ khí
+        // Thêm WeaponPickup component và lưu lại số đạn còn lại
         WeaponPickup pickup = droppedWeapon.AddComponent<WeaponPickup>();
         pickup.weaponIndex = prefabIndex;
         pickup.weaponName = weaponName;
         
-        // Lưu lại prefab gốc và chỉ số
-        pickup.originalWeaponPrefab = weaponGameplayPrefabs[prefabIndex];
-        pickup.originalWeaponIndex = prefabIndex;
-        
-        // Lưu lại thông tin chi tiết từ vũ khí hiện tại
+        // Lưu lại số đạn còn lại
+        // Gun currentGunComponent = currentWeapon.GetComponent<Gun>();
         if (currentGunComponent != null)
         {
-            pickup.CopyPropertiesFromGun(currentGunComponent);
-            
-            // Thêm mã sau để lưu thông tin animator
-            if (currentGunComponent.animator != null && currentGunComponent.animator.runtimeAnimatorController != null)
-            {
-                pickup.animatorController = currentGunComponent.animator.runtimeAnimatorController;
-                Debug.Log($"Đã sao chép animator controller từ vũ khí {currentGunComponent.name} cho pickup");
-            }
-            
-            Debug.Log($"Đã sao chép thuộc tính từ vũ khí {currentGunComponent.name} cho pickup");
+            pickup.remainingAmmo = currentGunComponent.currentAmmo;
+            Debug.Log($"Lưu lại số đạn còn lại: {pickup.remainingAmmo}");
         }
         
         // Áp dụng lực để vứt vũ khí ra xa
@@ -462,14 +428,13 @@ public class WeaponManager : MonoBehaviour
             WeaponPickup pickup = hit.collider.GetComponent<WeaponPickup>();
             if (pickup != null)
             {
-                // Sử dụng phương thức mới để nhặt vũ khí với đúng tham chiếu gốc
-                AddOriginalWeaponToInventory(pickup);
+                AddWeaponToInventory(pickup.weaponIndex, pickup.remainingAmmo);
                 Destroy(hit.collider.gameObject);
             }
         }
     }
     
-    // Thêm vũ khí vào kho đồ với số đạn được chỉ định và các thuộc tính từ pickup
+    // Thêm vũ khí vào kho đồ với số đạn được chỉ định
     public void AddWeaponToInventory(int weaponIndex, int ammoCount = -1)
     {
         if (weaponIndex < 0 || weaponIndex >= weaponGameplayPrefabs.Count)
@@ -506,9 +471,6 @@ public class WeaponManager : MonoBehaviour
         int targetIndex;
         int newSelectedWeapon;
         
-        // Tìm WeaponPickup đang ngắm để áp dụng thuộc tính
-        WeaponPickup pickupInfo = FindPickupInFront();
-        
         if (isPistol)
         {
             // Súng lục (secondary) luôn nằm ở cuối danh sách
@@ -527,23 +489,17 @@ public class WeaponManager : MonoBehaviour
             newWeapon.transform.SetSiblingIndex(0);
         }
         
-        // Áp dụng thuộc tính đã lưu từ WeaponPickup nếu có
+        // Thiết lập số đạn
         if (gunComponent != null)
         {
-            if (pickupInfo != null)
+            if (ammoCount >= 0)
             {
-                // Áp dụng thuộc tính từ pickup
-                ApplyWeaponPropertiesFromPickup(gunComponent, pickupInfo);
-                Debug.Log("Đã áp dụng thuộc tính từ weapon pickup vào súng mới");
-            }
-            else if (ammoCount >= 0)
-            {
-                // Nếu không có pickup nhưng có ammoCount, chỉ thiết lập đạn
                 gunComponent.currentAmmo = ammoCount;
+                Debug.Log($"Thiết lập số đạn cho vũ khí mới nhặt: {ammoCount}");
             }
             else
             {
-                // Nếu không có gì, sử dụng giá trị mặc định của prefab
+                // Nếu không có số đạn cụ thể, sử dụng số đạn mặc định từ prefab
                 Gun originalGun = originalPrefab.GetComponent<Gun>();
                 if (originalGun != null)
                 {
@@ -564,208 +520,6 @@ public class WeaponManager : MonoBehaviour
         }
     }
     
-    // Phương thức mới để thêm vũ khí gốc vào inventory (không tạo clone mới)
-    private void AddOriginalWeaponToInventory(WeaponPickup pickup)
-    {
-        if (pickup == null) return;
-        
-        int weaponIndex = pickup.weaponIndex;
-        if (weaponIndex < 0 || weaponIndex >= weaponGameplayPrefabs.Count)
-        {
-            Debug.LogError($"weaponIndex không hợp lệ: {weaponIndex}");
-            return;
-        }
-        
-        Debug.Log($"Đang nhặt vũ khí với index: {weaponIndex}, tên: {pickup.weaponName}");
-        
-        // Tạo bản sao của vũ khí gameplay và thêm vào weaponHolder
-        GameObject newWeapon = Instantiate(
-            weaponGameplayPrefabs[weaponIndex],
-            weaponHolder.position,
-            weaponHolder.rotation,
-            weaponHolder
-        );
-        
-        // Đặt lại vị trí, rotation và scale dựa trên prefab gốc
-        Transform originalTransform = weaponGameplayPrefabs[weaponIndex].transform;
-        newWeapon.transform.localPosition = originalTransform.localPosition;
-        newWeapon.transform.localRotation = originalTransform.localRotation;
-        newWeapon.transform.localScale = originalTransform.localScale;
-        
-        // Khôi phục tên gốc của vũ khí (nếu không có "(Clone)")
-        if (pickup.weaponName != null && !pickup.weaponName.Contains("(Clone)"))
-        {
-            newWeapon.name = pickup.weaponName;
-        }
-        
-        // Kiểm tra và xử lý các component thiết yếu
-        EnsureWeaponComponentsLoaded(newWeapon, weaponGameplayPrefabs[weaponIndex]);
-        
-        // Áp dụng các thuộc tính từ WeaponPickup vào Gun component
-        Gun gunComponent = newWeapon.GetComponent<Gun>();
-        if (gunComponent != null)
-        {
-            ApplyWeaponPropertiesFromPickup(gunComponent, pickup);
-            
-            // Đảm bảo animator được khởi tạo
-            if (pickup.animatorController != null)
-            {
-                if (gunComponent.animator == null)
-                    gunComponent.animator = newWeapon.GetComponent<Animator>() ?? 
-                                           newWeapon.AddComponent<Animator>();
-                                           
-                gunComponent.animator.runtimeAnimatorController = pickup.animatorController;
-                Debug.Log("Đã áp dụng animator controller cho súng vừa nhặt");
-            }
-            
-            // Xác định vị trí của vũ khí mới trong hierarchy
-            bool isPistol = gunComponent.isPistol;
-            int targetIndex;
-            int newSelectedWeapon;
-            
-            if (isPistol)
-            {
-                // Súng lục luôn nằm ở cuối danh sách
-                targetIndex = weaponHolder.childCount - 1;
-                newSelectedWeapon = targetIndex;
-                Debug.Log("Thêm súng lục vào vị trí cuối cùng");
-            }
-            else
-            {
-                // Vũ khí chính luôn nằm ở vị trí đầu tiên
-                targetIndex = 0;
-                newSelectedWeapon = 0;
-                Debug.Log("Thêm vũ khí chính vào vị trí đầu tiên");
-                
-                // Di chuyển vũ khí mới lên vị trí đầu tiên trong hierarchy
-                newWeapon.transform.SetSiblingIndex(0);
-            }
-            
-            // Nếu có SwitchWeapon, chuyển sang vũ khí mới nhặt
-            if (switchWeapon != null)
-            {
-                switchWeapon.selectedWeapon = newSelectedWeapon;
-                switchWeapon.SelectWeapon();
-                
-                // Gọi phương thức OnWeaponEnabled để vũ khí khởi tạo đúng
-                if (gunComponent != null)
-                {
-                    gunComponent.OnWeaponEnabled();
-                }
-                
-                Debug.Log($"Đã chọn vũ khí gốc tại index: {newSelectedWeapon}");
-            }
-        }
-        else
-        {
-            Debug.LogError("Không tìm thấy Gun component trên vũ khí mới nhặt!");
-        }
-    }
-    
-    // Phương thức mới để tìm WeaponPickup đang được nhìn
-    private WeaponPickup FindPickupInFront()
-    {
-        if (playerCamera == null) return null;
-        
-        RaycastHit hit;
-        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit, pickupRange, pickupLayer))
-        {
-            return hit.collider.GetComponent<WeaponPickup>();
-        }
-        return null;
-    }
-    
-    // Phương thức mới để áp dụng thuộc tính từ WeaponPickup vào Gun
-    private void ApplyWeaponPropertiesFromPickup(Gun targetGun, WeaponPickup pickup)
-    {
-        if (targetGun == null || pickup == null) return;
-        
-        // Áp dụng các thuộc tính cơ bản
-        targetGun.currentAmmo = pickup.remainingAmmo;
-        targetGun.isPistol = pickup.isPistol;
-        targetGun.isAutomatic = pickup.isAutomatic;
-        targetGun.damage = pickup.damage;
-        targetGun.recoilAmount = pickup.recoilAmount;
-        targetGun.baseSpread = pickup.baseSpread;
-        targetGun.impactEffect = pickup.impactEffect;
-        
-        // Khôi phục animator controller
-        if (pickup.animatorController != null)
-        {
-            // Tìm Animator trong parent GameObject (Weapon holder) trước
-            Animator parentAnimator = targetGun.transform.parent ? targetGun.transform.parent.GetComponent<Animator>() : null;
-            
-            if (parentAnimator != null)
-            {
-                targetGun.animator = parentAnimator;
-                targetGun.animator.runtimeAnimatorController = pickup.animatorController;
-                Debug.Log("Đã áp dụng animator controller cho Weapon holder (parent)");
-            }
-            else
-            {
-                // Nếu không có trong parent, kiểm tra trong weapon GameObject
-                if (targetGun.animator == null)
-                    targetGun.animator = targetGun.gameObject.GetComponent<Animator>() ?? 
-                                         targetGun.gameObject.GetComponentInChildren<Animator>();
-                
-                if (targetGun.animator == null)
-                    targetGun.animator = targetGun.gameObject.AddComponent<Animator>();
-                    
-                targetGun.animator.runtimeAnimatorController = pickup.animatorController;
-                Debug.Log("Đã áp dụng animator controller cho weapon GameObject");
-            }
-        }
-        
-        // Áp dụng thiết lập âm thanh nếu có
-        if (pickup.gunshotClip != null)
-        {
-            if (targetGun.gunshotSound == null)
-                targetGun.gunshotSound = targetGun.gameObject.GetComponent<AudioSource>() ?? 
-                                        targetGun.gameObject.AddComponent<AudioSource>();
-                
-            targetGun.gunshotSound.clip = pickup.gunshotClip;
-            targetGun.gunshotSound.volume = pickup.gunVolume;
-            targetGun.gunshotSound.playOnAwake = false;
-        }
-        
-        // Tìm các UI components từ đường dẫn đã lưu
-        if (!string.IsNullOrEmpty(pickup.ammoTextPath))
-            targetGun.ammoText = FindUITextFromPath(pickup.ammoTextPath);
-            
-        // We no longer need to deal with scoreText
-        
-        Debug.Log($"Đã áp dụng thuộc tính từ pickup vào vũ khí {targetGun.name}: " +
-                 $"Đạn còn: {targetGun.currentAmmo}, " +
-                 $"Súng lục: {targetGun.isPistol}, " +
-                 $"Tự động: {targetGun.isAutomatic}, " +
-                 $"Sát thương: {targetGun.damage}");
-    }
-    
-    // Phương thức để tìm Text component từ đường dẫn đã lưu
-    private Text FindUITextFromPath(string path)
-    {
-        if (string.IsNullOrEmpty(path)) return null;
-        
-        GameObject obj = GameObject.Find(path);
-        if (obj != null)
-            return obj.GetComponent<Text>();
-            
-        // Nếu không tìm thấy bằng đường dẫn đầy đủ, thử tìm bằng tên
-        string[] parts = path.Split('/');
-        if (parts.Length > 0)
-        {
-            string name = parts[parts.Length - 1];
-            Text[] allTexts = FindObjectsOfType<Text>();
-            foreach (Text text in allTexts)
-            {
-                if (text.name == name)
-                    return text;
-            }
-        }
-        
-        return null;
-    }
-    
     // Phương thức mới để đảm bảo tất cả component của vũ khí được tải đúng
     private void EnsureWeaponComponentsLoaded(GameObject newWeapon, GameObject originalPrefab)
     {
@@ -777,84 +531,42 @@ public class WeaponManager : MonoBehaviour
         {
             Debug.Log("Đã tìm thấy Gun component");
             
-            // 2. Kiểm tra Animator - kiểm tra trong parent (Weapon holder) trước
+            // 2. Kiểm tra Animator
             if (gunComponent.animator == null)
             {
                 Debug.Log("Tìm kiếm Animator component...");
                 
-                // Tìm trong parent (Weapon holder) trước
-                Animator parentAnimator = newWeapon.transform.parent ? newWeapon.transform.parent.GetComponent<Animator>() : null;
+                // Tìm trong vũ khí mới
+                gunComponent.animator = newWeapon.GetComponent<Animator>();
                 
-                if (parentAnimator != null)
+                // Nếu không có, tìm trong các thành phần con
+                if (gunComponent.animator == null)
                 {
-                    gunComponent.animator = parentAnimator;
-                    Debug.Log("Đã tìm thấy Animator trong parent (Weapon holder)");
+                    gunComponent.animator = newWeapon.GetComponentInChildren<Animator>();
                 }
-                else
+                
+                // Nếu vẫn không thấy, sao chép từ prefab gốc
+                if (gunComponent.animator == null)
                 {
-                    // Tìm trong vũ khí mới nếu không có trong parent
-                    gunComponent.animator = newWeapon.GetComponent<Animator>();
+                    Animator originalAnimator = originalPrefab.GetComponent<Animator>() ?? 
+                                              originalPrefab.GetComponentInChildren<Animator>();
                     
-                    // Nếu không có, tìm trong các thành phần con
-                    if (gunComponent.animator == null)
+                    if (originalAnimator != null && originalAnimator.runtimeAnimatorController != null)
                     {
-                        gunComponent.animator = newWeapon.GetComponentInChildren<Animator>();
-                    }
-                    
-                    // Nếu vẫn không thấy, kiểm tra prefab gốc và xem nó có parent Animator không
-                    if (gunComponent.animator == null)
-                    {
-                        Animator originalParentAnimator = originalPrefab.transform.parent ? 
-                                                         originalPrefab.transform.parent.GetComponent<Animator>() : null;
-                        
-                        if (originalParentAnimator != null && originalParentAnimator.runtimeAnimatorController != null)
-                        {
-                            // Thêm vào parent của weapon hiện tại nếu có
-                            if (newWeapon.transform.parent)
-                            {
-                                Debug.Log("Tạo Animator trong parent từ prefab gốc");
-                                gunComponent.animator = newWeapon.transform.parent.gameObject.AddComponent<Animator>();
-                                gunComponent.animator.runtimeAnimatorController = originalParentAnimator.runtimeAnimatorController;
-                                gunComponent.animator.avatar = originalParentAnimator.avatar;
-                            }
-                            else
-                            {
-                                // Nếu không có parent, thêm vào weapon
-                                Debug.Log("Không có parent, tạo Animator trong weapon");
-                                gunComponent.animator = newWeapon.AddComponent<Animator>();
-                                gunComponent.animator.runtimeAnimatorController = originalParentAnimator.runtimeAnimatorController;
-                                gunComponent.animator.avatar = originalParentAnimator.avatar;
-                            }
-                        }
-                        else
-                        {
-                            // Kiểm tra Animator trong weapon prefab gốc
-                            Animator originalAnimator = originalPrefab.GetComponent<Animator>() ?? 
-                                                      originalPrefab.GetComponentInChildren<Animator>();
-                            
-                            if (originalAnimator != null && originalAnimator.runtimeAnimatorController != null)
-                            {
-                                Debug.Log("Tạo Animator từ prefab gốc");
-                                gunComponent.animator = newWeapon.AddComponent<Animator>();
-                                gunComponent.animator.runtimeAnimatorController = originalAnimator.runtimeAnimatorController;
-                                gunComponent.animator.avatar = originalAnimator.avatar;
-                            }
-                            else
-                            {
-                                Debug.LogWarning("Không tìm thấy Animator trong prefab. Tạo mới Animator.");
-                                gunComponent.animator = newWeapon.AddComponent<Animator>();
-                            }
-                        }
+                        Debug.Log("Tạo Animator từ prefab gốc");
+                        gunComponent.animator = newWeapon.AddComponent<Animator>();
+                        gunComponent.animator.runtimeAnimatorController = originalAnimator.runtimeAnimatorController;
+                        gunComponent.animator.avatar = originalAnimator.avatar;
                     }
                     else
                     {
-                        Debug.Log($"Animator đã được tìm thấy trong weapon: {gunComponent.animator.name}");
+                        Debug.LogWarning("Không tìm thấy Animator trong cả hai prefab!");
                     }
                 }
-            }
-            else
-            {
-                Debug.Log($"Animator đã được gán trước đó: {gunComponent.animator.name}");
+                else
+                {
+                    Debug.Log($"Animator đã được tìm thấy: {gunComponent.animator.name}");
+                }
             }
             
             // 3. Kiểm tra AudioSource
@@ -871,7 +583,7 @@ public class WeaponManager : MonoBehaviour
                     audioSource = newWeapon.GetComponentInChildren<AudioSource>();
                 }
                 
-                // Nếu vẫn không thấy, sao chép từ prefab gốc hoặc tạo mới
+                // Nếu vẫn không thấy, sao chép từ prefab gốc
                 if (audioSource == null)
                 {
                     AudioSource originalAudioSource = originalPrefab.GetComponent<AudioSource>() ?? 
@@ -885,13 +597,6 @@ public class WeaponManager : MonoBehaviour
                         audioSource.volume = originalAudioSource.volume;
                         audioSource.pitch = originalAudioSource.pitch;
                         audioSource.spatialBlend = originalAudioSource.spatialBlend;
-                        audioSource.playOnAwake = false;
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Không tìm thấy AudioSource trong prefab. Tạo mới AudioSource.");
-                        audioSource = newWeapon.AddComponent<AudioSource>();
-                        audioSource.playOnAwake = false;
                     }
                 }
                 
@@ -933,50 +638,7 @@ public class WeaponManager : MonoBehaviour
                 }
             }
             
-            // 5. Kiểm tra impactEffect
-            if (gunComponent.impactEffect == null)
-            {
-                Debug.LogWarning("impactEffect is missing, trying to find a default one...");
-                
-                // Tìm từ prefab gốc
-                Gun originalGun = originalPrefab.GetComponent<Gun>();
-                if (originalGun != null && originalGun.impactEffect != null)
-                {
-                    gunComponent.impactEffect = originalGun.impactEffect;
-                }
-                else
-                {
-                    // Tìm một impact effect mặc định trong Resources nếu có
-                    GameObject defaultImpact = Resources.Load<GameObject>("DefaultImpact");
-                    if (defaultImpact != null)
-                    {
-                        gunComponent.impactEffect = defaultImpact;
-                    }
-                    else
-                    {
-                        Debug.LogError("Không thể tìm thấy impact effect. Hãy gán trong Inspector.");
-                    }
-                }
-            }
-            
-            // 6. Tìm UI references - only find ammoText now
-            if (gunComponent.ammoText == null)
-            {
-                Text[] texts = FindObjectsOfType<Text>();
-                foreach (Text text in texts)
-                {
-                    if (text.name.ToLower().Contains("ammo"))
-                    {
-                        gunComponent.ammoText = text;
-                        Debug.Log("Đã tìm thấy ammoText: " + text.name);
-                        break;
-                    }
-                }
-            }
-            
-            // Remove all scoreText related code
-            
-            // 7. Đảm bảo camera reference
+            // 5. Đảm bảo camera reference
             if (gunComponent.playerCamera == null)
             {
                 gunComponent.playerCamera = Camera.main;

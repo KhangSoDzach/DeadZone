@@ -108,13 +108,7 @@ public class Zombie_2 : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
         {
-            HealthManager playerHealth = hit.transform.GetComponent<HealthManager>();
-            if (playerHealth != null)
-            {
-                // Apply damage to the player
-                playerHealth.TakeDamage(attackDamage);
-                Debug.Log("Player hit for " + attackDamage + " damage");
-            }
+            Debug.Log("attac k");
         }
 
     }

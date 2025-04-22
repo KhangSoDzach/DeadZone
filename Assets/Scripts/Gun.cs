@@ -23,6 +23,8 @@ public class Gun : MonoBehaviour
     public float fireRate = 0.5f; // Rate of fire in seconds
     private float nextFireTime = 0f; // Time when the gun can fire again
     public Text ammoText; // Reference to the UI Text for displaying ammo
+    public Text scoreText; // Reference to the UI Text for displaying the score
+    private int score = 0; // Player's score
 
     [Header("Recoil Settings")]
     public float recoilAmount = 1.0f;               // How much recoil each shot produces
@@ -42,19 +44,9 @@ public class Gun : MonoBehaviour
     void Start()
     {
         currentAmmo = maxAmmo; // Initialize ammo
-        
-        // Make sure all required components are available
-        EnsureRequiredComponents();
-        
         UpdateAmmoUI(); // Update the ammo display
+        UpdateScoreUI(); // Initialize the score display
         
-        currentSpread = baseSpread;
-        lastShotTime = -10f; // Initialize to ensure we start with base spread
-    }
-    
-    // New method to ensure all required components exist
-    void EnsureRequiredComponents()
-    {
         // Ensure the animator reference is valid
         if (animator == null)
         {
@@ -64,8 +56,7 @@ public class Gun : MonoBehaviour
                 animator = GetComponentInChildren<Animator>();
                 if (animator == null)
                 {
-                    animator = gameObject.AddComponent<Animator>();
-                    Debug.LogWarning($"Created new Animator for {gameObject.name}");
+                    Debug.LogWarning("Không tìm thấy Animator cho vũ khí. Cần thiết lập animator trong Inspector.");
                 }
             }
         }
@@ -73,71 +64,34 @@ public class Gun : MonoBehaviour
         if (playerCamera == null)
         {
             playerCamera = Camera.main; // Get the main camera if not assigned
-            Debug.Log("Set Camera.main as playerCamera");
         }
-        
         if (muzzleFlash == null)
         {
-            // Try to find in children
-            muzzleFlash = GetComponentInChildren<ParticleSystem>();
-            if (muzzleFlash == null)
-            {
-                Debug.LogWarning("Muzzle flash particle system not found.");
-            }
+            Debug.LogError("Muzzle flash particle system is not assigned!");
         }
-        
         if (gunshotSound == null)
         {
-            gunshotSound = GetComponent<AudioSource>();
-            if (gunshotSound == null)
-            {
-                gunshotSound = gameObject.AddComponent<AudioSource>();
-                gunshotSound.playOnAwake = false;
-                Debug.LogWarning($"Created new AudioSource for {gameObject.name}");
-            }
+            Debug.LogError("Gunshot sound is not assigned!");
         }
-        
         if (impactEffect == null)
         {
-            // Try to find default impact in resources
-            GameObject defaultImpact = Resources.Load<GameObject>("DefaultImpact");
-            if (defaultImpact != null)
-            {
-                impactEffect = defaultImpact;
-                Debug.Log("Using default impact effect from Resources");
-            }
-            else
-            {
-                Debug.LogWarning("Impact effect prefab not found. Please assign in Inspector.");
-            }
+            Debug.LogError("Impact effect prefab is not assigned!");
         }
-        
-        // Try to find UI references
-        if (ammoText == null)
-        {
-            Text[] allTexts = FindObjectsOfType<Text>();
-            
-            foreach (Text text in allTexts)
-            {
-                if (ammoText == null && text.name.ToLower().Contains("ammo"))
-                {
-                    ammoText = text;
-                    Debug.Log($"Found ammoText: {text.name}");
-                }
-            }
-        }
-        
-        // Look for PlayerLook script if needed
-        if (playerLookScript == null && playerCamera != null)
+
+        // Find the PlayerLook script
+        if (playerCamera != null)
         {
             playerLookScript = playerCamera.GetComponentInParent<PlayerLook>();
             if (playerLookScript == null)
             {
+                // Try to find it on the parent GameObject
                 playerLookScript = playerCamera.transform.root.GetComponent<PlayerLook>();
             }
         }
-    }
 
+        currentSpread = baseSpread;
+        lastShotTime = -10f; // Initialize to ensure we start with base spread
+    }
     void OnEnable()
     {
         isReloading = false; // Reset reloading state when the gun is enabled
@@ -253,31 +207,27 @@ public class Gun : MonoBehaviour
             Zombie_3 zombie3 = hit.transform.GetComponent<Zombie_3>();
             Zombie_4 zombie4 = hit.transform.GetComponent<Zombie_4>();
 
-                // Use ScoreManager to add score directly
+
             if (zombie1 != null)
             {
                 zombie1.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             if (zombie2 != null)
             {
                 zombie2.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             if (zombie3 != null)
             {
                 zombie3.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             if (zombie4 != null)
             {
                 zombie4.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                
+                // Calculate force direction from camera position for consistent physics
                 Vector3 forceDirection = hit.point - playerCamera.transform.position;
                 forceDirection.Normalize();
                 rb.AddForce(forceDirection * impactForce, ForceMode.Impulse);
@@ -287,12 +237,6 @@ public class Gun : MonoBehaviour
             GameObject impact = Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
             Destroy(impact, 2f); 
         }
-    }
-
-    // Update to use ScoreManager for score management
-    public void IncreaseScore(int points)
-    {
-        ScoreManager.AddScore(points);
     }
 
     // Calculate direction with random spread
@@ -321,14 +265,12 @@ public class Gun : MonoBehaviour
             ammoText.text = $"{currentAmmo} / {maxAmmo}"; // Update the text to show current and max ammo
         }
     }
-    
-    // This method will be called from WeaponManager when this weapon is enabled
-    public void OnWeaponEnabled()
+
+    void UpdateScoreUI()
     {
-        // Make sure all components are ready
-        EnsureRequiredComponents();
-        
-        // Update the UI
-        UpdateAmmoUI();
+        if (scoreText != null)
+        {
+            scoreText.text = $"Score: {score}"; // Update the score display
+        }
     }
 }
