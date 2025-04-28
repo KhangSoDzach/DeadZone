@@ -302,24 +302,42 @@ public class WeaponPickup : MonoBehaviour
             gunComponent.baseSpread = baseSpread;
             gunComponent.impactEffect = impactEffect;
             
-            // Khôi phục animator controller
-            if (animatorController != null)
+            // Khôi phục animator controller - ĐÃ SỬA
+            // Luôn ưu tiên tìm animator trong parent trước
+            Transform parentTransform = transform.parent;
+            if (parentTransform != null)
             {
-                if (gunComponent.animator == null)
+                Animator parentAnimator = parentTransform.GetComponent<Animator>();
+                if (parentAnimator != null)
                 {
-                    // Tìm animator trong parent trước
-                    Animator parentAnimator = transform.parent ? transform.parent.GetComponent<Animator>() : null;
-                    if (parentAnimator != null)
+                    gunComponent.animator = parentAnimator;
+                    Debug.Log($"Đang sử dụng animator của parent {parentTransform.name} cho {gameObject.name}");
+                    
+                    // Chỉ áp dụng controller nếu có và nếu không dùng parent animator
+                    if (animatorController != null && parentAnimator.runtimeAnimatorController == null)
                     {
-                        gunComponent.animator = parentAnimator;
-                    }
-                    else
-                    {
-                        // Tạo animator mới nếu không có
-                        gunComponent.animator = gameObject.GetComponent<Animator>() ?? gameObject.AddComponent<Animator>();
+                        parentAnimator.runtimeAnimatorController = animatorController;
                     }
                 }
+            }
+            
+            // Nếu vẫn chưa có animator và có controller đã lưu, mới tạo mới
+            if (gunComponent.animator == null && animatorController != null)
+            {
+                // Kiểm tra xem đã có animator component trên vũ khí chưa
+                Animator existingAnimator = gameObject.GetComponent<Animator>();
+                if (existingAnimator != null) 
+                {
+                    gunComponent.animator = existingAnimator;
+                }
+                else
+                {
+                    // Tạo animator mới chỉ khi không tìm thấy ở parent và không có sẵn
+                    gunComponent.animator = gameObject.AddComponent<Animator>();
+                    Debug.Log($"Đã tạo animator mới cho {gameObject.name} vì không tìm thấy ở parent");
+                }
                 
+                // Áp dụng controller đã lưu
                 gunComponent.animator.runtimeAnimatorController = animatorController;
             }
             
@@ -340,7 +358,24 @@ public class WeaponPickup : MonoBehaviour
             if (gunComponent.playerCamera == null)
             {
                 gunComponent.playerCamera = Camera.main;
-                Debug.Log("Đã đặt camera chính cho súng");
+                if (gunComponent.playerCamera == null)
+                {
+                    // Tìm bất kỳ camera nào nếu không tìm thấy main camera
+                    Camera[] cameras = FindObjectsOfType<Camera>();
+                    if (cameras.Length > 0)
+                    {
+                        gunComponent.playerCamera = cameras[0];
+                        Debug.LogWarning($"Không tìm thấy camera chính! Sử dụng camera thay thế cho {gameObject.name}");
+                    }
+                    else
+                    {
+                        Debug.LogError("Không tìm thấy camera nào trong scene!");
+                    }
+                }
+                else
+                {
+                    Debug.Log("Đã đặt camera chính cho súng");
+                }
             }
             
             // Đảm bảo UI được cập nhật
