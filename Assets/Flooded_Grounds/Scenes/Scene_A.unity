@@ -104119,6 +104119,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 515.37, y: 16.599651, z: 405.45773}
+  m_LocalPosition: {x: 515.37, y: 16.599651, z: 405.45773}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -104174,6 +104175,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
+  Priority: 203
   Priority: 203
   DopplerLevel: 1
   MinDistance: 1
@@ -138554,6 +138556,7 @@ MonoBehaviour:
   playerExistenceRadius: 0
   playerInAttackingRadius: 0
   attackDamage: 5
+  attackDamage: 5
   audioSource: {fileID: 1121241803}
   idleGroanSound: {fileID: 8300000, guid: 5674ae0b8829ada46ab97ae9acc23de6, type: 3}
 --- !u!195 &1121241801
@@ -138619,6 +138622,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
+  Priority: 170
   Priority: 170
   DopplerLevel: 1
   MinDistance: 1
@@ -144821,6 +144825,7 @@ Transform:
   m_GameObject: {fileID: 1172809381}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 487.87, y: 20.064, z: 376.07654}
   m_LocalPosition: {x: 487.87, y: 20.064, z: 376.07654}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -174545,6 +174550,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
+  Priority: 106
   Priority: 106
   DopplerLevel: 1
   MinDistance: 1
@@ -204338,6 +204344,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
+  Priority: 147
   Priority: 147
   DopplerLevel: 1
   MinDistance: 1
@@ -263445,6 +263452,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 497.96, y: 20.101, z: 376.07654}
+  m_LocalPosition: {x: 497.96, y: 20.101, z: 376.07654}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -275087,9 +275095,11 @@ PrefabInstance:
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}
       propertyPath: m_LocalPosition.y
+      value: 0
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5129886904148119591, guid: c1452cffdd2a2e945a4072022325d5b8, type: 3}

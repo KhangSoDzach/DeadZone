@@ -56,8 +56,7 @@ public class Gun : MonoBehaviour
                 animator = GetComponentInChildren<Animator>();
                 if (animator == null)
                 {
-                    animator = gameObject.AddComponent<Animator>();
-                    Debug.LogWarning($"Created new Animator for {gameObject.name}");
+                    Debug.LogWarning("Không tìm thấy Animator cho vũ khí. Cần thiết lập animator trong Inspector.");
                 }
             }
         }

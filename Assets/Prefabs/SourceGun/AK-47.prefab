@@ -202,16 +202,17 @@ MonoBehaviour:
   maxAmmo: 30
   currentAmmo: 0
   reloadTime: 2
-  animator: {fileID: 0}
-  playerCamera: {fileID: 0}
+  animator: {fileID: 8477535945968153731, guid: 09e39c738a94fb74bb2d7283da270940, type: 3}
+  playerCamera: {fileID: 137473972859822471, guid: dbd8bd789d41f2f4db7c6f1923b78ce5, type: 3}
   muzzleFlash: {fileID: 3868768553441334791}
-  gunshotSound: {fileID: 0}
+  gunshotSound: {fileID: 2103502026826163907, guid: dbd8bd789d41f2f4db7c6f1923b78ce5, type: 3}
   impactEffect: {fileID: 100002, guid: 99c73c92ac40473459640b165473206f, type: 3}
   impactForce: 100
   fireRate: 0.1
-  ammoText: {fileID: 0}
-  recoilAmount: 0
-  recoilRecoverySpeed: 200
+  ammoText: {fileID: 2408228238869159501, guid: 1a573ec2e345ef641ae97df7b3fcb43d, type: 3}
+  scoreText: {fileID: 3492056626412583997, guid: c413df25183562d4b8dbbec4d38fcb55, type: 3}
+  recoilAmount: 1
+  recoilRecoverySpeed: 2
   recoilBuildup: 0.5
   horizontalRecoilFactor: 0.3
   baseSpread: 0.02

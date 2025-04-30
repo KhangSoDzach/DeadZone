@@ -17,13 +17,9 @@ public class WeaponManager : MonoBehaviour
     public KeyCode pickupKey = KeyCode.E; // Phím để nhặt vũ khí
     
     [Header("Prefabs")]
-    public List<GameObject> weaponPrefabs; // Prefabs của vũ khí hợp nhất
+    public List<GameObject> weaponPrefabs; // Prefabs của vũ khí không có script (để vứt xuống)
+    public List<GameObject> weaponGameplayPrefabs; // Prefabs của vũ khí có đầy đủ script
     
-    [Header("Primary Weapon Transform")]
-    public Vector3 primaryPosition = Vector3.zero;
-    public Quaternion primaryRotation = Quaternion.identity;
-    public Vector3 primaryScale = Vector3.one;
-
     // Dictionary để map giữa tên vũ khí và index trong mảng prefab
     private Dictionary<string, int> weaponNameToIndex = new Dictionary<string, int>();
     
@@ -83,43 +79,6 @@ public class WeaponManager : MonoBehaviour
             dropPointObj.transform.parent = playerCamera.transform;
             dropPointObj.transform.localPosition = new Vector3(0, -0.5f, 1f);
             dropPoint = dropPointObj.transform;
-        }
-    }
-    
-    // Phương thức đảm bảo rằng playerCamera luôn có sẵn
-    private bool EnsurePlayerCamera()
-    {
-        if (playerCamera == null)
-        {
-            Debug.LogWarning("playerCamera là null, đang tìm kiếm Camera.main...");
-            playerCamera = Camera.main;
-            
-            if (playerCamera == null)
-            {
-                // Nếu vẫn không tìm thấy, thử tìm kiếm camera trong scene
-                Camera[] allCameras = FindObjectsOfType<Camera>();
-                if (allCameras.Length > 0)
-                {
-                    playerCamera = allCameras[0];
-                    Debug.Log("Đã tìm thấy camera thay thế.");
-                }
-            }
-        }
-        
-        return playerCamera != null;
-    }
-    
-    // Phương thức cập nhật camera trước mỗi lần sử dụng
-    private void UpdateReferences()
-    {
-        if (playerCamera == null)
-        {
-            EnsurePlayerCamera();
-        }
-        
-        if (switchWeapon == null)
-        {
-            switchWeapon = GetComponent<SwitchWeapon>();
         }
     }
     
@@ -333,37 +292,24 @@ public class WeaponManager : MonoBehaviour
         Collider collider = droppedWeapon.GetComponent<Collider>();
         if (collider == null)
         {
-            // Thử tìm collider trong con trước
-            Collider childCollider = droppedWeapon.GetComponentInChildren<Collider>(true);
-            
-            if (childCollider != null)
-            {
-                // Sử dụng collider đã có trong con
-                collider = childCollider;
-            }
-            else
-            {
-                // Tạo mới box collider nếu cần
-                BoxCollider boxCollider = droppedWeapon.AddComponent<BoxCollider>();
-                // Đảm bảo kích thước collider phù hợp
-                boxCollider.size = new Vector3(0.3f, 0.15f, 0.5f);
-                boxCollider.center = Vector3.zero;
-            }
+            droppedWeapon.AddComponent<BoxCollider>();
         }
         
-        // Sao chép thuộc tính từ vũ khí hiện tại sang pickup
+        // Thêm WeaponPickup component và lưu lại số đạn còn lại
+        WeaponPickup pickup = droppedWeapon.AddComponent<WeaponPickup>();
         pickup.weaponIndex = prefabIndex;
         pickup.weaponName = weaponName;
         
-        // Sao chép thông tin chi tiết từ Gun component - using our saved reference
-        if (gunComponentRef != null)
+        // Lưu lại số đạn còn lại
+        // Gun currentGunComponent = currentWeapon.GetComponent<Gun>();
+        if (currentGunComponent != null)
         {
-            pickup.CopyPropertiesFromGun(gunComponentRef);
+            pickup.remainingAmmo = currentGunComponent.currentAmmo;
+            Debug.Log($"Lưu lại số đạn còn lại: {pickup.remainingAmmo}");
         }
         
-        // Đặt chế độ pickup và áp dụng lực
-        pickup.SetPickupMode(true);
-        pickup.ApplyDropForce(playerCamera.transform.forward, dropForce);
+        // Áp dụng lực để vứt vũ khí ra xa
+        rb.AddForce(playerCamera.transform.forward * dropForce, ForceMode.Impulse);
         
         // Xóa vũ khí hiện tại sau khi đã tạo bản sao
         Destroy(weaponToDestroy);
@@ -523,42 +469,16 @@ public class WeaponManager : MonoBehaviour
             WeaponPickup pickup = hit.collider.GetComponent<WeaponPickup>();
             if (pickup != null)
             {
-                Debug.Log($"Tìm thấy WeaponPickup: {pickup.weaponName}");
-                
-                // Nhặt và trang bị vũ khí
-                AddWeaponToInventory(pickup.gameObject);
-                
-                // Xóa vật phẩm sau khi nhặt
+                AddWeaponToInventory(pickup.weaponIndex, pickup.remainingAmmo);
                 Destroy(hit.collider.gameObject);
             }
-            else
-            {
-                Debug.LogWarning($"Đối tượng {hit.collider.gameObject.name} không có component WeaponPickup!");
-                
-                // Thử tìm trong các đối tượng con
-                WeaponPickup childPickup = hit.collider.GetComponentInChildren<WeaponPickup>();
-                if (childPickup != null)
-                {
-                    Debug.Log($"Tìm thấy WeaponPickup trong đối tượng con: {childPickup.weaponName}");
-                    
-                    // Nhặt và trang bị vũ khí
-                    AddWeaponToInventory(childPickup.gameObject);
-                    
-                    // Xóa vật phẩm sau khi nhặt
-                    Destroy(childPickup.transform.root.gameObject);
-                }
-            }
-        }
-        else
-        {
-            Debug.Log("Không tìm thấy vật phẩm có thể nhặt trong tầm nhìn");
         }
     }
     
-    // Thêm vũ khí từ GameObject đã tồn tại vào kho đồ
-    public void AddWeaponToInventory(GameObject weaponObject)
+    // Thêm vũ khí vào kho đồ với số đạn được chỉ định
+    public void AddWeaponToInventory(int weaponIndex, int ammoCount = -1)
     {
-        if (weaponObject == null)
+        if (weaponIndex < 0 || weaponIndex >= weaponGameplayPrefabs.Count)
         {
             Debug.LogError("weaponObject là null!");
             return;
@@ -595,138 +515,192 @@ public class WeaponManager : MonoBehaviour
             weaponHolder
         );
         
-        // Sửa tên vũ khí để loại bỏ "(Clone)" hoặc "(Clone)(Clone)"
-        string cleanName = pickup.weaponName;
-        if (cleanName.Contains("(Clone)"))
-        {
-            cleanName = cleanName.Replace("(Clone)", "").Trim();
-        }
-        newWeapon.name = cleanName; // Đặt tên sạch cho vũ khí
+        // Đặt lại vị trí, rotation và scale chính xác như prefab gốc
+        newWeapon.transform.localPosition = originalTransform.localPosition;
+        newWeapon.transform.localRotation = originalTransform.localRotation;
+        newWeapon.transform.localScale = originalTransform.localScale;
         
-        // Lưu transform gốc từ prefab nếu có
-        Vector3 originalPosition = pickup.transform.localPosition;
-        Quaternion originalRotation = pickup.transform.localRotation;
-        Vector3 originalScale = pickup.transform.localScale;
-        
-        Debug.Log($"Transform gốc từ pickup: pos={originalPosition}, rot={originalRotation.eulerAngles}, scale={originalScale}");
-
-        // KHÔNG đặt vị trí về Vector3.zero nữa, để giữ nguyên transform từ prefab
-        // Chỉ đặt scale về mặc định nếu scale quá nhỏ hoặc không hợp lệ
-        if (originalScale.magnitude < 0.1f)
-        {
-            newWeapon.transform.localScale = Vector3.one;
-        }
-        
-        // Đảm bảo có WeaponComponentRestore component
-        WeaponComponentRestore componentRestore = newWeapon.GetComponent<WeaponComponentRestore>();
-        if (componentRestore == null)
-        {
-            componentRestore = newWeapon.AddComponent<WeaponComponentRestore>();
-            //Debug.Log("Đã thêm component WeaponComponentRestore cho vũ khí mới");
-        }
-        
-        // Lấy Gun component
-        Gun gunComponent = newWeapon.GetComponent<Gun>();
-        if (gunComponent != null)
-        {
-            // Đảm bảo camera được gán đúng
-            if (mainCamera != null)
-            {
-                gunComponent.playerCamera = mainCamera;
-                Debug.Log($"Đã gán camera {mainCamera.name} cho vũ khí {newWeapon.name}");
-            }
-            else
-            {
-                Debug.LogError("Không thể tìm thấy camera nào để gán cho vũ khí!");
-            }
-            
-            // Khôi phục các component bị thiếu
-            componentRestore.RestoreGunComponents(gunComponent);
-        }
-        
-        // Chuyển sang chế độ trang bị và áp dụng thuộc tính vào Gun component
-        WeaponPickup newPickup = newWeapon.GetComponent<WeaponPickup>();
-        if (newPickup != null)
-        {
-            newPickup.weaponName = cleanName;
-            newPickup.SetPickupMode(false);
-            newPickup.ApplyPropertiesToGun();
-        }
-        
-        // Store transform nếu nó có giá trị hợp lệ (không phải zero)
-        if (originalPosition != Vector3.zero || originalRotation != Quaternion.identity || originalScale != Vector3.one)
-        {
-            Debug.Log($"Lưu transform từ pickup làm transform chuẩn");
-            componentRestore.StoreCurrentTransformAsCorrect();
-        }
-        
-        // QUAN TRỌNG: Gọi ResetPosition để khôi phục vị trí ban đầu của vũ khí
-        componentRestore.StoreCurrentTransformAsCorrect();
-        Debug.Log($"Trước khi ResetPosition: pos={newWeapon.transform.localPosition}, rot={newWeapon.transform.localRotation.eulerAngles}, scale={newWeapon.transform.localScale}");
-
-        componentRestore.ResetPosition();
-
-        Debug.Log($"Sau khi ResetPosition: pos={newWeapon.transform.localPosition}, rot={newWeapon.transform.localRotation.eulerAngles}, scale={newWeapon.transform.localScale}");
-        Debug.Log($"Đã gọi ResetPosition cho vũ khí {newWeapon.name}");
-
-        // Khi thêm vũ khí vào kho đồ, đảm bảo sử dụng các giá trị đã chỉnh sửa thủ công
-        if (componentRestore != null)
-        {
-            // Áp dụng các giá trị đã chỉnh sửa thủ công nếu có
-            componentRestore.ResetPosition();
-            Debug.Log($"WeaponManager: Đã áp dụng transform đã chỉnh sửa cho vũ khí {newWeapon.name}");
-        }
-
-        // Ensure the weapon is hidden after being added to the inventory
-        newWeapon.SetActive(false);
-        Debug.Log($"Đã ẩn vũ khí {newWeapon.name} sau khi thêm vào kho đồ");
+        // Kiểm tra và xử lý các component thiết yếu
+        EnsureWeaponComponentsLoaded(newWeapon, originalPrefab);
         
         // Xác định vị trí của vũ khí mới trong hierarchy
+        Gun gunComponent = newWeapon.GetComponent<Gun>();
         bool isPistol = gunComponent != null && gunComponent.isPistol;
+        int targetIndex;
         int newSelectedWeapon;
         
         if (isPistol)
         {
-            // Súng lục luôn nằm ở cuối danh sách
-            newWeapon.transform.SetSiblingIndex(weaponHolder.childCount - 1);
-            newSelectedWeapon = weaponHolder.childCount - 1;
+            // Súng lục (secondary) luôn nằm ở cuối danh sách
+            targetIndex = weaponHolder.childCount - 1;
+            newSelectedWeapon = targetIndex;
             Debug.Log("Thêm súng lục vào vị trí cuối cùng");
         }
         else
         {
             // Vũ khí chính (primary) luôn nằm ở vị trí đầu tiên (index 0)
-            newWeapon.transform.SetSiblingIndex(0);
+            targetIndex = 0;
             newSelectedWeapon = 0;
             Debug.Log("Thêm vũ khí chính vào vị trí đầu tiên");
+            
+            // Di chuyển vũ khí mới lên vị trí đầu tiên trong hierarchy
+            newWeapon.transform.SetSiblingIndex(0);
+        }
+        
+        // Thiết lập số đạn
+        if (gunComponent != null)
+        {
+            if (ammoCount >= 0)
+            {
+                gunComponent.currentAmmo = ammoCount;
+                Debug.Log($"Thiết lập số đạn cho vũ khí mới nhặt: {ammoCount}");
+            }
+            else
+            {
+                // Nếu không có số đạn cụ thể, sử dụng số đạn mặc định từ prefab
+                Gun originalGun = originalPrefab.GetComponent<Gun>();
+                if (originalGun != null)
+                {
+                    gunComponent.currentAmmo = originalGun.maxAmmo;
+                }
+            }
+            
+            // Cập nhật UI ngay lập tức
+            gunComponent.UpdateAmmoUI();
         }
         
         // Nếu có SwitchWeapon, chuyển sang vũ khí mới nhặt
         if (switchWeapon != null)
         {
-            switchWeapon.selectedWeapon = newSelectedWeapon;
-            switchWeapon.SelectWeapon();
-            Debug.Log($"Đã chọn vũ khí tại index: {newSelectedWeapon}");
+            newPickup.weaponName = cleanName;
+            newPickup.SetPickupMode(false);
+            newPickup.ApplyPropertiesToGun();
         }
     }
     
-    // Phương thức để tìm Text component từ đường dẫn đã lưu
-    private Text FindUITextFromPath(string path)
+    // Phương thức mới để đảm bảo tất cả component của vũ khí được tải đúng
+    private void EnsureWeaponComponentsLoaded(GameObject newWeapon, GameObject originalPrefab)
     {
-        if (string.IsNullOrEmpty(path)) return null;
+        Debug.Log("Kiểm tra và đảm bảo tất cả component được tải đúng...");
         
-        GameObject obj = GameObject.Find(path);
-        if (obj != null)
+        // 1. Kiểm tra Gun component
+        Gun gunComponent = newWeapon.GetComponent<Gun>();
+        if (gunComponent != null)
         {
-            return obj.GetComponent<Text>();
-        }
-        
-        // Nếu không tìm thấy, tìm kiếm tất cả Text components
-        Text[] texts = Object.FindObjectsOfType<Text>();
-        foreach (Text text in texts)
-        {
-            if (text.name.ToLower().Contains("ammo"))
+            Debug.Log("Đã tìm thấy Gun component");
+            
+            // 2. Kiểm tra Animator
+            if (gunComponent.animator == null)
             {
-                return text;
+                Debug.Log("Tìm kiếm Animator component...");
+                
+                // Tìm trong vũ khí mới
+                gunComponent.animator = newWeapon.GetComponent<Animator>();
+                
+                // Nếu không có, tìm trong các thành phần con
+                if (gunComponent.animator == null)
+                {
+                    gunComponent.animator = newWeapon.GetComponentInChildren<Animator>();
+                }
+                
+                // Nếu vẫn không thấy, sao chép từ prefab gốc
+                if (gunComponent.animator == null)
+                {
+                    Animator originalAnimator = originalPrefab.GetComponent<Animator>() ?? 
+                                              originalPrefab.GetComponentInChildren<Animator>();
+                    
+                    if (originalAnimator != null && originalAnimator.runtimeAnimatorController != null)
+                    {
+                        Debug.Log("Tạo Animator từ prefab gốc");
+                        gunComponent.animator = newWeapon.AddComponent<Animator>();
+                        gunComponent.animator.runtimeAnimatorController = originalAnimator.runtimeAnimatorController;
+                        gunComponent.animator.avatar = originalAnimator.avatar;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Không tìm thấy Animator trong cả hai prefab!");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Animator đã được tìm thấy: {gunComponent.animator.name}");
+                }
+            }
+            
+            // 3. Kiểm tra AudioSource
+            if (gunComponent.gunshotSound == null)
+            {
+                Debug.Log("Tìm kiếm AudioSource cho âm thanh bắn...");
+                
+                // Tìm AudioSource trong vũ khí mới
+                AudioSource audioSource = newWeapon.GetComponent<AudioSource>();
+                
+                // Nếu không có, tìm trong các thành phần con
+                if (audioSource == null)
+                {
+                    audioSource = newWeapon.GetComponentInChildren<AudioSource>();
+                }
+                
+                // Nếu vẫn không thấy, sao chép từ prefab gốc
+                if (audioSource == null)
+                {
+                    AudioSource originalAudioSource = originalPrefab.GetComponent<AudioSource>() ?? 
+                                                 originalPrefab.GetComponentInChildren<AudioSource>();
+                    
+                    if (originalAudioSource != null)
+                    {
+                        Debug.Log("Tạo AudioSource từ prefab gốc");
+                        audioSource = newWeapon.AddComponent<AudioSource>();
+                        audioSource.clip = originalAudioSource.clip;
+                        audioSource.volume = originalAudioSource.volume;
+                        audioSource.pitch = originalAudioSource.pitch;
+                        audioSource.spatialBlend = originalAudioSource.spatialBlend;
+                    }
+                }
+                
+                // Gán AudioSource cho gunshotSound
+                if (audioSource != null)
+                {
+                    gunComponent.gunshotSound = audioSource;
+                    Debug.Log("Đã gán AudioSource cho gunshotSound");
+                }
+            }
+            
+            // 4. Kiểm tra ParticleSystem (muzzleFlash)
+            if (gunComponent.muzzleFlash == null)
+            {
+                Debug.Log("Tìm kiếm ParticleSystem cho hiệu ứng đạn...");
+                
+                // Tìm trong các thành phần con trước
+                ParticleSystem[] particleSystems = newWeapon.GetComponentsInChildren<ParticleSystem>();
+                
+                if (particleSystems.Length > 0)
+                {
+                    // Tìm particle system có tên liên quan đến muzzle hoặc flash
+                    foreach (ParticleSystem ps in particleSystems)
+                    {
+                        if (ps.name.ToLower().Contains("muzzle") || ps.name.ToLower().Contains("flash"))
+                        {
+                            gunComponent.muzzleFlash = ps;
+                            Debug.Log($"Đã tìm thấy muzzleFlash: {ps.name}");
+                            break;
+                        }
+                    }
+                    
+                    // Nếu không tìm thấy, dùng cái đầu tiên
+                    if (gunComponent.muzzleFlash == null)
+                    {
+                        gunComponent.muzzleFlash = particleSystems[0];
+                        Debug.Log($"Sử dụng ParticleSystem đầu tiên làm muzzleFlash: {particleSystems[0].name}");
+                    }
+                }
+            }
+            
+            // 5. Đảm bảo camera reference
+            if (gunComponent.playerCamera == null)
+            {
+                gunComponent.playerCamera = Camera.main;
+                Debug.Log("Đã gán Camera.main cho playerCamera");
             }
         }
         

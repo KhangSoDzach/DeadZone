@@ -95,51 +95,7 @@ public class SwitchWeapon : MonoBehaviour
                 weapon.gameObject.SetActive(shouldBeActive);
                 if (shouldBeActive)
                 {
-                    // Đảm bảo vũ khí sẽ có vị trí chuẩn khi được kích hoạt
-                    if (componentRestore == null)                       
-                    {
-                        // Nếu không có WeaponComponentRestore, tạo mới và thiết lập vị trí mặc định
-                        componentRestore = weapon.gameObject.AddComponent<WeaponComponentRestore>();
-                        Debug.Log($"Đã thêm WeaponComponentRestore cho {weapon.name}");
-                        
-                        // Chỉ đặt vị trí mặc định nếu vũ khí đang ở vị trí 0,0,0 (có thể là vũ khí mới)
-                        if (weapon.localPosition == Vector3.zero && weapon.localEulerAngles == Vector3.zero)
-                        {
-                            Debug.Log($"Vũ khí {weapon.name} có vị trí 0, thiết lập các thông số mặc định");
-                            weapon.localPosition = Vector3.zero;
-                            weapon.localRotation = Quaternion.identity;
-                            weapon.localScale = Vector3.one;
-                        }
-                        
-                        // Lưu vị trí hiện tại làm vị trí chuẩn
-                        componentRestore.StoreCurrentTransformAsCorrect();
-                    }
-                    else
-                    {
-                        // Đảm bảo vị trí được reset về vị trí đã lưu trước đó
-                        componentRestore.ResetPosition();
-                    }
-                    
-                    // Thông báo cho vũ khí rằng nó đã được kích hoạt
-                    Gun gunComponent = weapon.GetComponent<Gun>();
-                    if (gunComponent != null)
-                    {
-                        // Đảm bảo camera được gán chính xác
-                        if (gunComponent.playerCamera == null && mainCamera != null)
-                        {
-                            gunComponent.playerCamera = mainCamera;
-                        }
-                        
-                        gunComponent.OnWeaponEnabled();
-                        
-                        // Đảm bảo WeaponComponentRestore cập nhật lại tất cả các thành phần
-                        if (componentRestore != null)
-                        {
-                            componentRestore.RestoreGunComponents(gunComponent);
-                        }
-                    }
-                    
-                    Debug.Log($"Đã kích hoạt vũ khí: {weapon.name} tại vị trí {i} với tọa độ: {weapon.localPosition}");
+                    Debug.Log($"Đã kích hoạt vũ khí: {weapon.name} tại vị trí {i}");
                 }
             }
             i++;
