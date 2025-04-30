@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4295963541818269086}
   - component: {fileID: 7934748138876939514}
   - component: {fileID: 3315892757341873431}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: MuzzelFlash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4906,13 +4906,13 @@ GameObject:
   - component: {fileID: 3223388372710455864}
   - component: {fileID: 8897599149042767041}
   - component: {fileID: 3098317778101601991}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: New AK-47(Clone)
   m_TagString: Weapon
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2043420036483072844
 Transform:
   m_ObjectHideFlags: 0
@@ -5000,7 +5000,7 @@ MonoBehaviour:
   reloadTime: 2
   animator: {fileID: 0}
   playerCamera: {fileID: 0}
-  muzzleFlash: {fileID: 7934748138876939514}
+  muzzleFlash: {fileID: 0}
   gunshotSound: {fileID: 0}
   impactEffect: {fileID: 0}
   impactForce: 100
@@ -5124,31 +5124,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   delegates: []
-  useDistance: 1
-  triggerType: 8
+  useDistance: 1.2
+  triggerType: 9
   key: 102
   actionTemplate: {fileID: 0}
-  actions:
-  - rid: 5226178285195493376
-  - rid: 5226178285195493377
+  actions: []
   m_Interruptable: 0
   references:
     version: 2
-    RefIds:
-    - rid: 5226178285195493376
-      type: {class: Pickup, ns: DevionGames.InventorySystem, asm: DevionGames.InventorySystem}
-      data:
-        m_Type: DevionGames.InventorySystem.Pickup
-        m_Enabled: 1
-        m_WindowName: Inventory
-        m_DestroyWhenEmpty: 1
-        m_Amount: -1
-    - rid: 5226178285195493377
-      type: {class: CanPickup, ns: DevionGames.InventorySystem, asm: DevionGames.InventorySystem}
-      data:
-        m_Type: DevionGames.InventorySystem.CanPickup
-        m_Enabled: 1
-        m_WindowName: Inventory
+    RefIds: []
 --- !u!114 &3223388372710455864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5229,7 +5213,7 @@ GameObject:
   m_Component:
   - component: {fileID: 869213975162393225}
   - component: {fileID: 3746884224804764552}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}

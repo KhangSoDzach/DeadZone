@@ -50,39 +50,14 @@ public class Gun : MonoBehaviour
         // Ensure the animator reference is valid
         if (animator == null)
         {
-            // First check if there's an animator in the parent (weapon holder)
-            if (transform.parent != null)
-            {
-                animator = transform.parent.GetComponent<Animator>();
-                if (animator != null)
-                {
-                    Debug.Log($"Using parent's animator from {transform.parent.name} for {gameObject.name}");
-                }
-            }
-            
-            // If no parent animator found, check for weapon pickup component
+            animator = GetComponent<Animator>();
             if (animator == null)
             {
-                WeaponPickup pickup = GetComponent<WeaponPickup>();
-                if (pickup != null && pickup.animatorController != null)
+                animator = GetComponentInChildren<Animator>();
+                if (animator == null)
                 {
-                    // Create new animator with the saved controller from the original weapon
-                    Animator newAnimator = gameObject.GetComponent<Animator>() ?? gameObject.AddComponent<Animator>();
-                    newAnimator.runtimeAnimatorController = pickup.animatorController;
-                    animator = newAnimator;
-                    Debug.Log($"Restored animator with saved controller for {gameObject.name}");
-                }
-                else
-                {
-                    // Only as last resort, try standard component search
-                    animator = GetComponent<Animator>();
-                    if (animator == null)
-                        animator = GetComponentInChildren<Animator>();
-                    if (animator == null)
-                    {
-                        animator = gameObject.AddComponent<Animator>();
-                        Debug.LogWarning($"Created new Animator for {gameObject.name} as last resort");
-                    }
+                    animator = gameObject.AddComponent<Animator>();
+                    Debug.LogWarning($"Created new Animator for {gameObject.name}");
                 }
             }
         }

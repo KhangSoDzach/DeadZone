@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7740519126252629237}
   - component: {fileID: 1245446008219990002}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,9 +110,9 @@ GameObject:
   - component: {fileID: 2367329249898043436}
   - component: {fileID: 2580161576222599311}
   - component: {fileID: 4017377775732240921}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: AK-47
-  m_TagString: Weapon
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -405,7 +405,7 @@ GameObject:
   - component: {fileID: 2675438933814807634}
   - component: {fileID: 3868768553441334791}
   - component: {fileID: 8660185146127210725}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: MuzzelFlash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
