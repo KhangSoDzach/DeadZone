@@ -8,6 +8,7 @@ TagManager:
   - SecondCamera
   - BulletSpawn
   - FxTemporaire
+  - PressE
   layers:
   - Default
   - TransparentFX
