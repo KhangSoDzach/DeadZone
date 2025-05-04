@@ -65,6 +65,10 @@ public class Zombie_4 : MonoBehaviour
                 nextSoundTime = Time.time + 5f;
             }
         }
+        if (!playerExistenceRadius && !playerInAttackingRadius)
+        {
+            Idle();
+        }
     }
     private void Awake()
     {
