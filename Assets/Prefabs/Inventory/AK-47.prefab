@@ -5017,8 +5017,8 @@ Transform:
   m_GameObject: {fileID: 4885872996788827317}
   serializedVersion: 2
   m_LocalRotation: {x: 0.009149086, y: -0.054773573, z: 0.00050190266, w: 0.9984568}
-  m_LocalPosition: {x: 0.436, y: -0.542, z: 0.75}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.41666666}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.49999997, y: 0.49999997, z: 0.41666666}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2173827431386222212}
@@ -5316,7 +5316,7 @@ MonoBehaviour:
         m_Enabled: 1
         m_WindowName: Inventory
         m_DestroyWhenEmpty: 1
-        m_Amount: -1
+        m_Amount: 1
     - rid: 5226178285195493377
       type: {class: CanPickup, ns: DevionGames.InventorySystem, asm: DevionGames.InventorySystem}
       data:
@@ -5335,7 +5335,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68165cdf1896c89479a91b2478670c0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveable: 1
+  saveable: 0
   m_Items:
   - {fileID: 4808018497518849002, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
   m_Amounts: 01000000

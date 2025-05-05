@@ -149,7 +149,53 @@ public class HealthManager : MonoBehaviour
     void Die()
     {
         Debug.Log("Player has died!");
-        // Thêm code xử lý khi người chơi chết ở đây (ví dụ: hiển thị màn hình GameOver)
+        
+        // Unlock cursor so player can click buttons
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        // Tìm Death Screen Manager để hiển thị màn hình chết
+        DeathScreenManager deathManager = DeathScreenManager.Instance;
+        
+        if (deathManager != null)
+        {
+            deathManager.ShowDeathScreen();
+        }
+        else
+        {
+            Debug.LogWarning("DeathScreenManager không tồn tại trong scene. Vui lòng thêm Death Screen Manager vào scene.");
+        }
+        
+        // Vô hiệu hóa điều khiển người chơi
+        var playerMovement = GetComponent<PlayerMovementScript>();
+        if (playerMovement != null)
+        {
+            playerMovement.enabled = false;
+        }
+        
+        var playerLookComponent = GetComponent<PlayerLook>();
+        if (playerLookComponent != null)
+        {
+            playerLookComponent.enabled = false;
+        }
+        
+        // Vô hiệu hóa weapon controller nếu có
+        var gunInventory = GetComponent<GunInventory>();
+        if (gunInventory != null)
+        {
+            gunInventory.DeadMethod();
+        }
+        
+        // Vô hiệu hóa tất cả các input component để tránh xung đột
+        var playerInputs = GetComponents<MonoBehaviour>();
+        foreach (var input in playerInputs)
+        {
+            // Tránh vô hiệu hóa HealthManager chính nó
+            if (input != this && input.GetType().Name.Contains("Input"))
+            {
+                input.enabled = false;
+            }
+        }
     }
 
     // Phương thức hồi máu

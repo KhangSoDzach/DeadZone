@@ -124,4 +124,4 @@ MonoBehaviour:
   bloodEffect: {fileID: 1013274939826982, guid: ffbf169ab9dcfdc45ae14010bc82a6b2, type: 3}
   ignoreLayer:
     serializedVersion: 2
-    m_Bits: 768
+    m_Bits: 0

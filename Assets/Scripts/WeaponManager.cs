@@ -85,6 +85,69 @@ public class WeaponManager : MonoBehaviour
             dropPointObj.transform.localPosition = new Vector3(0, -0.5f, 1f);
             dropPoint = dropPointObj.transform;
         }
+        
+        // Đảm bảo vũ khí đã có trong inspector không bị tắt khi khởi động
+        if (weaponHolder != null && weaponHolder.childCount > 0)
+        {
+            PreserveExistingWeapons();
+        }
+    }
+    
+    // Phương thức mới để bảo tồn vũ khí đã được set trong Inspector
+    private void PreserveExistingWeapons()
+    {
+        bool foundActiveWeapon = false;
+        
+        // Kiểm tra xem có vũ khí nào đang active không
+        for (int i = 0; i < weaponHolder.childCount; i++)
+        {
+            GameObject weapon = weaponHolder.GetChild(i).gameObject;
+            if (weapon.activeSelf)
+            {
+                foundActiveWeapon = true;
+                // Cập nhật tham chiếu đến vũ khí hiện tại
+                currentWeapon = weapon;
+                currentGun = weapon.GetComponent<Gun>();
+                
+                // Cập nhật selectedWeapon trong SwitchWeapon
+                if (switchWeapon != null)
+                {
+                    switchWeapon.selectedWeapon = i;
+                    Debug.Log($"Đã tìm thấy vũ khí active trong Inspector: {weapon.name}, index: {i}");
+                }
+                break;
+            }
+        }
+        
+        // Nếu không có vũ khí nào đang active, kích hoạt vũ khí đầu tiên
+        if (!foundActiveWeapon && weaponHolder.childCount > 0)
+        {
+            int indexToActivate = 0; // Mặc định kích hoạt vũ khí đầu tiên
+            
+            // Tìm súng chính (non-pistol) để kích hoạt nếu có
+            for (int i = 0; i < weaponHolder.childCount; i++)
+            {
+                Gun gunComponent = weaponHolder.GetChild(i).GetComponent<Gun>();
+                if (gunComponent != null && !gunComponent.isPistol)
+                {
+                    indexToActivate = i;
+                    break;
+                }
+            }
+            
+            // Kích hoạt vũ khí
+            GameObject weaponToActivate = weaponHolder.GetChild(indexToActivate).gameObject;
+            weaponToActivate.SetActive(true);
+            currentWeapon = weaponToActivate;
+            currentGun = weaponToActivate.GetComponent<Gun>();
+            
+            // Cập nhật selectedWeapon trong SwitchWeapon
+            if (switchWeapon != null)
+            {
+                switchWeapon.selectedWeapon = indexToActivate;
+                Debug.Log($"Không tìm thấy vũ khí active, đã kích hoạt vũ khí: {weaponToActivate.name}, index: {indexToActivate}");
+            }
+        }
     }
     
     // Phương thức đảm bảo rằng playerCamera luôn có sẵn
@@ -220,6 +283,13 @@ public class WeaponManager : MonoBehaviour
         if (currentGunComponent != null && currentGunComponent.isPistol)
         {
             Debug.Log("Không thể vứt súng lục (vũ khí thứ cấp)!");
+            return;
+        }
+        
+        // Kiểm tra xác thực lần nữa để đảm bảo rằng vũ khí này có thể vứt
+        if (!GetCurrentWeaponIsDroppable())
+        {
+            Debug.Log("Vũ khí hiện tại không thể vứt!");
             return;
         }
         
@@ -420,8 +490,8 @@ public class WeaponManager : MonoBehaviour
                     switchToUse.selectedWeapon = 0;
                 }
                 
-                // Gọi SelectWeapon để kích hoạt vũ khí mới
-                switchToUse.SelectWeapon();
+                // Kích hoạt thủ công vũ khí mới thay vì gọi SelectWeapon
+                ManuallyEnableWeapon(switchToUse.selectedWeapon);
                 
                 // Debug để theo dõi
                 StartCoroutine(DebugWeaponSwitchStatus());
@@ -588,6 +658,15 @@ public class WeaponManager : MonoBehaviour
             }
         }
         
+        // Tắt tất cả các vũ khí hiện tại trước khi thêm vũ khí mới
+        if (weaponHolder != null)
+        {
+            for (int i = 0; i < weaponHolder.childCount; i++)
+            {
+                weaponHolder.GetChild(i).gameObject.SetActive(false);
+            }
+        }
+        
         // Clone vũ khí vào weaponHolder
         GameObject newWeapon = Instantiate(
             weaponObject,
@@ -623,7 +702,6 @@ public class WeaponManager : MonoBehaviour
         if (componentRestore == null)
         {
             componentRestore = newWeapon.AddComponent<WeaponComponentRestore>();
-            //Debug.Log("Đã thêm component WeaponComponentRestore cho vũ khí mới");
         }
         
         // Lấy Gun component
@@ -657,31 +735,21 @@ public class WeaponManager : MonoBehaviour
         // Store transform nếu nó có giá trị hợp lệ (không phải zero)
         if (originalPosition != Vector3.zero || originalRotation != Quaternion.identity || originalScale != Vector3.one)
         {
-            Debug.Log($"Lưu transform từ pickup làm transform chuẩn");
             componentRestore.StoreCurrentTransformAsCorrect();
         }
         
         // QUAN TRỌNG: Gọi ResetPosition để khôi phục vị trí ban đầu của vũ khí
-        componentRestore.StoreCurrentTransformAsCorrect();
-        Debug.Log($"Trước khi ResetPosition: pos={newWeapon.transform.localPosition}, rot={newWeapon.transform.localRotation.eulerAngles}, scale={newWeapon.transform.localScale}");
-
         componentRestore.ResetPosition();
-
-        Debug.Log($"Sau khi ResetPosition: pos={newWeapon.transform.localPosition}, rot={newWeapon.transform.localRotation.eulerAngles}, scale={newWeapon.transform.localScale}");
         Debug.Log($"Đã gọi ResetPosition cho vũ khí {newWeapon.name}");
 
-        // Khi thêm vũ khí vào kho đồ, đảm bảo sử dụng các giá trị đã chỉnh sửa thủ công
-        if (componentRestore != null)
-        {
-            // Áp dụng các giá trị đã chỉnh sửa thủ công nếu có
-            componentRestore.ResetPosition();
-            Debug.Log($"WeaponManager: Đã áp dụng transform đã chỉnh sửa cho vũ khí {newWeapon.name}");
-        }
-
-        // Ensure the weapon is hidden after being added to the inventory
-        newWeapon.SetActive(false);
-        Debug.Log($"Đã ẩn vũ khí {newWeapon.name} sau khi thêm vào kho đồ");
+        // Đảm bảo vũ khí mới luôn hiển thị sau khi được thêm vào
+        newWeapon.SetActive(true);
+        Debug.Log($"Đã kích hoạt vũ khí {newWeapon.name} sau khi thêm vào kho đồ");
         
+        // Cập nhật vũ khí hiện tại
+        currentWeapon = newWeapon;
+        currentGun = gunComponent;
+
         // Xác định vị trí của vũ khí mới trong hierarchy
         bool isPistol = gunComponent != null && gunComponent.isPistol;
         int newSelectedWeapon;
@@ -701,12 +769,11 @@ public class WeaponManager : MonoBehaviour
             Debug.Log("Thêm vũ khí chính vào vị trí đầu tiên");
         }
         
-        // Nếu có SwitchWeapon, chuyển sang vũ khí mới nhặt
+        // Nếu có SwitchWeapon, cập nhật selectedWeapon nhưng KHÔNG gọi SelectWeapon()
         if (switchWeapon != null)
         {
             switchWeapon.selectedWeapon = newSelectedWeapon;
-            switchWeapon.SelectWeapon();
-            Debug.Log($"Đã chọn vũ khí tại index: {newSelectedWeapon}");
+            Debug.Log($"Đã cập nhật selectedWeapon trong switchWeapon thành: {newSelectedWeapon} (không gọi SelectWeapon)");
         }
     }
     
@@ -783,18 +850,8 @@ public class WeaponManager : MonoBehaviour
         int weaponToEnable = (pistolIndex != -1) ? pistolIndex : 0;
         Debug.Log($"Đang kích hoạt vũ khí ở vị trí {weaponToEnable} thủ công");
         
-        // Vô hiệu hóa tất cả vũ khí
-        for (int i = 0; i < weaponHolder.childCount; i++)
-        {
-            weaponHolder.GetChild(i).gameObject.SetActive(false);
-        }
-        
-        // Kích hoạt vũ khí đã chọn
-        if (weaponToEnable < weaponHolder.childCount)
-        {
-            weaponHolder.GetChild(weaponToEnable).gameObject.SetActive(true);
-            Debug.Log($"Đã kích hoạt vũ khí: {weaponHolder.GetChild(weaponToEnable).name}");
-        }
+        // Gọi phương thức mới để kích hoạt vũ khí
+        ManuallyEnableWeapon(weaponToEnable);
     }
     
     // Mỗi khi Awake hoặc Start, đảm bảo chúng ta có reference đến SwitchWeapon
@@ -846,5 +903,37 @@ public class WeaponManager : MonoBehaviour
     {
         // Gọi khi giá trị trong Inspector thay đổi
         UpdatePrimaryTransformForAllWeapons();
+    }
+
+    // Phương thức mới để kích hoạt thủ công vũ khí tại vị trí chỉ định
+    private void ManuallyEnableWeapon(int index)
+    {
+        if (weaponHolder == null || index < 0 || index >= weaponHolder.childCount)
+        {
+            Debug.LogError($"Không thể kích hoạt vũ khí ở vị trí {index}: index không hợp lệ hoặc weaponHolder là null");
+            return;
+        }
+        
+        // Kích hoạt vũ khí được chỉ định và vô hiệu hóa tất cả các vũ khí khác
+        for (int i = 0; i < weaponHolder.childCount; i++)
+        {
+            GameObject weapon = weaponHolder.GetChild(i).gameObject;
+            bool shouldBeActive = (i == index);
+            
+            // Chỉ thay đổi trạng thái nếu cần thiết để tránh các sự kiện OnEnable/OnDisable không cần thiết
+            if (weapon.activeSelf != shouldBeActive)
+            {
+                weapon.SetActive(shouldBeActive);
+                Debug.Log($"Thay đổi trạng thái của vũ khí {weapon.name} thành {shouldBeActive}");
+            }
+        }
+        
+        // Cập nhật tham chiếu đến vũ khí hiện tại
+        if (index < weaponHolder.childCount)
+        {
+            currentWeapon = weaponHolder.GetChild(index).gameObject;
+            currentGun = currentWeapon.GetComponent<Gun>();
+            Debug.Log($"Đã cập nhật tham chiếu currentWeapon thành {currentWeapon.name}");
+        }
     }
 }

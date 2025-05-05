@@ -7,7 +7,8 @@ public class WeaponPickup : MonoBehaviour
 {
     public int weaponIndex;          // Index trong weaponPrefabs array
     public string weaponName;        // Tên của vũ khí
-    public int remainingAmmo;        // Lưu số đạn còn lại khi vứt xuống
+    public int remainingAmmo;        // Lưu số đạn còn lại trong băng khi vứt xuống
+    public int remainingTotalAmmo;   // Lưu số đạn dự trữ khi vứt xuống
     public bool isPistol;            // Có phải súng lục không (vũ khí chính không thể vứt)
     
     // Các thuộc tính chi tiết về vũ khí
@@ -252,6 +253,7 @@ public class WeaponPickup : MonoBehaviour
         
         // Lưu thông tin cơ bản
         this.remainingAmmo = sourceGun.currentAmmo;
+        this.remainingTotalAmmo = sourceGun.totalAmmo; // Lưu đạn dự trữ
         this.isPistol = sourceGun.isPistol;
         this.isAutomatic = sourceGun.isAutomatic;
         this.damage = sourceGun.damage;
@@ -295,6 +297,7 @@ public class WeaponPickup : MonoBehaviour
         {
             // Áp dụng các thuộc tính cơ bản
             gunComponent.currentAmmo = remainingAmmo;
+            gunComponent.totalAmmo = remainingTotalAmmo; // Khôi phục số đạn dự trữ
             gunComponent.isPistol = isPistol;
             gunComponent.isAutomatic = isAutomatic;
             gunComponent.damage = damage;

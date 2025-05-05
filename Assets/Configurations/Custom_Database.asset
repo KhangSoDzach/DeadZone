@@ -1,5 +1,54 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8908077421690305108
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a78acd5557204d499bcf3420fd4ee78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: c6105900-d890-48aa-bf22-3fafe3561717
+  m_ItemName: Smaill Med Kit
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: ad1d41886c00171499a09322b2a7caff, type: 3}
+  m_Prefab: {fileID: 455505476493102801, guid: af4b09198e30fdd4cad768c43522448d, type: 3}
+  m_Description: 'Heal 20% '
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 5
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: 2680968774529471378}
+  m_SellPrice: 2
+  m_SellCurrency: {fileID: 2680968774529471378}
+  m_Stack: 1
+  m_MaxStack: 30
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+  m_UseCategoryCooldown: 1
+  m_Cooldown: 1
+  actions: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &-5633152080327596430
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -27,7 +76,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4abab319188bac4a8515c585b13ba9d, type: 3}
-  m_Name: None
+  m_Name: Default
   m_EditorClassIdentifier: 
   m_Parent: {fileID: 0}
   name: Default
@@ -205,7 +254,7 @@ MonoBehaviour:
     delay: 2
     duration: 2
     ignoreTimeScale: 1
---- !u!114 &-1994020409241421996
+--- !u!114 &-98635084419582185
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -262,10 +311,12 @@ MonoBehaviour:
   m_Name: Custom_Database
   m_EditorClassIdentifier: 
   items:
-  - {fileID: 6340713563562795023}
-  - {fileID: 4808018497518849002}
+  - {fileID: 5606543618748735577}
+  - {fileID: 1902423496763658815}
+  - {fileID: -8908077421690305108}
   currencies:
-  - {fileID: -1994020409241421996}
+  - {fileID: -98635084419582185}
+  - {fileID: 2680968774529471378}
   raritys: []
   categories:
   - {fileID: -4750904661271648325}
@@ -273,8 +324,8 @@ MonoBehaviour:
   itemGroups: []
   settings:
   - {fileID: -5633152080327596430}
-  - {fileID: 2147541891670961813}
   - {fileID: -4142737310876871308}
+  - {fileID: 2147541891670961813}
   - {fileID: 6880776277628143795}
   - {fileID: 1745099353617420840}
 --- !u!114 &1745099353617420840
@@ -294,6 +345,55 @@ MonoBehaviour:
   sellPriceTooltipName: Sell Price Tooltip
   stackName: Stack
   notificationName: Notification
+--- !u!114 &1902423496763658815
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a78acd5557204d499bcf3420fd4ee78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: 970e5a65-a3bd-42a4-bd74-a0b965181861
+  m_ItemName: MedKit
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: ffec77778ad310f45b4dd16011f2d9ea, type: 3}
+  m_Prefab: {fileID: 503660282682240084, guid: 77204e127edca5b45aad3df2d972a7af, type: 3}
+  m_Description: Heal 50%
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 3
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: 2680968774529471378}
+  m_SellPrice: 1
+  m_SellCurrency: {fileID: 2680968774529471378}
+  m_Stack: 1
+  m_MaxStack: 30
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+  m_UseCategoryCooldown: 1
+  m_Cooldown: 1
+  actions: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &2147541891670961813
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -308,6 +408,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unstackEvent: 3
   unstackKeyCode: 304
+--- !u!114 &2680968774529471378
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9b8ce84b90caa548ba4d29381f5d494, type: 3}
+  m_Name: Cash
+  m_EditorClassIdentifier: 
+  m_Id: c0452e1d-6f77-48e9-a1c2-9fb8f747528a
+  m_ItemName: Cash
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: 15e2489c210adfb4c8b48b23b81549ab, type: 3}
+  m_Prefab: {fileID: 0}
+  m_Description: 
+  m_Category: {fileID: 0}
+  m_IsSellable: 1
+  m_BuyPrice: 0
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: 0}
+  m_SellPrice: 0
+  m_SellCurrency: {fileID: 0}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+  currencyConversions: []
 --- !u!114 &4808018497518849002
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -331,9 +475,52 @@ MonoBehaviour:
   m_IsSellable: 1
   m_BuyPrice: 0
   m_CanBuyBack: 1
-  m_BuyCurrency: {fileID: -1994020409241421996}
+  m_BuyCurrency: {fileID: 0}
   m_SellPrice: 0
-  m_SellCurrency: {fileID: -1994020409241421996}
+  m_SellCurrency: {fileID: 0}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+--- !u!114 &5606543618748735577
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e14be5e3e6cf2204293682bf65bce5dc, type: 3}
+  m_Name: AK47
+  m_EditorClassIdentifier: 
+  m_Id: f7884e50-fc5f-4605-966d-31e6e2ea38d1
+  m_ItemName: AK-47
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: f0752039e3dbe814ea0fddddfd52e991, type: 3}
+  m_Prefab: {fileID: 4885872996788827317, guid: 95d1adfe2b833c5409cd6ad562c2aaaf, type: 3}
+  m_Description: This is a Rifle AK-47
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 5
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: 2680968774529471378}
+  m_SellPrice: 3
+  m_SellCurrency: {fileID: 2680968774529471378}
   m_Stack: 1
   m_MaxStack: 1
   m_IsDroppable: 1
@@ -374,9 +561,9 @@ MonoBehaviour:
   m_IsSellable: 1
   m_BuyPrice: 0
   m_CanBuyBack: 1
-  m_BuyCurrency: {fileID: -1994020409241421996}
+  m_BuyCurrency: {fileID: 0}
   m_SellPrice: 0
-  m_SellCurrency: {fileID: -1994020409241421996}
+  m_SellCurrency: {fileID: 0}
   m_Stack: 1
   m_MaxStack: 1
   m_IsDroppable: 1

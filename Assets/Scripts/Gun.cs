@@ -11,6 +11,7 @@ public class Gun : MonoBehaviour
     public bool isPistol = false;    // Is this a pistol (primary weapon that can't be dropped)
     public int maxAmmo = 30; // Maximum ammo for the gun
     public int currentAmmo; // Current ammo in the gun
+    public int totalAmmo = 120; // Tổng số đạn người chơi mang theo cho loại súng này
     public float reloadTime = 2f; // Time it takes to reload
     private bool isReloading = false; // Whether the gun is currently reloading
     public Animator animator; // Animator for reload animation
@@ -221,15 +222,45 @@ public class Gun : MonoBehaviour
 
     IEnumerator Reload()
     {
+        // Kiểm tra nếu không còn đạn dự trữ hoặc đã đầy đạn
+        if (totalAmmo <= 0 || currentAmmo == maxAmmo)
+        {
+            if (currentAmmo == maxAmmo)
+                Debug.Log("Đạn đã đầy!");
+            else
+                Debug.Log("Không còn đạn dự trữ!");
+            yield break;
+        }
+            
         isReloading = true;
-        Debug.Log("Reloading...");
-        animator.SetBool("Reloading", true); // Play reload animation
+        Debug.Log("Đang nạp đạn...");
+        
+        if (animator != null)
+            animator.SetBool("Reloading", true); // Play reload animation
 
         yield return new WaitForSeconds(reloadTime);
 
-        animator.SetBool("Reloading", false); // Stop reload animation
-        currentAmmo = maxAmmo; // Refill ammo
-        UpdateAmmoUI(); // Update the ammo display after reloading
+        if (animator != null)
+            animator.SetBool("Reloading", false); // Stop reload animation
+            
+        // Tính toán số đạn cần nạp
+        int ammoToReload = maxAmmo - currentAmmo; // Số đạn cần để nạp đầy băng
+        
+        // Kiểm tra nếu đạn dự trữ không đủ để nạp đầy băng
+        if (totalAmmo < ammoToReload)
+        {
+            // Nếu đạn dự trữ không đủ, nạp tất cả số đạn dự trữ còn lại
+            currentAmmo += totalAmmo;
+            totalAmmo = 0;
+        }
+        else
+        {
+            // Nếu đạn dự trữ đủ, nạp đầy băng
+            totalAmmo -= ammoToReload;
+            currentAmmo = maxAmmo;
+        }
+        
+        UpdateAmmoUI(); // Cập nhật hiển thị đạn sau khi nạp đạn
         isReloading = false;
     }
 
@@ -343,7 +374,7 @@ public class Gun : MonoBehaviour
     {
         if (ammoText != null)
         {
-            ammoText.text = $"{currentAmmo} / {maxAmmo}"; // Update the text to show current and max ammo
+            ammoText.text = $"{currentAmmo} / {totalAmmo}"; // Hiển thị cả đạn trong băng và đạn dự trữ
         }
     }
     

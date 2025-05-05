@@ -10,6 +10,7 @@ public class ScoreManager : MonoBehaviour
     
     [Header("UI References")]
     public Text scoreText;
+    public Text stackMoneyText; // Thêm reference cho StackMoney Text
     
     [Header("Settings")]
     public int initialScore = 0;
@@ -50,22 +51,23 @@ public class ScoreManager : MonoBehaviour
     private void Start()
     {
         // One more attempt to find scoreText if needed
-        if (scoreText == null)
+        if (scoreText == null || stackMoneyText == null)
         {
             FindScoreText();
         }
         
-        Debug.Log($"ScoreManager initialized with scoreText: {(scoreText != null ? scoreText.name : "null")}");
+        Debug.Log($"ScoreManager initialized with scoreText: {(scoreText != null ? scoreText.name : "null")}, stackMoneyText: {(stackMoneyText != null ? stackMoneyText.name : "null")}");
     }
     
     // Find score text in the scene
     public void FindScoreText()
     {
+        // Find all Text components in the scene
+        Text[] allTexts = FindObjectsOfType<Text>();
+        
+        // Tìm scoreText nếu chưa có
         if (scoreText == null)
         {
-            // Find all Text components in the scene
-            Text[] allTexts = FindObjectsOfType<Text>();
-            
             foreach (Text text in allTexts)
             {
                 if (text.name.ToLower().Contains("score"))
@@ -76,18 +78,40 @@ public class ScoreManager : MonoBehaviour
                 }
             }
         }
+        
+        // Tìm stackMoneyText nếu chưa có
+        if (stackMoneyText == null)
+        {
+            foreach (Text text in allTexts)
+            {
+                if (text.name.ToLower().Contains("stackmoney"))
+                {
+                    stackMoneyText = text;
+                    Debug.Log("ScoreManager found stackMoneyText: " + text.name);
+                    break;
+                }
+            }
+        }
     }
     
     // Updates the UI text to show current score
     public void UpdateScoreUI()
     {
+        // Cập nhật scoreText
         if (scoreText != null)
         {
-            scoreText.text = "Score: " + _score.ToString();
+            scoreText.text = "Money: " + _score.ToString();
         }
-        else
+        
+        // Cập nhật stackMoneyText
+        if (stackMoneyText != null)
         {
-            Debug.LogWarning("Cannot update score UI - scoreText is null!");
+            stackMoneyText.text = _score.ToString();
+        }
+        
+        // Nếu không tìm thấy một trong hai text element, thử tìm lại
+        if (scoreText == null || stackMoneyText == null)
+        {
             FindScoreText(); // Try to find it again
         }
     }
@@ -110,5 +134,11 @@ public class ScoreManager : MonoBehaviour
     public static Text GetScoreText()
     {
         return (Instance != null) ? Instance.scoreText : null;
+    }
+    
+    // Add method to get stackMoneyText reference
+    public static Text GetStackMoneyText()
+    {
+        return (Instance != null) ? Instance.stackMoneyText : null;
     }
 }
