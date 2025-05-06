@@ -34,12 +34,43 @@ public class PickupPrompt : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, weaponManager.pickupRange, weaponManager.pickupLayer))
             {
+                // Kiểm tra nếu đang nhìn vào medkit
+                MedkitPickup medkit = hit.collider.GetComponent<MedkitPickup>();
+                if (medkit != null)
+                {
+                    // Hiển thị thông báo nhặt medkit
+                    ShowMedkitPrompt(medkit);
+                    return;
+                }
+                
+                // Nếu không phải medkit, kiểm tra xem có phải vũ khí không
                 WeaponPickup weaponPickup = hit.collider.GetComponent<WeaponPickup>();
                 if (weaponPickup != null)
                 {
                     // Hiển thị thông báo nhặt vũ khí
                     ShowPickupPrompt(weaponPickup.weaponName);
                     return;
+                }
+                
+                // Kiểm tra trong các thành phần con
+                if (medkit == null)
+                {
+                    medkit = hit.collider.GetComponentInChildren<MedkitPickup>();
+                    if (medkit != null)
+                    {
+                        ShowMedkitPrompt(medkit);
+                        return;
+                    }
+                }
+                
+                if (weaponPickup == null)
+                {
+                    weaponPickup = hit.collider.GetComponentInChildren<WeaponPickup>();
+                    if (weaponPickup != null)
+                    {
+                        ShowPickupPrompt(weaponPickup.weaponName);
+                        return;
+                    }
                 }
             }
             
@@ -73,6 +104,28 @@ public class PickupPrompt : MonoBehaviour
             {
                 promptText.text = $"Nhấn [{pickupKey}] để nhặt {weaponName}";
             }
+            promptText.gameObject.SetActive(true);
+        }
+    }
+    
+    // Hiển thị thông báo nhặt medkit
+    public void ShowMedkitPrompt(MedkitPickup medkit)
+    {
+        if (promptText != null)
+        {
+            // Tìm HealthManager của người chơi để kiểm tra nếu máu đã đầy
+            HealthManager playerHealth = FindObjectOfType<HealthManager>();
+            
+            if (playerHealth != null && playerHealth.currentHealth >= playerHealth.maxHealth)
+            {
+                promptText.text = "Máu đã đầy, không cần sử dụng medkit!";
+            }
+            else
+            {
+                float healAmount = medkit.healPercent;
+                promptText.text = $"Nhấn [{pickupKey}] để sử dụng medkit (Hồi {healAmount}% HP)";
+            }
+            
             promptText.gameObject.SetActive(true);
         }
     }

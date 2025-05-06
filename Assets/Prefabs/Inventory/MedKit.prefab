@@ -15,7 +15,8 @@ GameObject:
   - component: {fileID: 762361570485295902}
   - component: {fileID: 8187486653817336010}
   - component: {fileID: 3254872795292756127}
-  m_Layer: 0
+  - component: {fileID: 4671179881976598030}
+  m_Layer: 7
   m_Name: MedKit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -140,8 +141,10 @@ MonoBehaviour:
   saveable: 0
   m_Items:
   - {fileID: 1902423496763658815, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
-  m_Amounts: 01000000
+  - {fileID: 1902423496763658815, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
+  m_Amounts: 0100000001000000
   m_Modifiers:
+  - modifiers: []
   - modifiers: []
   onChange:
     m_PersistentCalls:
@@ -195,3 +198,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &4671179881976598030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 503660282682240084}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf17956edf7d0b49b04edcec8c33e93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healPercent: 30
+  rotationSpeed: 0
+  floatSpeed: 0
+  floatHeight: 0
+  pickupEffect: {fileID: 0}
+  pickupSound: {fileID: 0}

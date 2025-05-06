@@ -141,10 +141,8 @@ MonoBehaviour:
   m_Items:
   - {fileID: -8908077421690305108, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
   - {fileID: -8908077421690305108, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
-  - {fileID: -8908077421690305108, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
-  m_Amounts: 010000000100000001000000
+  m_Amounts: 0100000001000000
   m_Modifiers:
-  - modifiers: []
   - modifiers: []
   - modifiers: []
   onChange:

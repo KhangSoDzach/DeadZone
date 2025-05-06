@@ -579,7 +579,7 @@ public class WeaponManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Đang thử nhặt vũ khí. Layer mask: {pickupLayer.value}");
+        Debug.Log($"Đang thử nhặt vật phẩm. Layer mask: {pickupLayer.value}");
         
         // Vẽ ray trong scene để debug
         Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * pickupRange, Color.yellow, 0.5f);
@@ -589,6 +589,31 @@ public class WeaponManager : MonoBehaviour
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit, pickupRange, pickupLayer))
         {
             Debug.Log($"Phát hiện va chạm với {hit.collider.gameObject.name}, layer: {hit.collider.gameObject.layer}");
+            
+            // Kiểm tra xem có phải là medkit không
+            MedkitPickup medkit = hit.collider.GetComponent<MedkitPickup>();
+            if (medkit != null)
+            {
+                Debug.Log("Tìm thấy Medkit, đang sử dụng...");
+                // Tìm HealthManager của người chơi
+                HealthManager playerHealth = GetComponent<HealthManager>();
+                if (playerHealth == null)
+                {
+                    // Nếu không tìm thấy trên GameObjet hiện tại, tìm trên Player
+                    playerHealth = GameObject.FindGameObjectWithTag("Player").GetComponent<HealthManager>();
+                }
+                
+                if (playerHealth != null)
+                {
+                    // Sử dụng medkit
+                    medkit.Use(playerHealth);
+                    return;
+                }
+                else
+                {
+                    Debug.LogError("Không tìm thấy HealthManager trên người chơi!");
+                }
+            }
             
             // Kiểm tra xem có phải là vũ khí có thể nhặt không
             WeaponPickup pickup = hit.collider.GetComponent<WeaponPickup>();
@@ -617,6 +642,30 @@ public class WeaponManager : MonoBehaviour
                     
                     // Xóa vật phẩm sau khi nhặt
                     Destroy(childPickup.transform.root.gameObject);
+                }
+                
+                // Thử tìm Medkit trong các đối tượng con
+                MedkitPickup childMedkit = hit.collider.GetComponentInChildren<MedkitPickup>();
+                if (childMedkit != null)
+                {
+                    Debug.Log("Tìm thấy Medkit trong đối tượng con, đang sử dụng...");
+                    // Tìm HealthManager của người chơi
+                    HealthManager playerHealth = GetComponent<HealthManager>();
+                    if (playerHealth == null)
+                    {
+                        // Nếu không tìm thấy trên GameObjet hiện tại, tìm trên Player
+                        playerHealth = GameObject.FindGameObjectWithTag("Player").GetComponent<HealthManager>();
+                    }
+                    
+                    if (playerHealth != null)
+                    {
+                        // Sử dụng medkit
+                        childMedkit.Use(playerHealth);
+                    }
+                    else
+                    {
+                        Debug.LogError("Không tìm thấy HealthManager trên người chơi!");
+                    }
                 }
             }
         }
