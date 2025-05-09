@@ -9,6 +9,7 @@ TagManager:
   - BulletSpawn
   - FxTemporaire
   - PressE
+  - Event
   layers:
   - Default
   - TransparentFX
