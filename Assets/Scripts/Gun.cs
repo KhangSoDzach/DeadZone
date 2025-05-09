@@ -387,4 +387,14 @@ public class Gun : MonoBehaviour
         // Update the UI
         UpdateAmmoUI();
     }
+    
+    // Add ammo to the total ammo count
+    public void AddAmmo(int amount)
+    {
+        if (amount <= 0) return;
+        
+        totalAmmo += amount;
+        //Debug.Log($"Added {amount} ammo. Total ammo now: {totalAmmo}");
+        UpdateAmmoUI();
+    }
 }

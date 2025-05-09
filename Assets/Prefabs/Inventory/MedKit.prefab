@@ -141,10 +141,8 @@ MonoBehaviour:
   saveable: 0
   m_Items:
   - {fileID: 1902423496763658815, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
-  - {fileID: 1902423496763658815, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
-  m_Amounts: 0100000001000000
+  m_Amounts: 01000000
   m_Modifiers:
-  - modifiers: []
   - modifiers: []
   onChange:
     m_PersistentCalls:
