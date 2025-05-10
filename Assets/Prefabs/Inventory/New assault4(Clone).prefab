@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 2671670198206181556}
   - component: {fileID: 4968124728591229108}
   - component: {fileID: 6376305985901289823}
+  - component: {fileID: 1854834925311345027}
   m_Layer: 7
   m_Name: New assault4(Clone)
   m_TagString: Weapon
@@ -211,6 +212,7 @@ MonoBehaviour:
   weaponIndex: 0
   weaponName: M4A1
   remainingAmmo: 0
+  remainingTotalAmmo: 0
   isPistol: 0
   isAutomatic: 1
   damage: 10
@@ -221,6 +223,45 @@ MonoBehaviour:
   gunshotClip: {fileID: 0}
   gunVolume: 0
   ammoTextPath: 
-  scoreTextPath: 
   originalWeaponPrefab: {fileID: 0}
   originalWeaponIndex: -1
+  rotationSpeed: 50
+  floatHeight: 0.1
+  floatSpeed: 1
+--- !u!114 &1854834925311345027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 20529366969353621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7b03a8c4191f1245a3d370a971a3d5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 10
+  range: 100
+  isAutomatic: 1
+  isPistol: 0
+  maxAmmo: 30
+  currentAmmo: 0
+  totalAmmo: 120
+  reloadTime: 2
+  animator: {fileID: 0}
+  playerCamera: {fileID: 0}
+  muzzleFlash: {fileID: 3550505959120485069, guid: 95d1adfe2b833c5409cd6ad562c2aaaf, type: 3}
+  gunshotSound: {fileID: 0}
+  impactEffect: {fileID: 100002, guid: 99c73c92ac40473459640b165473206f, type: 3}
+  impactForce: 100
+  fireRate: 0.1
+  ammoText: {fileID: 0}
+  recoilAmount: 0
+  recoilRecoverySpeed: 200
+  recoilBuildup: 0.5
+  horizontalRecoilFactor: 0.3
+  baseSpread: 0.02
+  maxSpread: 0.06
+  spreadIncreasePerShot: 0.01
+  spreadRecoveryTime: 0.5
+  currentSpread: 0

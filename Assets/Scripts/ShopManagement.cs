@@ -32,7 +32,14 @@ public class ShopManagement : MonoBehaviour
     // Prefabs for spawned items
     [Header("Item Prefabs")]
     public GameObject medkitPrefab;
+    public GameObject ak47Prefab;  // Add reference to AK-47 prefab
     public int pistolAmmoAmount = 10;
+    public int rifleAmmoAmount = 30;  // Add rifle ammo amount
+
+    // UI Panels
+    [Header("Shop Panels")]
+    public GameObject mainShopPanel;    // Reference to the main shop panel
+    public GameObject gunShopPanel;     // Reference to the gun shop panel
 
     void Start()
     {
@@ -40,7 +47,8 @@ public class ShopManagement : MonoBehaviour
         shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 300 });
         shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 200 });
         shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 300 });
-        
+        shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 });  // Add Buy gun option
+        shopItemsList.Add(new ShopItem { id = 5, name = "AK-47", price = 50 });
         // Find player's gun if present
         playerGun = FindObjectOfType<Gun>();
         
@@ -58,6 +66,12 @@ public class ShopManagement : MonoBehaviour
         
         // Update the money text with current score
         UpdateMoneyText();
+
+        // Make sure gun shop panel is hidden at start
+        if (gunShopPanel != null)
+        {
+            gunShopPanel.SetActive(false);
+        }
     }
     
     void Update()
@@ -85,49 +99,79 @@ public class ShopManagement : MonoBehaviour
         }
     }
 
+    // Method to check if player has enough money for a purchase
+    private bool HasEnoughMoney(int price)
+    {
+        if (playerMoney >= price)
+        {
+            return true;
+        }
+        else
+        {
+            ShowNotification("Not enough money. Required: " + price + " Cash");
+            Debug.Log("Not enough money. Required: " + price + ", Current: " + playerMoney);
+            return false;
+        }
+    }
+
+    // Method to deduct money after successful purchase
+    private void DeductMoney(int amount)
+    {
+        playerMoney -= amount;
+        
+        // Đồng bộ với ScoreManager (nếu có)
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Score = playerMoney;
+        }
+        
+        // Cập nhật giao diện hiển thị tiền
+        UpdateMoneyText();
+    }
+
     // Method to be called directly from UI buttons
     public void BuyItem(int itemID)
     {
         ShopItem item = shopItemsList.Find(i => i.id == itemID);
-        if (item != null && playerMoney >= item.price)
+        if (item != null)
         {
-            // Deduct cost from score
-            playerMoney -= item.price;
-            
-            // Cập nhật tiền trong ScoreManager
-            if (ScoreManager.Instance != null)
+            // Special case for "Buy gun" option
+            if (itemID == 4)
             {
-                ScoreManager.Score = playerMoney;
+                // Show gun shop panel instead of purchasing
+                ShowGunShopPanel();
+                return;
             }
             
-            // Cập nhật giao diện hiển thị tiền
-            UpdateMoneyText();
-            
-            // Hiển thị thông báo mua hàng thành công
-            ShowNotification("Đã mua: " + item.name);
-            
-            // Handle different items
-            switch(itemID)
+            // Check if player has enough money
+            if (HasEnoughMoney(item.price))
             {
-                case 1: // First Aid (MedKit)
-                    AddMedkit();
-                    break;
-                case 2: // Pistol Ammo
-                    AddPistolAmmo();
-                    break;
-                case 3: // Rifle Ammo
-                    // Implement rifle ammo similar to pistol ammo
-                    Debug.Log("Bought: " + item.name);
-                    break;
-                default:
-                    Debug.Log("Bought: " + item.name);
-                    break;
+                // Deduct cost from score
+                DeductMoney(item.price);
+                
+                // Hiển thị thông báo mua hàng thành công
+                ShowNotification("Has Bought: " + item.name);
+                
+                // Handle different items
+                switch(itemID)
+                {
+                    case 1: // First Aid (MedKit)
+                        AddMedkit();
+                        break;
+                    case 2: // Pistol Ammo
+                        AddPistolAmmo();
+                        break;
+                    case 3: // Rifle Ammo
+                        AddRifleAmmo();  // Add method for rifle ammo
+                        break;
+                    case 5: // AK-47
+                        BuyAK47();      // Add method to buy AK-47
+                        break;
+                    default:
+                        Debug.Log("Bought: " + item.name);
+                        break;
+                }
             }
-        }
-        else
-        {
-            Debug.Log("Not enough coins");
-            ShowNotification("Not enough money");
         }
     }
     
@@ -299,6 +343,125 @@ public class ShopManagement : MonoBehaviour
                 UpdateMoneyText();
                 ShowNotification("No pistol found to add ammo to!");
             }
+        }
+    }
+
+    // Add rifle ammo to player's weapon
+    private void AddRifleAmmo()
+    {
+        // Similar implementation to AddPistolAmmo but for rifles
+        Gun[] allGuns = FindObjectsOfType<Gun>(true);
+        Gun rifle = null;
+        
+        // Find a rifle (non-pistol and automatic)
+        foreach (Gun gun in allGuns)
+        {
+            if (!gun.isPistol && gun.isAutomatic)
+            {
+                rifle = gun;
+                Debug.Log("Found rifle: " + gun.name);
+                break;
+            }
+        }
+        
+        if (rifle != null)
+        {
+            // Add ammo to rifle
+            rifle.AddAmmo(rifleAmmoAmount);
+            ShowNotification($"Bought Rifle Ammo: +{rifleAmmoAmount}");
+        }
+        else
+        {
+            ShowNotification("You don't have a rifle to add ammo to!");
+            // Refund money
+            playerMoney += shopItemsList.Find(i => i.id == 3).price;
+            
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Score = playerMoney;
+            }
+            
+            UpdateMoneyText();
+        }
+    }
+    
+    // Buy AK-47 gun
+    private void BuyAK47()
+    {
+        // Check if AK-47 prefab is assigned
+        if (ak47Prefab == null)
+        {
+            Debug.LogError("AK-47 prefab is not assigned in ShopManagement!");
+            
+            // Refund money
+            playerMoney += shopItemsList.Find(i => i.id == 5).price;
+            
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Score = playerMoney;
+            }
+            
+            UpdateMoneyText();
+            return;
+        }
+        
+        // Find the player object to spawn the weapon near them
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            // Spawn position in front of the player
+            Vector3 spawnPosition = player.transform.position + player.transform.forward * 1f;
+            
+            // Simply instantiate the AK-47 prefab - the prefab should already have all needed components
+            GameObject newAK47 = Instantiate(ak47Prefab, spawnPosition, Quaternion.identity);
+            
+            // Make sure it's in the Pickups layer so the player can interact with it
+            newAK47.layer = LayerMask.NameToLayer("Pickups");
+            
+            ShowNotification("AK-47 purchased! Pick up the weapon to use it.");
+            Debug.Log("Spawned AK-47 at: " + spawnPosition);
+        }
+        else
+        {
+            ShowNotification("Lỗi: Không tìm thấy người chơi!");
+            Debug.LogWarning("Player object not found when trying to spawn AK-47");
+            
+            // Refund money since we couldn't spawn the weapon
+            playerMoney += shopItemsList.Find(i => i.id == 5).price;
+            
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Score = playerMoney;
+            }
+            
+            UpdateMoneyText();
+        }
+    }
+
+    // Method to show the gun shop panel
+    public void ShowGunShopPanel()
+    {
+        if (mainShopPanel != null && gunShopPanel != null)
+        {
+            mainShopPanel.SetActive(false);
+            gunShopPanel.SetActive(true);
+            Debug.Log("Showing Gun Shop Panel");
+        }
+        else
+        {
+            Debug.LogWarning("Shop panels not assigned in inspector");
+            ShowNotification("Gun Shop not available");
+        }
+    }
+    
+    // Method to go back to the main shop panel
+    public void BackToMainShop()
+    {
+        if (mainShopPanel != null && gunShopPanel != null)
+        {
+            mainShopPanel.SetActive(true);
+            gunShopPanel.SetActive(false);
+            Debug.Log("Returning to Main Shop Panel");
         }
     }
 }
