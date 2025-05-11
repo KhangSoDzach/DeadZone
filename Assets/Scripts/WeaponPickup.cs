@@ -290,14 +290,21 @@ public class WeaponPickup : MonoBehaviour
             if (!gunComponent) 
             {
                 gunComponent = gameObject.AddComponent<Gun>();
+                Debug.Log($"[PICKUP] Created new Gun component for {gameObject.name}");
             }
         }
         
         if (gunComponent)
         {
+            // Log initial values for debugging
+            Debug.Log($"[PICKUP] BEFORE applying properties to Gun ({gameObject.GetInstanceID()}):" +
+                     $"\n - Current Gun state: Damage={gunComponent.damage}, Recoil={gunComponent.recoilAmount}, Spread={gunComponent.baseSpread}" +
+                     $"\n - Current Pickup state: Damage={damage}, Recoil={recoilAmount}, Spread={baseSpread}");
+            
             // Áp dụng các thuộc tính cơ bản
             gunComponent.currentAmmo = remainingAmmo;
-            gunComponent.totalAmmo = remainingTotalAmmo; // Khôi phục số đạn dự trữ
+            gunComponent.totalAmmo = remainingTotalAmmo;
+            gunComponent.maxAmmo = remainingAmmo > 0 ? remainingAmmo : 30;
             gunComponent.isPistol = isPistol;
             gunComponent.isAutomatic = isAutomatic;
             gunComponent.damage = damage;
@@ -305,51 +312,82 @@ public class WeaponPickup : MonoBehaviour
             gunComponent.baseSpread = baseSpread;
             gunComponent.impactEffect = impactEffect;
             
-            // Khôi phục animator controller - ĐÃ SỬA
-            // Luôn ưu tiên tìm animator trong parent trước
+            // PRIORITIZE PARENT ANIMATOR - Always look for a parent animator first
+            bool foundParentAnimator = false;
+            
+            // First, try to get animator from parent
             Transform parentTransform = transform.parent;
             if (parentTransform != null)
             {
                 Animator parentAnimator = parentTransform.GetComponent<Animator>();
                 if (parentAnimator != null)
                 {
+                    // Use the parent animator
                     gunComponent.animator = parentAnimator;
-                    Debug.Log($"Đang sử dụng animator của parent {parentTransform.name} cho {gameObject.name}");
+                    foundParentAnimator = true;
+                    Debug.Log($"[PICKUP] Using parent animator from {parentTransform.name} for {gameObject.name}");
                     
-                    // Chỉ áp dụng controller nếu có và nếu không dùng parent animator
+                    // Apply animator controller to parent if it doesn't have one
                     if (animatorController != null && parentAnimator.runtimeAnimatorController == null)
                     {
                         parentAnimator.runtimeAnimatorController = animatorController;
+                        Debug.Log($"[PICKUP] Applied animator controller to parent {parentTransform.name}");
+                    }
+                }
+                else
+                {
+                    // Try to look for animator in parent's parent
+                    Transform grandParent = parentTransform.parent;
+                    if (grandParent != null)
+                    {
+                        Animator grandParentAnimator = grandParent.GetComponent<Animator>();
+                        if (grandParentAnimator != null)
+                        {
+                            gunComponent.animator = grandParentAnimator;
+                            foundParentAnimator = true;
+                            Debug.Log($"[PICKUP] Using grandparent animator from {grandParent.name} for {gameObject.name}");
+                        }
                     }
                 }
             }
             
-            // Nếu vẫn chưa có animator và có controller đã lưu, mới tạo mới
-            if (gunComponent.animator == null && animatorController != null)
+            // Only if we didn't find a parent animator, look for or create a local one
+            if (!foundParentAnimator)
             {
-                // Kiểm tra xem đã có animator component trên vũ khí chưa
-                Animator existingAnimator = gameObject.GetComponent<Animator>();
-                if (existingAnimator != null) 
+                // Check if there's a local animator
+                Animator localAnimator = GetComponent<Animator>();
+                if (localAnimator != null)
                 {
-                    gunComponent.animator = existingAnimator;
+                    gunComponent.animator = localAnimator;
+                    Debug.Log($"[PICKUP] No parent animator found. Using local animator on {gameObject.name}");
+                    
+                    // Apply animator controller to local animator if needed
+                    if (animatorController != null && localAnimator.runtimeAnimatorController == null)
+                    {
+                        localAnimator.runtimeAnimatorController = animatorController;
+                    }
+                }
+                else if (animatorController != null)
+                {
+                    // If we have a controller but no animator, create one as last resort
+                    localAnimator = gameObject.AddComponent<Animator>();
+                    gunComponent.animator = localAnimator;
+                    localAnimator.runtimeAnimatorController = animatorController;
+                    Debug.Log($"[PICKUP] Created new animator for {gameObject.name} as last resort");
                 }
                 else
                 {
-                    // Tạo animator mới chỉ khi không tìm thấy ở parent và không có sẵn
-                    gunComponent.animator = gameObject.AddComponent<Animator>();
-                    Debug.Log($"Đã tạo animator mới cho {gameObject.name} vì không tìm thấy ở parent");
+                    Debug.LogWarning($"[PICKUP] No animator found or created for {gameObject.name}. Weapon animations may not work.");
                 }
-                
-                // Áp dụng controller đã lưu
-                gunComponent.animator.runtimeAnimatorController = animatorController;
             }
             
-            // Áp dụng thiết lập âm thanh
+            // Apply audio settings
             if (gunshotClip != null)
             {
                 if (gunComponent.gunshotSound == null)
                 {
-                    gunComponent.gunshotSound = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+                    AudioSource existingAudio = GetComponent<AudioSource>();
+                    gunComponent.gunshotSound = existingAudio ?? gameObject.AddComponent<AudioSource>();
                 }
                 
                 gunComponent.gunshotSound.clip = gunshotClip;
@@ -357,49 +395,26 @@ public class WeaponPickup : MonoBehaviour
                 gunComponent.gunshotSound.playOnAwake = false;
             }
             
-            // Đảm bảo có camera
+            // Ensure camera reference
             if (gunComponent.playerCamera == null)
             {
                 gunComponent.playerCamera = Camera.main;
-                if (gunComponent.playerCamera == null)
-                {
-                    // Tìm bất kỳ camera nào nếu không tìm thấy main camera
-                    Camera[] cameras = FindObjectsOfType<Camera>();
-                    if (cameras.Length > 0)
-                    {
-                        gunComponent.playerCamera = cameras[0];
-                        Debug.LogWarning($"Không tìm thấy camera chính! Sử dụng camera thay thế cho {gameObject.name}");
-                    }
-                    else
-                    {
-                        Debug.LogError("Không tìm thấy camera nào trong scene!");
-                    }
-                }
-                else
-                {
-                    Debug.Log("Đã đặt camera chính cho súng");
-                }
             }
             
-            // Đảm bảo UI được cập nhật
+            // Apply UI text if applicable
             if (!string.IsNullOrEmpty(ammoTextPath))
             {
                 gunComponent.ammoText = FindUITextFromPath(ammoTextPath);
             }
             
-            // Tìm hoặc thêm component WeaponComponentRestore để đảm bảo vị trí và camera đúng
-            WeaponComponentRestore componentRestore = gameObject.GetComponent<WeaponComponentRestore>();
-            if (componentRestore == null)
-            {
-                // Tạo mới nếu chưa có
-                componentRestore = gameObject.AddComponent<WeaponComponentRestore>();
-                Debug.Log("Đã thêm component WeaponComponentRestore cho " + gameObject.name);
-            }
+            // Log final values
+            Debug.Log($"[PICKUP] AFTER applying properties to Gun ({gameObject.GetInstanceID()}):" +
+                     $"\n - Damage: {gunComponent.damage} (from {damage})" +
+                     $"\n - Recoil: {gunComponent.recoilAmount} (from {recoilAmount})" +
+                     $"\n - Animator: {(gunComponent.animator ? gunComponent.animator.gameObject.name : "null")}" +
+                     $"\n - Ammo: {gunComponent.currentAmmo}/{gunComponent.totalAmmo}");
             
-            // Khôi phục vị trí và các components của súng
-            componentRestore.RestoreGunComponents(gunComponent);
-            
-            // Cập nhật UI
+            // Update UI
             gunComponent.UpdateAmmoUI();
         }
     }

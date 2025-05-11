@@ -5092,6 +5092,7 @@ MonoBehaviour:
   isPistol: 0
   maxAmmo: 30
   currentAmmo: 0
+  totalAmmo: 120
   reloadTime: 2
   animator: {fileID: 0}
   playerCamera: {fileID: 0}
@@ -5270,6 +5271,7 @@ MonoBehaviour:
   weaponIndex: 0
   weaponName: AK-47
   remainingAmmo: 0
+  remainingTotalAmmo: 0
   isPistol: 0
   isAutomatic: 1
   damage: 10
@@ -5337,7 +5339,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   saveable: 0
   m_Items:
-  - {fileID: 4808018497518849002, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
+  - {fileID: 5606543618748735577, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
   m_Amounts: 01000000
   m_Modifiers:
   - modifiers: []
