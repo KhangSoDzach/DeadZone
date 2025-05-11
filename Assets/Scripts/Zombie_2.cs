@@ -36,7 +36,7 @@ public class Zombie_2 : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 5f;
-    private float zombieHealth = 70f;
+    private float zombieHealth = 50f;
     private float remainHeath;
     [Header("Zombie Sounds")]
     public AudioSource audioSource;
@@ -81,7 +81,7 @@ public class Zombie_2 : MonoBehaviour
     {
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 4f;
+            zombieAgent.speed = 5f;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);

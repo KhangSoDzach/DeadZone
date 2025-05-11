@@ -39,7 +39,7 @@ public class Zombie_3 : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 20f;
-    private float zombieHealth = 100f;
+    private float zombieHealth = 75F;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -106,7 +106,7 @@ public class Zombie_3 : MonoBehaviour
         observationRadius = 30f;
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 1.5f;
+            zombieAgent.speed = 2f;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isWalking", true);
             aniZombie.SetBool("isAttacking", false);
@@ -129,8 +129,7 @@ public class Zombie_3 : MonoBehaviour
         if (!prevAttack)
         {
             //Code the player take damage from player
-            ApplyZombieDamage();
-
+         
             aniZombie.SetBool("isAttacking", true);
             aniZombie.SetBool("isWalking", false);
             aniZombie.SetBool("isDead", false);

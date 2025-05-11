@@ -39,8 +39,8 @@ public class Zombie_1 : MonoBehaviour
     public bool playerInAttackingRadius;
 
     [Header("Zombie Health and Damage")]
-    public float attackDamage = 15f;
-    private float zombieHealth = 100f;
+    public float attackDamage = 20f;
+    private float zombieHealth = 75f;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -108,7 +108,7 @@ public class Zombie_1 : MonoBehaviour
        observationRadius = 30f;
        if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 3;
+            zombieAgent.speed = 4;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isWalking", false);
             aniZombie.SetBool("isRunning", true);
