@@ -21,8 +21,8 @@ public class MedkitPickup : MonoBehaviour
     {
         startPosition = transform.position;
 
-        // Đặt medkit vào layer Pickups giống như vũ khí
-        gameObject.layer = LayerMask.NameToLayer("Pickups");
+        // Đặt medkit vào layer WeaponPickup (thay vì Pickups)
+        gameObject.layer = LayerMask.NameToLayer("WeaponPickup");
     }
 
     void Update()
@@ -66,6 +66,12 @@ public class MedkitPickup : MonoBehaviour
             if (pickupEffect != null)
             {
                 Instantiate(pickupEffect, transform.position, Quaternion.identity);
+            }
+
+            // Hiển thị thông báo nhặt medkit
+            if (PickupDisplayManager.Instance != null)
+            {
+                PickupDisplayManager.Instance.ShowMedkitPickup(healPercent);
             }
 
             // Hủy đối tượng sau khi sử dụng

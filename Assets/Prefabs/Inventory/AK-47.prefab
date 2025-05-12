@@ -4978,7 +4978,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 3.4e-44, z: 0, w: 1e-45}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 1e-45, z: 6.6838e-41, w: 3.59e-43}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -5001,6 +5001,7 @@ GameObject:
   - component: {fileID: 8270676115773028155}
   - component: {fileID: 5205117537819751510}
   - component: {fileID: 6280656921073715520}
+  - component: {fileID: 1790734712813204378}
   m_Layer: 7
   m_Name: AK-47
   m_TagString: Weapon
@@ -5111,6 +5112,10 @@ MonoBehaviour:
   spreadIncreasePerShot: 0.01
   spreadRecoveryTime: 0.5
   currentSpread: 0
+  bloodSplatterEffect: {fileID: 1000013355911406, guid: d32aa916f50cac94db11e6f19821a58f, type: 3}
+  bloodDecalPrefab: {fileID: 100000, guid: 358b75ea5451cf143ab19029a189097d, type: 3}
+  bloodDecalLifetime: 10
+  bloodSplatterChance: 0.8
 --- !u!82 &2527786609146320886
 AudioSource:
   m_ObjectHideFlags: 0
@@ -5346,3 +5351,18 @@ MonoBehaviour:
   onChange:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1790734712813204378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4885872996788827317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cda3b9d89a55f143bf4546d43b708d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_DisplayType: -1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Offset: {x: 0, y: 0, z: 0}

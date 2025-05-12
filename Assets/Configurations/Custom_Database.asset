@@ -1,5 +1,48 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9007112319356383190
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e14be5e3e6cf2204293682bf65bce5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: 0e0b3d80-374e-47bf-9234-793ad26652bc
+  m_ItemName: Rifle Ammo
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: 845ad875ec6d67841bbc402be43ac82a, type: 3}
+  m_Prefab: {fileID: 5911406465249511347, guid: cbf0011819add684187ac6c07b74d617, type: 3}
+  m_Description: 'An 12x70 rem '
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 0
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: -98635084419582185}
+  m_SellPrice: 0
+  m_SellCurrency: {fileID: -98635084419582185}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
 --- !u!114 &-7613858837025846036
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -429,6 +472,8 @@ MonoBehaviour:
   - {fileID: 7840715381217724353}
   - {fileID: -2526849871109524535}
   - {fileID: -836897042634075265}
+  - {fileID: -9007112319356383190}
+  - {fileID: 2427885662329859330}
   currencies:
   - {fileID: -98635084419582185}
   - {fileID: 2680968774529471378}
@@ -527,6 +572,49 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unstackEvent: 3
   unstackKeyCode: 304
+--- !u!114 &2427885662329859330
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e14be5e3e6cf2204293682bf65bce5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: 740db35c-3165-4a59-b995-7ddce44a572e
+  m_ItemName: PistolAmmo
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: f2f1cbc044638494eb2b42eb08414931, type: 3}
+  m_Prefab: {fileID: 1219562244816867253, guid: c243c395e6780bb4a90a1a3b600aa5d5, type: 3}
+  m_Description: Pistol Box of Ammo
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 0
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: -98635084419582185}
+  m_SellPrice: 0
+  m_SellCurrency: {fileID: -98635084419582185}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
 --- !u!114 &2680968774529471378
 MonoBehaviour:
   m_ObjectHideFlags: 1

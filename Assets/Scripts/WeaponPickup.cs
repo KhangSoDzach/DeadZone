@@ -73,6 +73,9 @@ public class WeaponPickup : MonoBehaviour
             isInitialized = true;
         }
 
+        // Đảm bảo vũ khí ở đúng layer
+        gameObject.layer = LayerMask.NameToLayer("WeaponPickup");
+        
         // Kiểm tra nếu đây là vũ khí mới nhặt, lấy vị trí đã lưu (nếu có)
         if (isPickupMode && !string.IsNullOrEmpty(weaponName))
         {
@@ -83,7 +86,7 @@ public class WeaponPickup : MonoBehaviour
                 if (Vector3.Distance(transform.position, savedPos) < 5f)
                 {
                     originalPosition = savedPos;
-                    Debug.Log($"Vũ khí {weaponName} đang sử dụng vị trí đã lưu: {savedPos}");
+                   // Debug.Log($"Vũ khí {weaponName} đang sử dụng vị trí đã lưu: {savedPos}");
                 }
             }
         }

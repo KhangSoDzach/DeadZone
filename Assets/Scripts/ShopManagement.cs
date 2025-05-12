@@ -47,8 +47,9 @@ public class ShopManagement : MonoBehaviour
         shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 300 });
         shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 200 });
         shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 300 });
-        shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 });  // Add Buy gun option
-        shopItemsList.Add(new ShopItem { id = 5, name = "AK-47", price = 50 });
+        shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 }); 
+        shopItemsList.Add(new ShopItem { id = 5, name = "Upgrade", price = 0 });
+        shopItemsList.Add(new ShopItem { id = 6, name = "AK-47", price = 50 });
         // Find player's gun if present
         playerGun = FindObjectOfType<Gun>();
         
@@ -85,7 +86,7 @@ public class ShopManagement : MonoBehaviour
     }
     
     // Update the money text with the current score
-    private void UpdateMoneyText()
+    public void UpdateMoneyText()
     {
         if (moneyText != null)
         {
@@ -143,6 +144,14 @@ public class ShopManagement : MonoBehaviour
                 return;
             }
             
+            // Special case for "Upgrade" option
+            if (itemID == 5)
+            {
+                // Show upgrade panel instead of purchasing
+                ShowWeaponUpgradePanel();
+                return;
+            }
+            
             // Check if player has enough money
             if (HasEnoughMoney(item.price))
             {
@@ -164,7 +173,7 @@ public class ShopManagement : MonoBehaviour
                     case 3: // Rifle Ammo
                         AddRifleAmmo();  // Add method for rifle ammo
                         break;
-                    case 5: // AK-47
+                    case 6: // AK-47
                         BuyAK47();      // Add method to buy AK-47
                         break;
                     default:
@@ -462,6 +471,41 @@ public class ShopManagement : MonoBehaviour
             mainShopPanel.SetActive(true);
             gunShopPanel.SetActive(false);
             Debug.Log("Returning to Main Shop Panel");
+        }
+    }
+    
+    // Method to show the weapon upgrade panel
+    public void ShowWeaponUpgradePanel()
+    {
+        // Find the WeaponUpgradeManager in scene
+        WeaponUpgradeManager upgradeManager = FindObjectOfType<WeaponUpgradeManager>();
+        
+        
+        if (upgradeManager != null)
+        {
+            // Hide shop panels
+            if (mainShopPanel != null)
+                mainShopPanel.SetActive(false);
+                
+            if (gunShopPanel != null)
+                gunShopPanel.SetActive(false);
+                
+            // Show the weapon type selection panel
+            upgradeManager.ShowWeaponTypeSelection(playerMoney, this);
+        }
+        else
+        {
+            ShowNotification("Weapon Upgrade system not available!");
+            Debug.LogWarning("WeaponUpgradeManager not found in scene!");
+        }
+    }
+    
+    // Method to be called from WeaponUpgradeManager to return to main shop
+    public void ReturnFromUpgradePanel()
+    {
+        if (mainShopPanel != null)
+        {
+            mainShopPanel.SetActive(true);
         }
     }
 }

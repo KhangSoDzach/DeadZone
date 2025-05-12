@@ -45,6 +45,12 @@ public class Zombie_4 : MonoBehaviour
 
     private float nextSoundTime = 0f;
 
+    [Header("Money Drop Settings")]
+    public GameObject moneyPrefab;          // Prefab đồng tiền
+    public float dropChance = 0.8f;         // Tỷ lệ rơi tiền (0-1)
+    public int minCoinsDropped = 3;         // Số lượng đồng tiền tối thiểu
+    public int maxCoinsDropped = 5;         // Số lượng đồng tiền tối đa
+
     // Update is called once per frame
     void Update()
     {
@@ -152,5 +158,32 @@ public class Zombie_4 : MonoBehaviour
 
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
+        
+        // Kiểm tra tỷ lệ rơi tiền
+        if (Random.value <= dropChance)
+        {
+            // Xác định số lượng đồng tiền rơi ra
+            int coinCount = Random.Range(minCoinsDropped, maxCoinsDropped + 1);
+            
+            for (int i = 0; i < coinCount; i++)
+            {
+                // Tạo vị trí rơi ngẫu nhiên xung quanh zombie
+                Vector3 randomOffset = new Vector3(
+                    Random.Range(-0.5f, 0.5f),
+                    0.1f,  // Đặt cao hơn một chút so với mặt đất
+                    Random.Range(-0.5f, 0.5f)
+                );
+                
+                // Tạo đồng tiền
+                if (moneyPrefab != null)
+                {
+                    Instantiate(moneyPrefab, transform.position + randomOffset, Quaternion.Euler(0, Random.Range(0, 360), 0));
+                }
+                else
+                {
+                    Debug.LogWarning("Money prefab not assigned to zombie!");
+                }
+            }
+        }
     }
 }

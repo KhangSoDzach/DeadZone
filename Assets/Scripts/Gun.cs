@@ -40,6 +40,12 @@ public class Gun : MonoBehaviour
     public float currentSpread;                  // Current spread value
     private float lastShotTime;                   // Time when last shot was fired
 
+    [Header("Blood Effects")]
+    public GameObject bloodSplatterEffect;  // Hiệu ứng máu bắn tóe
+    public GameObject bloodDecalPrefab;     // Prefab vết máu trên sàn
+    public float bloodDecalLifetime = 10f;  // Thời gian tồn tại của vết máu (giây)
+    public float bloodSplatterChance = 0.8f; // Tỷ lệ xuất hiện hiệu ứng máu (0-1)
+
     void Start()
     {
         currentAmmo = maxAmmo; // Initialize ammo
@@ -160,6 +166,38 @@ public class Gun : MonoBehaviour
             if (playerLookScript == null)
             {
                 playerLookScript = playerCamera.transform.root.GetComponent<PlayerLook>();
+            }
+        }
+        
+        // Kiểm tra hiệu ứng máu
+        if (bloodSplatterEffect == null)
+        {
+            // Thử tìm bloodSplatterEffect trong resources
+            GameObject defaultBloodEffect = Resources.Load<GameObject>("BloodSplatter");
+            if (defaultBloodEffect != null)
+            {
+                bloodSplatterEffect = defaultBloodEffect;
+                Debug.Log("Using default blood splatter effect from Resources");
+            }
+            else
+            {
+                Debug.LogWarning("Blood splatter effect not assigned. Blood effects will be disabled.");
+            }
+        }
+        
+        // Kiểm tra prefab vết máu
+        if (bloodDecalPrefab == null)
+        {
+            // Thử tìm bloodDecalPrefab trong resources
+            GameObject defaultBloodDecal = Resources.Load<GameObject>("BloodDecal");
+            if (defaultBloodDecal != null)
+            {
+                bloodDecalPrefab = defaultBloodDecal;
+                Debug.Log("Using default blood decal from Resources");
+            }
+            else
+            {
+                Debug.LogWarning("Blood decal prefab not assigned. Floor blood will be disabled.");
             }
         }
     }
@@ -304,54 +342,66 @@ public class Gun : MonoBehaviour
         if (Physics.Raycast(ray, out hit, range))
         {
             Debug.Log("Hit: " + hit.transform.name);
+            
+            // Kiểm tra nếu bắn trúng zombie
+            bool hitZombie = false;
+            float damageDealt = 0;
+            
             Zombie_1 zombie1 = hit.transform.GetComponent<Zombie_1>();
             Zombie_2 zombie2 = hit.transform.GetComponent<Zombie_2>();
             Zombie_3 zombie3 = hit.transform.GetComponent<Zombie_3>();
             Zombie_4 zombie4 = hit.transform.GetComponent<Zombie_4>();
 
-                // Use ScoreManager to add score directly
+            // Use ScoreManager to add score directly
             if (zombie1 != null)
             {
                 zombie1.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
+                hitZombie = true;
+                damageDealt = damage;
             }
             if (zombie2 != null)
             {
                 zombie2.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
+                hitZombie = true;
+                damageDealt = damage;
             }
             if (zombie3 != null)
             {
                 zombie3.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
+                hitZombie = true;
+                damageDealt = damage;
             }
             if (zombie4 != null)
             {
                 zombie4.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
+                hitZombie = true;
+                damageDealt = damage;
             }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                
                 Vector3 forceDirection = hit.point - playerCamera.transform.position;
                 forceDirection.Normalize();
                 rb.AddForce(forceDirection * impactForce, ForceMode.Impulse);
             }
             
-            // Instantiate impact effect at hit point
-            GameObject impact = Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
-            Destroy(impact, 2f); 
+            if (hitZombie && Random.value <= bloodSplatterChance)
+            {
+                CreateBloodEffects(hit, damageDealt);
+            }
+            else
+            {
+                GameObject impact = Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
+                Destroy(impact, 2f);
+            }
         }
     }
 
-    // Update to use ScoreManager for score management
     public void IncreaseScore(int points)
     {
         ScoreManager.AddScore(points);
     }
 
-    // Calculate direction with random spread
     private Vector3 CalculateSpreadVector()
     {
         // Start with camera forward direction (center of screen)
@@ -394,7 +444,103 @@ public class Gun : MonoBehaviour
         if (amount <= 0) return;
         
         totalAmmo += amount;
-        //Debug.Log($"Added {amount} ammo. Total ammo now: {totalAmmo}");
         UpdateAmmoUI();
+    }
+
+    // Method to set maxAmmo (for weapon upgrades)
+    public void SetMaxAmmo(int newMaxAmmo)
+    {
+        maxAmmo = newMaxAmmo;
+        UpdateAmmoUI();
+    }
+
+    // Method to set reload time (for weapon upgrades)
+    public void SetReloadTime(float newReloadTime)
+    {
+        reloadTime = newReloadTime;
+    }
+
+    // Method to set damage (for weapon upgrades)
+    public void SetDamage(float newDamage)
+    {
+        damage = newDamage;
+    }
+
+    private void CreateBloodEffects(RaycastHit hit, float damageAmount)
+    {
+        if (bloodSplatterEffect != null)
+        {
+            // Tạo hiệu ứng máu bắn tóe tại điểm va chạm
+            GameObject bloodSplatter = Instantiate(bloodSplatterEffect, hit.point, Quaternion.LookRotation(-hit.normal));
+            
+            // Điều chỉnh kích thước hiệu ứng dựa vào sát thương
+            float scale = Mathf.Clamp(damageAmount / 30f, 0.5f, 2.0f);
+            bloodSplatter.transform.localScale *= scale;
+            
+            // Gắn bloodSplatter vào zombie để nó di chuyển theo
+            bloodSplatter.transform.SetParent(hit.transform);
+            
+            // Hủy hiệu ứng sau một khoảng thời gian ngắn hơn
+            Destroy(bloodSplatter, .3f); // Giảm thời gian từ 2f xuống 0.3f
+            
+            // Xoay ngẫu nhiên hiệu ứng máu
+            bloodSplatter.transform.Rotate(0, 0, Random.Range(0, 360));
+        }
+        else
+        {
+            Debug.LogWarning("Blood splatter effect prefab is missing!");
+        }
+        
+        CreateBloodDecal(hit);
+    }
+
+    private void CreateBloodDecal(RaycastHit zombieHit)
+    {
+        if (bloodDecalPrefab == null) return;
+        
+        // Kiểm tra xem có sàn/mặt đất phía dưới không
+        RaycastHit floorHit;
+        if (Physics.Raycast(zombieHit.point, Vector3.down, out floorHit, 3f))
+        {
+            //Create a blood decal at the hit point
+            Quaternion decalRotation = Quaternion.FromToRotation(Vector3.up, floorHit.normal);
+            GameObject bloodDecal = Instantiate(bloodDecalPrefab, floorHit.point + floorHit.normal * 0.01f, decalRotation);
+            
+            // Adjust the size of the blood decal based on the damage amount
+            float randomScale = Random.Range(0.8f, 1.5f);
+            bloodDecal.transform.localScale *= randomScale;
+            
+            // Randomly rotate the blood decal for variety
+            bloodDecal.transform.Rotate(0, Random.Range(0, 360), 0);
+            
+            // Destroy the blood decal after a certain time
+            Destroy(bloodDecal, bloodDecalLifetime);
+        }
+    }
+
+    private void CreateBloodBurstEffect(RaycastHit hit, float damageAmount)
+    {
+        // Kiểm tra xem bloodSplatterEffect có chứa ParticleSystem không
+        ParticleSystem bloodParticles = bloodSplatterEffect.GetComponent<ParticleSystem>();
+        
+        if (bloodParticles != null)
+        {
+            // Tạo hiệu ứng particle tại điểm va chạm
+            ParticleSystem burstEffect = Instantiate(bloodParticles, hit.point, Quaternion.LookRotation(-hit.normal));
+            
+            // Gắn vào zombie để di chuyển theo
+            burstEffect.transform.SetParent(hit.transform);
+            
+            // Điều chỉnh số lượng particle dựa vào sát thương
+            var mainModule = burstEffect.main;
+            mainModule.startSizeMultiplier *= Mathf.Clamp(damageAmount / 20f, 0.7f, 1.5f);
+            
+            // Phát một lần duy nhất, không lặp lại
+            burstEffect.Stop();
+            burstEffect.Play();
+            
+            // Hủy particle system sau khi nó hoàn thành
+            Destroy(burstEffect.gameObject, burstEffect.main.duration + 0.1f);
+        }
     }
 }
