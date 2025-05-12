@@ -35,7 +35,7 @@ public class ItemInfo : MonoBehaviour
             if (item != null)
             {
                 if (priceText != null)
-                    priceText.text = item.price.ToString() + "đ";
+                    priceText.text = item.price.ToString() + "$";
                 
                 if (nameText != null)
                     nameText.text = item.name;

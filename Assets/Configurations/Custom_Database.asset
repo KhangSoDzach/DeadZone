@@ -264,6 +264,108 @@ MonoBehaviour:
     delay: 2
     duration: 2
     ignoreTimeScale: 1
+--- !u!114 &-2526849871109524535
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6132cc3558d117f4bbad4651b2dbdba7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: ee039bc6-9d77-4766-a0f6-d587f21869e3
+  m_ItemName: MP5
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: 2bc12cb49ca1b3346bf23919990c5875, type: 3}
+  m_Prefab: {fileID: 6817528042747389862, guid: 877cd5926a3edd64b94fc3e925cb9653, type: 3}
+  m_Description: MP5 is the most balance gun in WW2
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 0
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: -98635084419582185}
+  m_SellPrice: 0
+  m_SellCurrency: {fileID: -98635084419582185}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+  m_UseCategoryCooldown: 1
+  m_Cooldown: 1
+  actions: []
+  m_OverrideEquipPrefab: {fileID: 0}
+  m_Region: []
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &-836897042634075265
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6132cc3558d117f4bbad4651b2dbdba7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: cbbb1850-d117-43a9-8fae-3a098a1f7733
+  m_ItemName: Uzi
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: 0e9dc83621e8941449ec11f311af6343, type: 3}
+  m_Prefab: {fileID: 4861596940092689024, guid: 74cf765cf0d557d46a1346f664d53888, type: 3}
+  m_Description: 'This gun have a huge fire rate '
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 0
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: -98635084419582185}
+  m_SellPrice: 0
+  m_SellCurrency: {fileID: -98635084419582185}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+  m_UseCategoryCooldown: 1
+  m_Cooldown: 1
+  actions: []
+  m_OverrideEquipPrefab: {fileID: 0}
+  m_Region: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &-98635084419582185
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -324,6 +426,9 @@ MonoBehaviour:
   - {fileID: 5606543618748735577}
   - {fileID: 1902423496763658815}
   - {fileID: -6007527343319832179}
+  - {fileID: 7840715381217724353}
+  - {fileID: -2526849871109524535}
+  - {fileID: -836897042634075265}
   currencies:
   - {fileID: -98635084419582185}
   - {fileID: 2680968774529471378}
@@ -627,3 +732,54 @@ MonoBehaviour:
   name: Comsumable
   m_EditorColor: {r: 0.7830189, g: 0.7108122, b: 0.114498034, a: 0}
   m_Cooldown: 3
+--- !u!114 &7840715381217724353
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6132cc3558d117f4bbad4651b2dbdba7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Id: cb44ba81-3c23-417f-8531-a319fb282160
+  m_ItemName: M4A1
+  m_UseItemNameAsDisplayName: 1
+  m_DisplayName: New Item
+  m_Icon: {fileID: 21300000, guid: 97e1bb2dc820b1e47a2dd66871778f6f, type: 3}
+  m_Prefab: {fileID: 20529366969353621, guid: a8439753838ea654a9d1039afde923fb, type: 3}
+  m_Description: 
+  m_Category: {fileID: -4750904661271648325}
+  m_IsSellable: 1
+  m_BuyPrice: 0
+  m_CanBuyBack: 1
+  m_BuyCurrency: {fileID: -98635084419582185}
+  m_SellPrice: 0
+  m_SellCurrency: {fileID: -98635084419582185}
+  m_Stack: 1
+  m_MaxStack: 1
+  m_IsDroppable: 1
+  m_DropSound: {fileID: 0}
+  m_OverridePrefab: {fileID: 0}
+  m_IsCraftable: 0
+  m_CraftingDuration: 2
+  m_UseCraftingSkill: 0
+  m_SkillWindow: Skills
+  m_CraftingSkill: {fileID: 0}
+  m_RemoveIngredientsWhenFailed: 0
+  m_MinCraftingSkillValue: 0
+  m_CraftingAnimatorState: Blacksmithy
+  m_CraftingModifier:
+    modifiers: []
+  ingredients: []
+  properties: []
+  m_UseCategoryCooldown: 1
+  m_Cooldown: 1
+  actions: []
+  m_OverrideEquipPrefab: {fileID: 0}
+  m_Region: []
+  references:
+    version: 2
+    RefIds: []
