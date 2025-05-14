@@ -225,26 +225,38 @@ public class ShopManagement : MonoBehaviour
         {
             notificationPanel.SetActive(false);
         }
-    }
-    
-    // Adds a medkit to the player's inventory (spawns medkit or increases health)
+    }      // Adds a medkit to the player's inventory (adds to inventory or increases health)
     private void AddMedkit()
     {
-        // Option 1: Spawn a medkit in the scene
+        // Try to use the Devion Games Inventory System first
+        bool addedToInventory = false;
+        
+        // Check if we have the medkit prefab and try to add it to inventory
         if (medkitPrefab != null)
         {
-            // Find the player object
-            GameObject player = GameObject.FindWithTag("Player");
-            if (player != null)
+            // Get the ItemCollection component
+            DevionGames.InventorySystem.ItemCollection itemCollection = medkitPrefab.GetComponent<DevionGames.InventorySystem.ItemCollection>();
+            
+            if (itemCollection != null && itemCollection.Count > 0)
             {
-                // Spawn the medkit near the player
-                Vector3 spawnPosition = player.transform.position + player.transform.forward * .2f ;
-                Instantiate(medkitPrefab, spawnPosition, Quaternion.identity);
-                ShowNotification("Medkit purchased!");
-                Debug.Log("Spawned medkit at: " + spawnPosition);
+                // Get the first item from the collection
+                DevionGames.InventorySystem.Item medkitItem = itemCollection[0];
+                
+                // Create an instance of the item to add to inventory
+                DevionGames.InventorySystem.Item instance = DevionGames.InventorySystem.InventoryManager.CreateInstance(medkitItem);
+                
+                // Try to add it to the player's inventory
+                if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
+                {
+                    ShowNotification("Medkit added to inventory!");
+                    Debug.Log("Added medkit to inventory");
+                    addedToInventory = true;
+                }
             }
         }
-        else
+        
+        // If we couldn't add to inventory, fallback to health restoration or spawning
+        if (!addedToInventory)
         {
             // Try to find a health component on the player
             HealthManager playerHealth = FindObjectOfType<HealthManager>();
@@ -253,6 +265,19 @@ public class ShopManagement : MonoBehaviour
                 playerHealth.Heal(50); // Add 50 health or whatever amount is appropriate
                 ShowNotification("Health restored!");
                 Debug.Log("Added health to player: 50");
+            }
+            else if (medkitPrefab != null)
+            {
+                // Fallback to spawning if we have a prefab but couldn't add to inventory
+                GameObject player = GameObject.FindWithTag("Player");
+                if (player != null)
+                {
+                    // Spawn the medkit near the player
+                    Vector3 spawnPosition = player.transform.position + player.transform.forward * .2f;
+                    Instantiate(medkitPrefab, spawnPosition, Quaternion.identity);
+                    ShowNotification("Medkit purchased!");
+                    Debug.Log("Spawned medkit at: " + spawnPosition);
+                }
             }
             else
             {
@@ -353,48 +378,110 @@ public class ShopManagement : MonoBehaviour
                 ShowNotification("No pistol found to add ammo to!");
             }
         }
-    }
-
-    // Add rifle ammo to player's weapon
+    }    // Add rifle ammo to player's weapon
     private void AddRifleAmmo()
     {
-        // Similar implementation to AddPistolAmmo but for rifles
-        Gun[] allGuns = FindObjectsOfType<Gun>(true);
+        // Try to find all guns in the scene
+        Gun[] allGuns = FindObjectsOfType<Gun>();
         Gun rifle = null;
         
-        // Find a rifle (non-pistol and automatic)
+        // Look specifically for active rifles (non-pistol and automatic)
         foreach (Gun gun in allGuns)
         {
             if (!gun.isPistol && gun.isAutomatic)
             {
                 rifle = gun;
-                Debug.Log("Found rifle: " + gun.name);
+                Debug.Log("Found active rifle: " + gun.name);
                 break;
             }
         }
         
+        // If no active rifle is found, try by name for more active guns
+        if (rifle == null)
+        {
+            Debug.Log("No rifle with isAutomatic=true found, trying to find by name...");
+            foreach (Gun gun in allGuns)
+            {
+                string lowercaseName = gun.name.ToLower();
+                if (!gun.isPistol && (lowercaseName.Contains("rifle") || 
+                    lowercaseName.Contains("ak") || 
+                    lowercaseName.Contains("m4") || 
+                    lowercaseName.Contains("assault")))
+                {
+                    rifle = gun;
+                    Debug.Log("Found rifle by name: " + gun.name);
+                    break;
+                }
+            }
+        }
+        
+        // If we found a rifle, add ammo to it
         if (rifle != null)
         {
-            // Add ammo to rifle
+            // Add ammo to the rifle
             rifle.AddAmmo(rifleAmmoAmount);
-            ShowNotification($"Bought Rifle Ammo: +{rifleAmmoAmount}");
+            ShowNotification("Rifle ammo purchased: +" + rifleAmmoAmount);
+            Debug.Log("Added " + rifleAmmoAmount + " ammo to rifle: " + rifle.name);
         }
         else
         {
-            ShowNotification("You don't have a rifle to add ammo to!");
-            // Refund money
-            playerMoney += shopItemsList.Find(i => i.id == 3).price;
-            
-            if (ScoreManager.Instance != null)
+            // If looking in active guns failed, try to look in inactive guns (in weapon inventory)
+            Gun[] inactiveGuns = FindObjectsOfType<Gun>(true); // true to include inactive objects
+            foreach (Gun gun in inactiveGuns)
             {
-                ScoreManager.Score = playerMoney;
+                if (!gun.gameObject.activeInHierarchy && !gun.isPistol && gun.isAutomatic)
+                {
+                    rifle = gun;
+                    Debug.Log("Found inactive rifle: " + gun.name);
+                    break;
+                }
             }
             
-            UpdateMoneyText();
+            // Try inactive guns by name as a last resort
+            if (rifle == null)
+            {
+                foreach (Gun gun in inactiveGuns)
+                {
+                    if (!gun.gameObject.activeInHierarchy && !gun.isPistol)
+                    {
+                        string lowercaseName = gun.name.ToLower();
+                        if (lowercaseName.Contains("rifle") || 
+                            lowercaseName.Contains("ak") || 
+                            lowercaseName.Contains("m4") || 
+                            lowercaseName.Contains("assault"))
+                        {
+                            rifle = gun;
+                            Debug.Log("Found inactive rifle by name: " + gun.name);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (rifle != null)
+            {
+                // Add ammo to the inactive rifle
+                rifle.AddAmmo(rifleAmmoAmount);
+                ShowNotification("Rifle ammo purchased: +" + rifleAmmoAmount);
+                Debug.Log("Added " + rifleAmmoAmount + " ammo to inactive rifle: " + rifle.name);
+            }
+            else
+            {
+                // No rifle found anywhere - return money
+                Debug.LogWarning("No rifle found in the scene (active or inactive)! Returning money.");
+                playerMoney += shopItemsList.Find(i => i.id == 3).price;
+                
+                // Cập nhật tiền trong ScoreManager
+                if (ScoreManager.Instance != null)
+                {
+                    ScoreManager.Score = playerMoney;
+                }
+                
+                UpdateMoneyText();
+                ShowNotification("No rifle found to add ammo to!");
+            }
         }
-    }
-    
-    // Buy AK-47 gun
+    }    // Buy AK-47 gun
     private void BuyAK47()
     {
         // Check if AK-47 prefab is assigned
@@ -403,7 +490,7 @@ public class ShopManagement : MonoBehaviour
             Debug.LogError("AK-47 prefab is not assigned in ShopManagement!");
             
             // Refund money
-            playerMoney += shopItemsList.Find(i => i.id == 5).price;
+            playerMoney += shopItemsList.Find(i => i.id == 6).price;
             
             if (ScoreManager.Instance != null)
             {
@@ -414,7 +501,28 @@ public class ShopManagement : MonoBehaviour
             return;
         }
         
-        // Find the player object to spawn the weapon near them
+        // Try to add directly to inventory using Devion Games Inventory System
+        // Find the item (Item component or ItemCollection) in the prefab
+        DevionGames.InventorySystem.ItemCollection itemCollection = ak47Prefab.GetComponent<DevionGames.InventorySystem.ItemCollection>();
+        
+        if (itemCollection != null && itemCollection.Count > 0)
+        {
+            // Get the first item from the collection
+            DevionGames.InventorySystem.Item ak47Item = itemCollection[0];
+            
+            // Create an instance of the item
+            DevionGames.InventorySystem.Item instance = DevionGames.InventorySystem.InventoryManager.CreateInstance(ak47Item);
+            
+            // Try to add it to the player's inventory
+            if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
+            {
+                ShowNotification("AK-47 added to inventory!");
+                Debug.Log("Added AK-47 to inventory");
+                return;
+            }
+        }
+        
+        // If we couldn't add to inventory, fallback to spawning
         GameObject player = GameObject.FindWithTag("Player");
         if (player != null)
         {
@@ -436,7 +544,7 @@ public class ShopManagement : MonoBehaviour
             Debug.LogWarning("Player object not found when trying to spawn AK-47");
             
             // Refund money since we couldn't spawn the weapon
-            playerMoney += shopItemsList.Find(i => i.id == 5).price;
+            playerMoney += shopItemsList.Find(i => i.id == 6).price;
             
             if (ScoreManager.Instance != null)
             {
@@ -495,8 +603,8 @@ public class ShopManagement : MonoBehaviour
         }
         else
         {
-            ShowNotification("Weapon Upgrade system not available!");
-            Debug.LogWarning("WeaponUpgradeManager not found in scene!");
+            ShowNotification("Weapon Upgrade system not available!");   
+            Debug.Log("WeaponUpgradeManager not found in scene!");
         }
     }
     

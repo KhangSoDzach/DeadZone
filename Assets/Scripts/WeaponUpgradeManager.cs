@@ -98,24 +98,40 @@ public class WeaponUpgradeManager : MonoBehaviour
         if (reloadTimeButton)
             reloadTimeButton.onClick.AddListener(() => UpgradeReloadTime());
     }
-    
     // Show the weapon type selection panel
     public void ShowWeaponTypeSelection(int playerMoney, ShopManagement shop)
     {
         currentMoney = playerMoney;
         shopManager = shop;
         
-        // Check if player has weapons
-        Gun[] allGuns = FindObjectsOfType<Gun>(true);
+        // Check if player has weapons in the WeaponHolder
         bool hasPistol = false;
         bool hasRifle = false;
+        bool hasActiveRifle = false;
         
-        foreach (Gun gun in allGuns)
+        // Find the WeaponManager to access the WeaponHolder
+        WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
+        if (weaponManager != null && weaponManager.weaponHolder != null)
         {
-            if (gun.isPistol)
-                hasPistol = true;
-            else if (gun.isAutomatic)
-                hasRifle = true;
+            // Check only guns in the WeaponHolder
+            foreach (Transform child in weaponManager.weaponHolder)
+            {
+                Gun gun = child.GetComponent<Gun>();
+                if (gun != null)
+                {
+                    if (gun.isPistol)
+                        hasPistol = true;
+                    else if (gun.isAutomatic) {
+                        hasRifle = true;
+                        
+                        // Kiểm tra xem súng trường có đang được trang bị (active) không
+                        if (child.gameObject.activeInHierarchy) {
+                            hasActiveRifle = true;
+                            Debug.Log("Đã tìm thấy súng trường đang active trong WeaponHolder: " + gun.name);
+                        }
+                    }
+                }
+            }
         }
         
         // Enable/disable buttons based on weapon availability
@@ -123,7 +139,8 @@ public class WeaponUpgradeManager : MonoBehaviour
             pistolButton.interactable = hasPistol;
             
         if (rifleButton)
-            rifleButton.interactable = hasRifle;
+            // Chỉ cho phép nâng cấp súng trường khi có súng trường ĐANG ACTIVE
+            rifleButton.interactable = hasActiveRifle;
             
         if (noWeaponText)
             noWeaponText.gameObject.SetActive(!hasPistol && !hasRifle);
@@ -135,20 +152,32 @@ public class WeaponUpgradeManager : MonoBehaviour
         if (weaponUpgradePanel)
             weaponUpgradePanel.SetActive(false);
     }
-    
     // Select weapon type (pistol or rifle)
     private void SelectWeaponType(bool isPistol)
     {
         this.isPistol = isPistol;
         
-        // Find the appropriate weapon
-        Gun[] allGuns = FindObjectsOfType<Gun>(true);
-        foreach (Gun gun in allGuns)
+        // Find the appropriate weapon from the WeaponHolder
+        WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
+        if (weaponManager != null && weaponManager.weaponHolder != null)
         {
-            if ((isPistol && gun.isPistol) || (!isPistol && gun.isAutomatic && !gun.isPistol))
+            // Find guns that are children of WeaponHolder
+            foreach (Transform child in weaponManager.weaponHolder)
             {
-                currentWeapon = gun;
-                break;
+                Gun gun = child.GetComponent<Gun>();
+                if (gun != null)
+                {
+                    if (isPistol && gun.isPistol) {
+                        currentWeapon = gun;
+                        break;
+                    } else if (!isPistol && gun.isAutomatic && !gun.isPistol) {
+                        // Đối với súng trường, chỉ chọn súng đang active
+                        if (child.gameObject.activeInHierarchy) {
+                            currentWeapon = gun;
+                            break;
+                        }
+                    }
+                }
             }
         }
         
@@ -159,7 +188,7 @@ public class WeaponUpgradeManager : MonoBehaviour
         else
         {
             // This shouldn't happen if buttons are disabled properly
-            Debug.LogWarning("No weapon found of selected type!");
+            Debug.LogWarning("No weapon found of selected type in WeaponHolder!");
         }
     }
     
