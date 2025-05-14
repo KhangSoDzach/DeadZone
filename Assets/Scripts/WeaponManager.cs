@@ -165,7 +165,7 @@ public class WeaponManager : MonoBehaviour
                 if (allCameras.Length > 0)
                 {
                     playerCamera = allCameras[0];
-                    Debug.Log("Đã tìm thấy camera thay thế.");
+                    //Debug.Log("Đã tìm thấy camera thay thế.");
                 }
             }
         }
@@ -251,7 +251,7 @@ public class WeaponManager : MonoBehaviour
             // Lưu transform hiện tại trước khi vứt vũ khí
             componentRestore.StoreCurrentTransformAsCorrect();
             componentRestore.PrepareForDrop();
-            Debug.Log($"Đã lưu transform hiện tại của vũ khí {currentWeapon.name} trước khi vứt");
+           // Debug.Log($"Đã lưu transform hiện tại của vũ khí {currentWeapon.name} trước khi vứt");
         }
         
         // Kiểm tra và đảm bảo camera có sẵn
@@ -274,7 +274,7 @@ public class WeaponManager : MonoBehaviour
         // Kiểm tra nếu đây là vũ khí cuối cùng thì không cho vứt
         if (weaponHolder == null || weaponHolder.childCount <= 1)
         {
-            Debug.Log("Không thể vứt vũ khí cuối cùng!");
+           // Debug.Log("Không thể vứt vũ khí cuối cùng!");
             return;
         }
         
@@ -282,14 +282,14 @@ public class WeaponManager : MonoBehaviour
         Gun currentGunComponent = currentWeapon.GetComponent<Gun>();
         if (currentGunComponent != null && currentGunComponent.isPistol)
         {
-            Debug.Log("Không thể vứt súng lục (vũ khí thứ cấp)!");
+          //  Debug.Log("Không thể vứt súng lục (vũ khí thứ cấp)!");
             return;
         }
         
         // Kiểm tra xác thực lần nữa để đảm bảo rằng vũ khí này có thể vứt
         if (!GetCurrentWeaponIsDroppable())
         {
-            Debug.Log("Vũ khí hiện tại không thể vứt!");
+           // Debug.Log("Vũ khí hiện tại không thể vứt!");
             return;
         }
         
@@ -300,7 +300,7 @@ public class WeaponManager : MonoBehaviour
             weaponName = weaponName.Replace("(Clone)", "");
         }
         
-        Debug.Log($"Đang vứt vũ khí: {weaponName}");
+     //   Debug.Log($"Đang vứt vũ khí: {weaponName}");
         
         // Tìm prefab index dựa trên tên vũ khí
         int prefabIndex = -1;
@@ -308,7 +308,7 @@ public class WeaponManager : MonoBehaviour
         // Kiểm tra chính xác tên vũ khí
         if (weaponNameToIndex.TryGetValue(weaponName, out prefabIndex))
         {
-            Debug.Log($"Tìm thấy prefab index: {prefabIndex}");
+         //   Debug.Log($"Tìm thấy prefab index: {prefabIndex}");
         }
         // Thử với phương thức tìm kiếm mềm hơn
         else
@@ -319,7 +319,7 @@ public class WeaponManager : MonoBehaviour
                     weaponName.ToLower().Contains(key.ToLower()))
                 {
                     prefabIndex = weaponNameToIndex[key];
-                    Debug.Log($"Tìm thấy prefab tương tự: {key} với index {prefabIndex}");
+                 //   Debug.Log($"Tìm thấy prefab tương tự: {key} với index {prefabIndex}");
                     break;
                 }
             }
@@ -570,52 +570,53 @@ public class WeaponManager : MonoBehaviour
         return -1;
     }
     
-    // Thử nhặt vũ khí trước mặt
+    // Thử nhặt vũ khí hoặc đạn trước mặt
     private void TryPickupWeapon()
     {
         if (playerCamera == null)
         {
-            Debug.LogError("playerCamera là null khi cố gắng nhặt vũ khí!");
+            Debug.LogError("Không có camera được gán!");
             return;
         }
-
-        Debug.Log($"Đang thử nhặt vật phẩm. Layer mask: {pickupLayer.value}");
-        
-        // Vẽ ray trong scene để debug
-        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * pickupRange, Color.yellow, 0.5f);
         
         RaycastHit hit;
-        // Thực hiện raycast để tìm vật phẩm có thể nhặt
+        // Raycast để kiểm tra vật phẩm phía trước
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit, pickupRange, pickupLayer))
         {
-            Debug.Log($"Phát hiện va chạm với {hit.collider.gameObject.name}, layer: {hit.collider.gameObject.layer}");
-            
-            // Kiểm tra xem có phải là medkit không
-            MedkitPickup medkit = hit.collider.GetComponent<MedkitPickup>();
-            if (medkit != null)
+            // Kiểm tra xem đối tượng có phải là đạn không
+            AmmoPickup ammoPickup = hit.collider.GetComponent<AmmoPickup>();
+            if (ammoPickup != null)
             {
-                Debug.Log("Tìm thấy Medkit, đang sử dụng...");
-                // Tìm HealthManager của người chơi
-                HealthManager playerHealth = GetComponent<HealthManager>();
-                if (playerHealth == null)
+                bool ammoAdded = false;
+                
+                // Thử tìm súng phù hợp trong kho để thêm đạn
+                for (int i = 0; i < weaponHolder.childCount; i++)
                 {
-                    // Nếu không tìm thấy trên GameObjet hiện tại, tìm trên Player
-                    playerHealth = GameObject.FindGameObjectWithTag("Player").GetComponent<HealthManager>();
+                    Gun gun = weaponHolder.GetChild(i).GetComponent<Gun>();
+                    if (gun != null)
+                    {
+                        // Thử thêm đạn vào súng này
+                        if (ammoPickup.AddAmmoToGun(gun))
+                        {
+                            ammoAdded = true;
+                            break;
+                        }
+                    }
                 }
                 
-                if (playerHealth != null)
+                if (ammoAdded)
                 {
-                    // Sử dụng medkit
-                    medkit.Use(playerHealth);
+                    // Xóa đạn sau khi nhặt
+                    Destroy(hit.collider.gameObject);
                     return;
                 }
                 else
                 {
-                    Debug.LogError("Không tìm thấy HealthManager trên người chơi!");
+                    Debug.Log("Không có súng phù hợp để thêm đạn này!");
                 }
             }
             
-            // Kiểm tra xem có phải là vũ khí có thể nhặt không
+            // Xử lý nhặt vũ khí như bình thường
             WeaponPickup pickup = hit.collider.GetComponent<WeaponPickup>();
             if (pickup != null)
             {
@@ -823,6 +824,21 @@ public class WeaponManager : MonoBehaviour
         {
             switchWeapon.selectedWeapon = newSelectedWeapon;
             Debug.Log($"Đã cập nhật selectedWeapon trong switchWeapon thành: {newSelectedWeapon} (không gọi SelectWeapon)");
+        }
+
+        // Add this code after successfully adding a weapon to inventory
+        if (PickupDisplayManager.Instance != null)
+        {
+            // Get Gun component to extract required information
+            if (gunComponent != null)
+            {
+                PickupDisplayManager.Instance.ShowWeaponPickup(
+                    cleanName,  // weapon name
+                    gunComponent.currentAmmo,  // current ammo
+                    gunComponent.damage,  // damage value
+                    gunComponent.isAutomatic  // is automatic
+                );
+            }
         }
     }
     

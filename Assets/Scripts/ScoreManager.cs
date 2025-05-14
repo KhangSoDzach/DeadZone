@@ -119,15 +119,7 @@ public class ScoreManager : MonoBehaviour
     // Static method to add points to the score
     public static void AddScore(int points)
     {
-        // Ensure we have an instance
-        if (Instance == null)
-        {
-            GameObject scoreManagerObj = new GameObject("ScoreManager");
-            scoreManagerObj.AddComponent<ScoreManager>();
-        }
-        
         Score += points;
-        Debug.Log("Score increased by " + points + ". Total: " + Score);
     }
     
     // For external scripts to get the scoreText reference

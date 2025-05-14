@@ -4978,7 +4978,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 3.4e-44, z: 0, w: 1e-45}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 1e-45, z: 6.6838e-41, w: 3.59e-43}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -5111,6 +5111,10 @@ MonoBehaviour:
   spreadIncreasePerShot: 0.01
   spreadRecoveryTime: 0.5
   currentSpread: 0
+  bloodSplatterEffect: {fileID: 1000013355911406, guid: d32aa916f50cac94db11e6f19821a58f, type: 3}
+  bloodDecalPrefab: {fileID: 100000, guid: 358b75ea5451cf143ab19029a189097d, type: 3}
+  bloodDecalLifetime: 10
+  bloodSplatterChance: 0.8
 --- !u!82 &2527786609146320886
 AudioSource:
   m_ObjectHideFlags: 0
