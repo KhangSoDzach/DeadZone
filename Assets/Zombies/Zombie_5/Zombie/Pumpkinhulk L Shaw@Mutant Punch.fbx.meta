@@ -1,39 +1,9 @@
 fileFormatVersion: 2
-guid: 834d9bc15a0e8b14b8d1c8fb78dc2f37
+guid: 79d0709d9fe897340a746f8e06af5f45
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: parasitezombie_Material
-    second: {fileID: 2100000, guid: fd384c01b0c7d6c4abe3cf59606f2823, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: parasitezombie_Material1
-    second: {fileID: 2100000, guid: 0e48c5a66e1dd7f4b95778da2628fd50, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: parasiteZombie_body_diffuse
-    second: {fileID: 2800000, guid: 3d0fd475c9231b94ea9a2d79e6dabcc5, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: parasiteZombie_diffuse
-    second: {fileID: 2800000, guid: efc4dafe46648f44d921f68ba4ba1586, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: parasiteZombie_normal
-    second: {fileID: 2800000, guid: 66002f50528438840bab638c174dc0b2, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: parasiteZombie_specular
-    second: {fileID: 2800000, guid: 709742b97d5d1c048bd1a1c706232772, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -129,7 +99,7 @@ ModelImporter:
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 1
+  avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0

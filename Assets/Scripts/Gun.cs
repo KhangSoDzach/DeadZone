@@ -352,6 +352,7 @@ public class Gun : MonoBehaviour
             Zombie_3 zombie3 = hit.transform.GetComponent<Zombie_3>();
             Zombie_4 zombie4 = hit.transform.GetComponent<Zombie_4>();
             ZombieMiniboss ZombieMiniboss = hit.transform.GetComponent<ZombieMiniboss>();
+            Boss Boss = hit.transform.GetComponent<Boss>();
 
             // Use ScoreManager to add score directly
             if (zombie1 != null)
@@ -381,6 +382,11 @@ public class Gun : MonoBehaviour
             if (ZombieMiniboss != null)
             {
                 ZombieMiniboss.zombieGotHit(damage);
+                ScoreManager.AddScore((int)damage);
+            }
+            if (Boss != null)
+            {
+                Boss.zombieGotHit(damage);
                 ScoreManager.AddScore((int)damage);
             }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
