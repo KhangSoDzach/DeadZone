@@ -211,9 +211,7 @@ public class Gun : MonoBehaviour
         {
             animator.SetBool("Reloading", false); // Stop reload animation
         }
-    }
-
-    // Update is called once per frame
+    }    // Update is called once per frame
     void Update()
     {
         if (isReloading)
@@ -225,6 +223,20 @@ public class Gun : MonoBehaviour
         {
             StartCoroutine(Reload());
             return;
+        }
+        
+        // Check if shop is open using direct reference to ShopManagement
+        // This is more reliable and doesn't require the ShopWeaponBlocker to be in the scene
+        ShopManagement shopManager = FindObjectOfType<ShopManagement>();
+        if (shopManager != null && shopManager.IsShopOpen())
+        {
+            return; // Prevent shooting while shop is open
+        }
+        
+        // Also check the ShopWeaponBlocker as a backup if it exists in the scene
+        if (ShopWeaponBlocker.Instance != null && ShopWeaponBlocker.ShouldBlockWeaponFiring())
+        {
+            return; // Prevent shooting while shop is open (via the blocker)
         }
 
         if (isAutomatic)
