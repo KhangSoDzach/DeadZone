@@ -31,23 +31,45 @@ public class ShopTrigger : MonoBehaviour
                 ToggleShop();
             }
         }
-    }
-
-    void ToggleShop()
+    }    void ToggleShop()
     {
         shopOpen = !shopOpen;
-        shopUI.SetActive(shopOpen);
-
+        
+        // Get reference to ShopManagement
+        ShopManagement shopManager = FindObjectOfType<ShopManagement>();
+        
         if (shopOpen)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            Time.timeScale = 0f; 
+            // Use ShopManagement to open shop (which also sets isShopOpen to true)
+            if (shopManager != null)
+            {
+                shopManager.OpenShop();
+            }
+            else
+            {
+                // Fallback if no ShopManagement is found
+                shopUI.SetActive(true);
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            
+            Time.timeScale = 0f;
         }
         else
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            // Use ShopManagement to close shop (which also sets isShopOpen to false)
+            if (shopManager != null)
+            {
+                shopManager.CloseShop();
+            }
+            else
+            {
+                // Fallback if no ShopManagement is found
+                shopUI.SetActive(false);
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+            
             Time.timeScale = 1f;
         }
     }

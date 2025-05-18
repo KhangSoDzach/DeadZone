@@ -44,6 +44,26 @@ public class SwitchWeapon : MonoBehaviour
         {
             SelectWeapon();
         }
+        
+        // Kiểm tra trong Shop đóng lại có cần reload lại súng hay không
+        ShopManagement shopManager = FindObjectOfType<ShopManagement>();
+        if (shopManager != null && !shopManager.IsShopOpen())
+        {
+            // Check if there's a flag indicating we just closed the shop
+            if (shopManager.GetComponent<ShopStateTracker>() == null)
+            {
+                // Add a tracker component
+                ShopStateTracker tracker = shopManager.gameObject.AddComponent<ShopStateTracker>();
+                tracker.wasOpen = true;
+            }
+            else if (shopManager.GetComponent<ShopStateTracker>().wasOpen)
+            {
+                // Reset the flag
+                shopManager.GetComponent<ShopStateTracker>().wasOpen = false;
+                // Force reselect the weapon to enable it properly
+                ForceSelectCurrentWeapon();
+            }
+        }
     }
 
     public void SelectWeapon()
@@ -146,4 +166,17 @@ public class SwitchWeapon : MonoBehaviour
             i++;
         }
     }
+
+    // Phương thức để bắt buộc chọn lại vũ khí hiện tại (sau khi đóng cửa hàng)
+    public void ForceSelectCurrentWeapon()
+    {
+        Debug.Log("Áp dụng Force Select sau khi rời cửa hàng");
+        SelectWeapon(); // Chỉ gọi lại phương thức SelectWeapon để refreshq
+    }
+}
+
+// Class nhỏ để theo dõi trạng thái cửa hàng
+public class ShopStateTracker : MonoBehaviour
+{
+    public bool wasOpen = false;
 }
