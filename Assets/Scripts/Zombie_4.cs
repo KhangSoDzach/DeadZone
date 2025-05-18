@@ -54,6 +54,11 @@ public class Zombie_4 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (playerBody == null || LookPoint == null)
+        {
+            TryAssignPlayerReferences();
+            return;
+        }
         playerExistenceRadius = Physics.CheckSphere(transform.position, observationRadius, PlayerLayer);
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
@@ -98,6 +103,30 @@ public class Zombie_4 : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
         }
 
+    }
+    private void TryAssignPlayerReferences()
+    {
+        if (playerBody == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                playerBody = playerObj.transform;
+            }
+        }
+
+        if (LookPoint == null && playerBody != null)
+        {
+            Transform lookTarget = playerBody.Find("LookPoint");
+            if (lookTarget != null)
+            {
+                LookPoint = lookTarget;
+            }
+            else
+            {
+                LookPoint = playerBody;
+            }
+        }
     }
     private void AttackPlayer()
     {

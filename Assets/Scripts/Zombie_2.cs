@@ -36,7 +36,7 @@ public class Zombie_2 : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 5f;
-    private float zombieHealth = 50f;
+    private float zombieHealth = 55f;
     private float remainHeath;
     [Header("Zombie Sounds")]
     public AudioSource audioSource;
@@ -54,6 +54,11 @@ public class Zombie_2 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (playerBody == null || LookPoint == null)
+        {
+            TryAssignPlayerReferences();
+            return;
+        }
         playerExistenceRadius = Physics.CheckSphere(transform.position, observationRadius, PlayerLayer);
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
@@ -124,6 +129,30 @@ public class Zombie_2 : MonoBehaviour
             }
         }
 
+    }
+    private void TryAssignPlayerReferences()
+    {
+        if (playerBody == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                playerBody = playerObj.transform;
+            }
+        }
+
+        if (LookPoint == null && playerBody != null)
+        {
+            Transform lookTarget = playerBody.Find("LookPoint");
+            if (lookTarget != null)
+            {
+                LookPoint = lookTarget;
+            }
+            else
+            {
+                LookPoint = playerBody;
+            }
+        }
     }
     private void ActiveAttacking()
     {

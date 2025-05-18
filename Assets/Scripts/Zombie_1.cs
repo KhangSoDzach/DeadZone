@@ -58,6 +58,11 @@ public class Zombie_1 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (playerBody == null || LookPoint == null)
+        {
+            TryAssignPlayerReferences();
+            return;
+        }
         playerExistenceRadius = Physics.CheckSphere(transform.position, observationRadius, PlayerLayer);
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (!playerExistenceRadius && !playerInAttackingRadius) Guard();
@@ -201,7 +206,30 @@ public class Zombie_1 : MonoBehaviour
 
 
     }
+    private void TryAssignPlayerReferences()
+    {
+        if (playerBody == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                playerBody = playerObj.transform;
+            }
+        }
 
+        if (LookPoint == null && playerBody != null)
+        {
+            Transform lookTarget = playerBody.Find("LookPoint");
+            if (lookTarget != null)
+            {
+                LookPoint = lookTarget;
+            }
+            else
+            {
+                LookPoint = playerBody;
+            }
+        }
+    }
     private void EndReaction()
     {
         zombieAgent.isStopped = false;

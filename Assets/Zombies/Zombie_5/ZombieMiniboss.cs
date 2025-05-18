@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,7 +7,10 @@ public class ZombieMiniboss : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        remainHeath = zombieHealth;
+        zombieAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
 
+        TryAssignPlayerReferences();
     }
 
     [Header("Zombie Things")]
@@ -38,7 +41,7 @@ public class ZombieMiniboss : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 15f;
-    private float zombieHealth = 100f;
+    private float zombieHealth = 300f;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -46,15 +49,21 @@ public class ZombieMiniboss : MonoBehaviour
     public AudioClip idleGroanSound;
 
     [Header("Heavy Attack Settings")]
-    public float heavyAttackCooldown = 3f;
-    private float heavyAttackTimer = 0f;
+    public int heavyAttackCooldown = 10;
+    private int heavyAttackTimer = 0;
     public float heavyAttackDamage = 30f;
 
     private float nextSoundTime = 0f;
 
+
     // Update is called once per frame
     void Update()
     {
+        if (playerBody == null || LookPoint == null)
+        {
+            TryAssignPlayerReferences();
+            return; 
+        }
         playerExistenceRadius = Physics.CheckSphere(transform.position, observationRadius, PlayerLayer);
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (!playerExistenceRadius && !playerInAttackingRadius) Guard();
@@ -69,18 +78,20 @@ public class ZombieMiniboss : MonoBehaviour
                     audioSource.PlayOneShot(idleGroanSound);
                 }
 
-                nextSoundTime = Time.time + 10f;
+                nextSoundTime = Time.time + 15f;
             }
         }
         if (playerExistenceRadius && playerInAttackingRadius)
         {
-            AttackPlayer();
-
-            heavyAttackTimer += Time.deltaTime;
-            if (heavyAttackTimer >= heavyAttackCooldown)
+            heavyAttackTimer += 1;
+            if (heavyAttackTimer >= 5)
             {
-                TriggerHeavyAttack();
-                heavyAttackTimer = 0f;
+                HeavyAttacking();
+            }
+            else
+            {
+                AttackPlayer();
+
             }
         }
 
@@ -127,6 +138,8 @@ public class ZombieMiniboss : MonoBehaviour
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", false);
+            aniZombie.SetBool("isHeavyAttack", false);
+
 
         }
         else
@@ -151,7 +164,6 @@ public class ZombieMiniboss : MonoBehaviour
             aniZombie.SetBool("isWalking", false);
             aniZombie.SetBool("isRunning", false);
             aniZombie.SetBool("isDead", false);
-            aniZombie.SetTrigger("isAttack");
             zombieAgent.isStopped = true;
 
             Invoke(nameof(EndReaction), 1.4f);
@@ -179,7 +191,7 @@ public class ZombieMiniboss : MonoBehaviour
 
     }
 
-    void TriggerHeavyAttack()
+    private void HeavyAttacking()
     {
         zombieAgent.SetDestination(transform.position);
         transform.LookAt(LookPoint);
@@ -188,24 +200,29 @@ public class ZombieMiniboss : MonoBehaviour
         {
             //Code the player take damage from player
 
-            aniZombie.SetBool("isAttacking", false);
+            aniZombie.SetBool("isHeavyAttack", true);
             aniZombie.SetBool("isWalking", false);
+            aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isRunning", false);
             aniZombie.SetBool("isDead", false);
-            aniZombie.SetTrigger("isHeavyAttack");
             zombieAgent.isStopped = true;
 
-            Invoke(nameof(ApplyHeavyDamage), 0.5f);
             Invoke(nameof(EndReaction), 1.5f);
+
+            Invoke(nameof(ApplyHeavyDamage), 1.6f);
 
 
             prevAttack = true;
             Invoke(nameof(ActiveAttacking), attackSpeed);
         }
 
+
+
+
     }
     void ApplyHeavyDamage()
     {
+        heavyAttackTimer = 0;
         RaycastHit hit;
         if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
         {
@@ -235,13 +252,13 @@ public class ZombieMiniboss : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 100 || remainHeath == 200 || remainHeath == 300)
+        if (remainHeath == 50 || remainHeath == 100 || remainHeath == 150|| remainHeath == 250|| remainHeath == 200)
         {
             //Reaction hit
             aniZombie.SetTrigger("isHit");
             zombieAgent.isStopped = true;
 
-            Invoke(nameof(EndReaction), 1f);
+            Invoke(nameof(EndReaction), 1.4f);
         }
 
 
@@ -252,6 +269,31 @@ public class ZombieMiniboss : MonoBehaviour
     {
         zombieAgent.isStopped = false;
     }
+    private void TryAssignPlayerReferences()
+    {
+        if (playerBody == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                playerBody = playerObj.transform;
+            }
+        }
+
+        if (LookPoint == null && playerBody != null)
+        {
+            Transform lookTarget = playerBody.Find("LookPoint");
+            if (lookTarget != null)
+            {
+                LookPoint = lookTarget;
+            }
+            else
+            {
+                LookPoint = playerBody; 
+            }
+        }
+    }
+
     private void zombieDie()
     {
         transform.LookAt(LookPoint);

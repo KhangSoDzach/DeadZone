@@ -35,6 +35,10 @@ public class PlayerLook : MonoBehaviour
     private bool isFiring = false;          // Track if player is actively firing
 
     // Thêm hàm để xử lý camera shake khi bị tấn công
+    void Awake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+    }
     public void TakeDamageEffect()
     {
         Debug.Log("TakeDamageEffect đã được gọi!");

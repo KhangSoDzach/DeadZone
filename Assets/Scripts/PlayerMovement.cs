@@ -27,6 +27,10 @@ public class PlayerMovement : MonoBehaviour
     private HealthManager healthManager;
 
     // Start is called before the first frame update
+    void Awake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+    }
     void Start()
     {
         controller = GetComponent<CharacterController>();
