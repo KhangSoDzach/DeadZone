@@ -396,6 +396,24 @@ public class ShopManagement : MonoBehaviour
     }    // Add rifle ammo to player's weapon
     private void AddRifleAmmo()
     {
+        // Check if player has a rifle in their weapon holder first
+        if (!PlayerHasRifle())
+        {
+            // If no rifle is found, show notification and refund money
+            Debug.LogWarning("No rifle found in player's weapon holder! Returning money.");
+            playerMoney += shopItemsList.Find(i => i.id == 3).price;
+            
+            // Cập nhật tiền trong ScoreManager
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Score = playerMoney;
+            }
+            
+            UpdateMoneyText();
+            ShowNotification("You need to buy a rifle first!");
+            return;
+        }
+
         // Try to find all guns in the scene
         Gun[] allGuns = FindObjectsOfType<Gun>();
         Gun rifle = null;
@@ -690,5 +708,28 @@ public class ShopManagement : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
+    }
+
+    // New helper method to check if player has a rifle in their weapon holder
+    private bool PlayerHasRifle()
+    {
+        // Find the weapon holder
+        WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
+        if (weaponManager != null && weaponManager.weaponHolder != null)
+        {
+            // Check all weapons in the holder
+            foreach (Transform weapon in weaponManager.weaponHolder)
+            {
+                Gun gun = weapon.GetComponent<Gun>();
+                if (gun != null && !gun.isPistol)
+                {
+                    // Found a rifle in the weapon holder
+                    return true;
+                }
+            }
+        }
+        
+        // No rifle found
+        return false;
     }
 }

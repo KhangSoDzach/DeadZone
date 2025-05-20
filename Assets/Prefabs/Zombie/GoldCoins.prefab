@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 23458456864992360}
   - component: {fileID: 624616886855256349}
   - component: {fileID: 1718280509108951495}
-  - component: {fileID: 4170805459085598854}
   - component: {fileID: -7122980228032196695}
   - component: {fileID: -90271200289996460}
   m_Layer: 0
@@ -31,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1950871307682000}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.017469307, y: 0.014255274, z: -0.1131496}
   m_LocalScale: {x: 4, y: 4, z: 4}
   m_ConstrainProportionsScale: 1
@@ -100,17 +99,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92db8595745190347b794daea3b49349, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseValue: 10
-  maxAdditionalValue: 20
-  rotationSpeed: 0
-  floatHeight: 0
-  floatSpeed: 2
-  collectRadius: 2
+  value: 10
+  pickupRadius: 2
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
   pickupSound: {fileID: 0}
-  pickupEffectPrefab: {fileID: 0}
+  pickupEffect: {fileID: 0}
 --- !u!135 &1718280509108951495
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -132,33 +127,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.032534447
   m_Center: {x: 0.0032892236, y: 0.010496559, z: 0.0014966959}
---- !u!54 &4170805459085598854
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1950871307682000}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!2083052967 &-7122980228032196695
 VisualEffect:
   m_ObjectHideFlags: 0

@@ -25,6 +25,21 @@ public class AmmoPickup : MonoBehaviour
     private void Start()
     {
         startPosition = transform.position;
+        
+        // Add glow effect if not already present
+        if (GetComponent<PickupGlow>() == null)
+        {
+            PickupGlow glow = gameObject.AddComponent<PickupGlow>();
+            
+            // Different colors for different ammo types
+            if (ammoType == AmmoType.Pistol)
+                glow.glowColor = new Color(1f, 0.8f, 0f); // Yellow-orange for pistol ammo
+            else
+                glow.glowColor = new Color(1f, 0.4f, 0f); // Orange for rifle ammo
+                
+            glow.intensity = 1f;
+            glow.flickerAmount = 0.05f;
+        }
     }
     
     private void Update()
