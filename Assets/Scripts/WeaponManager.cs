@@ -33,6 +33,15 @@ public class WeaponManager : MonoBehaviour
     private GameObject currentWeapon;
     private SwitchWeapon switchWeapon;
     
+    // Properties for PlayerDataManager access
+    public Gun CurrentGun { get { return currentGun; } }
+    
+    // Dictionary to store ammo counts by type
+    private Dictionary<string, int> ammoByType = new Dictionary<string, int>() {
+        { "pistol", 30 },
+        { "rifle", 0 }
+    };
+
     private void Start()
     {
         Debug.Log("Khởi tạo WeaponManager...");
@@ -999,6 +1008,132 @@ public class WeaponManager : MonoBehaviour
             currentWeapon = weaponHolder.GetChild(index).gameObject;
             currentGun = currentWeapon.GetComponent<Gun>();
             Debug.Log($"Đã cập nhật tham chiếu currentWeapon thành {currentWeapon.name}");
+        }
+    }
+
+    // Method to get a Gun component by name
+    public Gun GetGunByName(string weaponName)
+    {
+        GameObject weapon = GetWeaponPrefabByName(weaponName);
+        if (weapon != null)
+        {
+            return weapon.GetComponent<Gun>();
+        }
+        return null;
+    }
+
+    // Method to get a weapon prefab by name
+    public GameObject GetWeaponPrefabByName(string weaponName)
+    {
+        if (weaponNameToIndex.TryGetValue(weaponName, out int index))
+        {
+            if (index >= 0 && index < weaponPrefabs.Count)
+            {
+                return weaponPrefabs[index];
+            }
+        }
+        Debug.LogWarning($"Không tìm thấy prefab vũ khí có tên: {weaponName}");
+        return null;
+    }
+
+    // Method to unlock a weapon
+    public void UnlockWeapon(string weaponName)
+    {
+        // In this implementation, we assume a weapon is "unlocked" when it's added to the player's inventory
+        // This would typically happen in your game's weapon unlock logic
+        Debug.Log($"Weapon unlocked: {weaponName}");
+        
+        // Find weapon prefab by name
+        GameObject weaponPrefab = GetWeaponPrefabByName(weaponName);
+        if (weaponPrefab != null)
+        {
+            // Equip the weapon if it's not already equipped
+            bool weaponFound = false;
+            for (int i = 0; i < weaponHolder.childCount; i++)
+            {
+                if (weaponHolder.GetChild(i).name.Contains(weaponName))
+                {
+                    weaponFound = true;
+                    break;
+                }
+            }
+            
+            if (!weaponFound)
+            {
+                // Add weapon to player's inventory
+                GameObject weapon = Instantiate(weaponPrefab, weaponHolder);
+                weapon.name = weaponName;
+                weapon.SetActive(false); // Don't activate it yet
+                Debug.Log($"Added weapon {weaponName} to player's inventory");
+            }
+        }
+    }
+
+    // Method to equip a specific weapon by name
+    public void EquipWeapon(string weaponName)
+    {
+        // Find weapon in holder by name
+        for (int i = 0; i < weaponHolder.childCount; i++)
+        {
+            if (weaponHolder.GetChild(i).name.Contains(weaponName))
+            {
+                if (switchWeapon != null)
+                {
+                    switchWeapon.selectedWeapon = i;
+                    switchWeapon.SelectWeapon();
+                }
+                else
+                {
+                    // Fallback if switchWeapon is not available
+                    for (int j = 0; j < weaponHolder.childCount; j++)
+                    {
+                        weaponHolder.GetChild(j).gameObject.SetActive(j == i);
+                    }
+                }
+                
+                currentWeapon = weaponHolder.GetChild(i).gameObject;
+                currentGun = currentWeapon.GetComponent<Gun>();
+                
+                Debug.Log($"Equipped weapon: {weaponName}");
+                return;
+            }
+        }
+        
+        Debug.LogWarning($"Could not equip weapon {weaponName}: not found in weapon holder");
+    }
+
+    // Methods to get/set ammo count for different weapon types
+    public int GetAmmoCount(string ammoType)
+    {
+        if (ammoByType.TryGetValue(ammoType.ToLower(), out int count))
+        {
+            return count;
+        }
+        return 0;
+    }
+
+    public void SetAmmoCount(string ammoType, int count)
+    {
+        ammoType = ammoType.ToLower();
+        if (ammoByType.ContainsKey(ammoType))
+        {
+            ammoByType[ammoType] = Mathf.Max(0, count);
+            
+            // Update the ammo count on all guns of this type
+            foreach (Transform weaponTransform in weaponHolder)
+            {
+                Gun gun = weaponTransform.GetComponent<Gun>();
+                if (gun != null)
+                {
+                    // Determine gun type based on isPistol property
+                    string gunType = gun.isPistol ? "pistol" : "rifle";
+                    if (gunType == ammoType)
+                    {
+                        gun.totalAmmo = count;
+                        gun.UpdateAmmoUI();
+                    }
+                }
+            }
         }
     }
 }

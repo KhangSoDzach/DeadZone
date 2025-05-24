@@ -23,6 +23,16 @@ public class MoneyPickup : MonoBehaviour
         
         // Debug để kiểm tra layer
         Debug.Log($"Money Layer: {gameObject.layer}, Player Layer: {player?.gameObject.layer}");
+        
+        // Add glow effect if not already present
+        if (GetComponent<PickupGlow>() == null)
+        {
+            PickupGlow glow = gameObject.AddComponent<PickupGlow>();
+            glow.glowColor = new Color(0.8f, 0.8f, 0.1f); // Gold/yellow for money
+            glow.intensity = 1.3f;
+            glow.usePulse = true;
+            glow.flickerSpeed = 1f;
+        }
     }
     
     private void Update()
@@ -65,7 +75,7 @@ public class MoneyPickup : MonoBehaviour
         }
         
         // Tăng điểm
-        ScoreManager.AddScore(value);
+        ScoreManager.Instance.AddScore(value);
         //Debug.Log($"Added {value} money to score. New total: {ScoreManager.Score}");
         
         // Phát âm thanh
