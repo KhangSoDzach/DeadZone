@@ -75,7 +75,7 @@ public class MoneyPickup : MonoBehaviour
         }
         
         // Tăng điểm
-        ScoreManager.AddScore(value);
+        ScoreManager.Instance.AddScore(value);
         //Debug.Log($"Added {value} money to score. New total: {ScoreManager.Score}");
         
         // Phát âm thanh
