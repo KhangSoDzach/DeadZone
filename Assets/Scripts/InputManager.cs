@@ -10,8 +10,11 @@ public class InputManager : MonoBehaviour
     private PlayerMovement movement;
     private PlayerLook look;
     private WeaponManager weaponManager;
-    
+
     // Start is called before the first frame update
+    void Start()
+    {
+    }
     void Awake()
     {
         playerInput = new PlayerInput();

@@ -18,6 +18,5 @@ public class InventoryForKey : MonoBehaviour
     public void PickUpKey()
     {
         hasKey = true;
-        Debug.Log("Đã nhặt chìa khóa!");
     }
 }

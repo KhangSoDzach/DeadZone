@@ -10,6 +10,8 @@ TagManager:
   - FxTemporaire
   - PressE
   - Event
+  - Boss
+  - Vaccine
   layers:
   - Default
   - TransparentFX

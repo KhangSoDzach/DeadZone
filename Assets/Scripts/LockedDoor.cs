@@ -3,8 +3,6 @@ using UnityEngine.SceneManagement;
 
 public class LockedDoor : MonoBehaviour
 {
-    public string sceneToLoad = "Lab_Scene";
-    public float delayBeforeLoad = 2f;
 
     public GameObject instructionUI;
     private bool isPlayerNear = false;
@@ -29,9 +27,9 @@ public class LockedDoor : MonoBehaviour
                 {
                     hasUnlocked = true;
                     instructionUI.SetActive(false);
-                    Invoke(nameof(LoadScene), delayBeforeLoad);
+                    LoadScene();
                     ObjectiveManager.Instance.UpdateObjective("Find the vaccine");
-
+                   
                 }
                 else
                 {
@@ -58,6 +56,6 @@ public class LockedDoor : MonoBehaviour
 
     void LoadScene()
     {
-        SceneManager.LoadScene(sceneToLoad);
+        SceneManager.LoadScene("Lab_Scene");
     }
 }

@@ -34,11 +34,7 @@ public class PlayerLook : MonoBehaviour
     private float horizontalRecoilFactor = 0.3f; // How much horizontal vs vertical recoil
     private bool isFiring = false;          // Track if player is actively firing
 
-    // Thêm hàm để xử lý camera shake khi bị tấn công
-    void Awake()
-    {
-        DontDestroyOnLoad(this.gameObject);
-    }
+    
     public void TakeDamageEffect()
     {
         Debug.Log("TakeDamageEffect đã được gọi!");
@@ -73,6 +69,7 @@ public class PlayerLook : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
         cam = GetComponentInChildren<Camera>();
         if (cam == null)
         {
@@ -84,7 +81,10 @@ public class PlayerLook : MonoBehaviour
         
         // Lưu vị trí ban đầu của camera
         originalPosition = cam.transform.localPosition;
-        
+
+        xSensitivity = 30f;
+        ySensitivity = 20f;
+
         // Tạo hiệu ứng viền đỏ
         CreateDamageVignetteEffect();
     }

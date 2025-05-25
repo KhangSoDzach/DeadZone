@@ -73,7 +73,7 @@ public class Zombie_4 : MonoBehaviour
                     audioSource.PlayOneShot(idleGroanSound);
                 }
 
-                nextSoundTime = Time.time + 5f;
+                nextSoundTime = Time.time + 25f;
             }
         }
         if (!playerExistenceRadius && !playerInAttackingRadius)

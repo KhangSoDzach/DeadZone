@@ -77,7 +77,7 @@ public class Zombie_3 : MonoBehaviour
                     audioSource.PlayOneShot(idleGroanSound);
                 }
 
-                nextSoundTime = Time.time + 10f;
+                nextSoundTime = Time.time + 30f;
             }
         }
 
@@ -214,7 +214,7 @@ public class Zombie_3 : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 40 || remainHeath == 60 || remainHeath == 80)
+        if (remainHeath <= 40 || remainHeath <= 60 || remainHeath <= 80)
         {
             //Reaction hit
             aniZombie.SetTrigger("isHit");
