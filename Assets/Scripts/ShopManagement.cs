@@ -29,6 +29,9 @@ public class ShopManagement : MonoBehaviour
     public Text notificationText;
     private float notificationDuration = 2f;
     
+    // Variable to track if shop is open
+    private bool isShopOpen = false;
+    
     // Prefabs for spawned items
     [Header("Item Prefabs")]
     public GameObject medkitPrefab;
@@ -72,6 +75,18 @@ public class ShopManagement : MonoBehaviour
         if (gunShopPanel != null)
         {
             gunShopPanel.SetActive(false);
+        }
+        
+        // Set initial shop state
+        isShopOpen = mainShopPanel != null && mainShopPanel.activeSelf;
+        
+        // Set cursor state based on shop state
+        if (isShopOpen) {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        } else {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
     }
     
@@ -563,6 +578,13 @@ public class ShopManagement : MonoBehaviour
             mainShopPanel.SetActive(false);
             gunShopPanel.SetActive(true);
             Debug.Log("Showing Gun Shop Panel");
+            
+            // Set shop as open to disable weapon firing
+            isShopOpen = true;
+            
+            // Lock cursor to interact with UI
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
         else
         {
@@ -579,10 +601,12 @@ public class ShopManagement : MonoBehaviour
             mainShopPanel.SetActive(true);
             gunShopPanel.SetActive(false);
             Debug.Log("Returning to Main Shop Panel");
+            
+            // Shop is still open, just changed panels
+            isShopOpen = true;
         }
     }
-    
-    // Method to show the weapon upgrade panel
+      // Method to show the weapon upgrade panel
     public void ShowWeaponUpgradePanel()
     {
         // Find the WeaponUpgradeManager in scene
@@ -600,6 +624,13 @@ public class ShopManagement : MonoBehaviour
                 
             // Show the weapon type selection panel
             upgradeManager.ShowWeaponTypeSelection(playerMoney, this);
+            
+            // Set shop as open to disable weapon firing
+            isShopOpen = true;
+            
+            // Lock cursor to interact with UI
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
         else
         {
@@ -607,13 +638,57 @@ public class ShopManagement : MonoBehaviour
             Debug.Log("WeaponUpgradeManager not found in scene!");
         }
     }
-    
-    // Method to be called from WeaponUpgradeManager to return to main shop
+      // Method to be called from WeaponUpgradeManager to return to main shop
     public void ReturnFromUpgradePanel()
     {
         if (mainShopPanel != null)
         {
             mainShopPanel.SetActive(true);
+            
+            // Set shop as open to disable weapon firing
+            isShopOpen = true;
+        }
+    }
+    
+    // Method to close all shop panels and return to gameplay
+    public void CloseShop()
+    {
+        if (mainShopPanel != null)
+            mainShopPanel.SetActive(false);
+            
+        if (gunShopPanel != null)
+            gunShopPanel.SetActive(false);
+        
+        // Set shop as closed to enable weapon firing
+        isShopOpen = false;
+        
+        // Lock cursor for gameplay
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+    
+    // Public method to check if shop is open (for other scripts to check)
+    public bool IsShopOpen()
+    {
+        return isShopOpen;
+    }
+
+    // Method to open the main shop
+    public void OpenShop()
+    {
+        if (mainShopPanel != null)
+        {
+            mainShopPanel.SetActive(true);
+            
+            if (gunShopPanel != null)
+                gunShopPanel.SetActive(false);
+            
+            // Set shop as open to disable weapon firing
+            isShopOpen = true;
+            
+            // Lock cursor to interact with UI
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 }
