@@ -6,6 +6,7 @@ public class ShopTrigger : MonoBehaviour
     public GameObject shopUI; 
     public Transform player;
     public float interactDistance = 3f;
+    public KeyCode interactKey = KeyCode.E; // Changed from KeyCode.F to KeyCode.E
 
     private bool playerInZone = false;
     private bool shopOpen = false;
@@ -26,7 +27,7 @@ public class ShopTrigger : MonoBehaviour
     {
         if (playerInZone && Vector3.Distance(transform.position, player.position) < interactDistance)
         {
-            if (Input.GetKeyDown(KeyCode.F))
+            if (Input.GetKeyDown(interactKey)) // Using the variable instead of hardcoded KeyCode.F
             {
                 ToggleShop();
             }

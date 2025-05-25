@@ -23,6 +23,14 @@ public class MedkitPickup : MonoBehaviour
 
         // Đặt medkit vào layer WeaponPickup (thay vì Pickups)
         gameObject.layer = LayerMask.NameToLayer("WeaponPickup");
+        
+        // Add glow effect if not already present
+        if (GetComponent<PickupGlow>() == null)
+        {
+            PickupGlow glow = gameObject.AddComponent<PickupGlow>();
+            glow.glowColor = new Color(0.2f, 1f, 0.2f); // Green glow for health
+            glow.intensity = 1.2f;
+        }
     }
 
     void Update()

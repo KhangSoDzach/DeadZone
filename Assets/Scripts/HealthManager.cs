@@ -352,4 +352,26 @@ public class HealthManager : MonoBehaviour
             staminaText.text = Mathf.Round(currentStamina).ToString() + " / " + maxStamina.ToString();
         }
     }
+
+    // Phương thức để thiết lập giá trị sức khỏe một cách rõ ràng (để tải từ dữ liệu đã lưu)
+    public void SetHealth(float health)
+    {
+        currentHealth = Mathf.Clamp(health, 0f, maxHealth);
+        UpdateHealthUI();
+        
+        // Nếu sức khỏe thấp hơn mức cảnh báo, hiển thị hiệu ứng trực quan
+        if (currentHealth <= maxHealth * 0.2f)
+        {
+            // Hiển thị hiệu ứng sức khỏe thấp nếu đã được triển khai
+            ShowLowHealthEffect();
+        }
+    }
+    
+    // Phương thức để hiển thị hiệu ứng trực quan khi sức khỏe thấp
+    private void ShowLowHealthEffect()
+    {
+        // Triển khai hiệu ứng trực quan khi sức khỏe thấp ở đây
+        // Ví dụ: có thể làm cho các cạnh màn hình chuyển sang màu đỏ, hoặc thêm hiệu ứng nhấp nháy
+        Debug.Log("Hiệu ứng sức khỏe thấp đã được kích hoạt");
+    }
 }

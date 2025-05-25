@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Import for UI components
+using Scripts;
 
 public class Gun : MonoBehaviour
 {
@@ -45,6 +46,11 @@ public class Gun : MonoBehaviour
     public GameObject bloodDecalPrefab;     // Prefab vết máu trên sàn
     public float bloodDecalLifetime = 10f;  // Thời gian tồn tại của vết máu (giây)
     public float bloodSplatterChance = 0.8f; // Tỷ lệ xuất hiện hiệu ứng máu (0-1)
+
+    [Header("Weapon Progression")]
+    public string weaponName = "Default Gun"; // Name of the weapon (used for API integration)
+    public int currentLevel = 1;              // Current upgrade level of the weapon
+    public int maxLevel = 5;                  // Maximum level the weapon can be upgraded to
 
     void Start()
     {
@@ -394,12 +400,10 @@ public class Gun : MonoBehaviour
             if (ZombieMiniboss != null)
             {
                 ZombieMiniboss.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             if (Boss != null)
             {
                 Boss.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)
@@ -419,11 +423,9 @@ public class Gun : MonoBehaviour
                 Destroy(impact, 2f);
             }
         }
-    }
-
-    public void IncreaseScore(int points)
+    }    public void IncreaseScore(int points)
     {
-        ScoreManager.AddScore(points);
+        ScoreManager.Instance.AddScore(points);
     }
 
     private Vector3 CalculateSpreadVector()
@@ -443,13 +445,36 @@ public class Gun : MonoBehaviour
         return direction.normalized;
     }
 
-    // Make this public so it can be called from WeaponManager
+    // Update the ammo display
     public void UpdateAmmoUI()
     {
+        // Update ammo UI if available
         if (ammoText != null)
         {
-            ammoText.text = $"{currentAmmo} / {totalAmmo}"; // Hiển thị cả đạn trong băng và đạn dự trữ
+            ammoText.text = currentAmmo + " / " + totalAmmo;
         }
+    }
+    
+    // Set the weapon level and update stats accordingly
+    public void SetLevel(int level)
+    {
+        level = Mathf.Clamp(level, 1, maxLevel);
+        if (level == currentLevel) return;
+        
+        currentLevel = level;
+        
+        // Scale damage based on weapon level
+        damage *= (1f + (currentLevel - 1) * 0.2f);
+        
+        // Other stat improvements based on level could be added here
+        Debug.Log($"Weapon {weaponName} upgraded to level {currentLevel}");
+    }
+    
+    // Set the current ammo of the weapon
+    public void SetAmmo(int ammo)
+    {
+        currentAmmo = Mathf.Clamp(ammo, 0, maxAmmo);
+        UpdateAmmoUI();
     }
     
     // This method will be called from WeaponManager when this weapon is enabled

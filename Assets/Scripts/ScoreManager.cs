@@ -28,6 +28,13 @@ public class ScoreManager : MonoBehaviour
         }
     }
     
+    // Direct access to the current score for PlayerDataManager
+    public int currentScore
+    {
+        get { return _score; }
+        private set { _score = value; }
+    }
+    
     private void Awake()
     {
         // Implement Singleton pattern
@@ -116,10 +123,25 @@ public class ScoreManager : MonoBehaviour
         }
     }
     
-    // Static method to add points to the score
-    public static void AddScore(int points)
+    // Method to set the score from saved data
+    public void SetScore(int newScore)
     {
-        Score += points;
+        _score = newScore;
+        UpdateScoreUI();
+    }
+    
+    // Method to add points/money
+    public void AddScore(int points)
+    {
+        _score += points;
+        UpdateScoreUI();
+    }
+    
+    // Method to subtract points/money
+    public void SubtractScore(int points)
+    {
+        _score = Mathf.Max(0, _score - points);
+        UpdateScoreUI();
     }
     
     // For external scripts to get the scoreText reference

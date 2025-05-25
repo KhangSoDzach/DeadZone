@@ -5,15 +5,21 @@ using UnityEngine.UI;
 
 public class WeaponPickup : MonoBehaviour
 {
-    public int weaponIndex;          // Index trong weaponPrefabs array
-    public string weaponName;        // Tên của vũ khí
-    public int remainingAmmo;        // Lưu số đạn còn lại trong băng khi vứt xuống
-    public int remainingTotalAmmo;   // Lưu số đạn dự trữ khi vứt xuống
-    public bool isPistol;            // Có phải súng lục không (vũ khí chính không thể vứt)
+    [Header("Weapon Properties")]
+    public string weaponName = "Default Weapon";
+    public int remainingAmmo = 30;
+    public float damage = 10f;
+    public bool isAutomatic = true;
+    
+    [Header("Movement Effect")]
+    public float rotationSpeed = 30f; // Tốc độ xoay
+    public float floatSpeed = 0.5f; // Tốc độ di chuyển lên xuống
+    public float floatHeight = 0.2f; // Độ cao di chuyển lên xuống
+    
+    private Vector3 startPosition;
     
     // Các thuộc tính chi tiết về vũ khí
-    public bool isAutomatic;         // Loại súng (tự động/bán tự động)
-    public float damage;             // Sát thương
+    public bool isPistol;            // Có phải súng lục không (vũ khí chính không thể vứt)
     public float recoilAmount;       // Lượng giật
     public float baseSpread;         // Độ chính xác cơ bản
     public GameObject impactEffect;  // Prefab hiệu ứng va chạm
@@ -30,19 +36,6 @@ public class WeaponPickup : MonoBehaviour
     [HideInInspector] public GameObject originalWeaponPrefab;
     [HideInInspector] public int originalWeaponIndex = -1;
     
-    // Các thành phần cho hiệu ứng nhặt súng
-    [Header("Hiệu ứng nhặt vũ khí")]
-    public float rotationSpeed = 50f;
-    public float floatHeight = 0.1f;
-    public float floatSpeed = 1f;
-    
-    // Components cần thiết khi súng được vứt xuống
-    private Rigidbody rb;
-    private Collider pickupCollider;
-    
-    // Components cần thiết khi súng được trang bị
-    private Gun gunComponent;
-    
     // Lưu vị trí gốc để làm hiệu ứng nổi
     private Vector3 originalPosition;
     private bool isPickupMode = false; // Thay đổi mặc định thành false
@@ -51,19 +44,47 @@ public class WeaponPickup : MonoBehaviour
     // Lưu vị trí của các vũ khí đã vứt xuống để có thể tái sử dụng khi nhặt lại
     private static Dictionary<string, Vector3> lastDroppedPositions = new Dictionary<string, Vector3>();
     
+    // Missing variables needed for the script
+    [HideInInspector] public int weaponIndex = -1; // Add weaponIndex to fix WeaponManager errors
+    public int remainingTotalAmmo = 0; // Total ammo remaining in reserve
+    
+    // Component references
+    private Rigidbody rb;
+    private Collider pickupCollider;
+    private Gun gunComponent;
+    
     void Awake()
     {
-        // Kiểm tra các components cần thiết
-        rb = GetComponent<Rigidbody>();
-        pickupCollider = GetComponent<Collider>();
-        gunComponent = GetComponent<Gun>();
-        
         // Lưu vị trí ban đầu để làm hiệu ứng nổi
         originalPosition = transform.position;
+        
+        // Initialize components
+        rb = GetComponent<Rigidbody>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+        
+        pickupCollider = GetComponent<Collider>();
+        if (pickupCollider == null) pickupCollider = gameObject.AddComponent<BoxCollider>();
+        
+        gunComponent = GetComponent<Gun>();
     }
     
     void Start()
     {
+        startPosition = transform.position;
+        
+        // Make sure it's in the pickup layer
+        gameObject.layer = LayerMask.NameToLayer("WeaponPickup");
+        
+        // Add glow effect if not already present
+        if (GetComponent<PickupGlow>() == null)
+        {
+            PickupGlow glow = gameObject.AddComponent<PickupGlow>();
+            glow.glowColor = new Color(0.2f, 0.6f, 1f); // Blue for weapons
+            glow.intensity = 1.5f;
+            glow.range = 3f;
+            glow.flickerAmount = 0.08f;
+        }
+        
         // Kiểm tra vị trí của vũ khí để quyết định chế độ
         bool isChildOfWeaponHolder = IsChildOfWeaponHolder();
         
@@ -134,6 +155,20 @@ public class WeaponPickup : MonoBehaviour
             // Tắt Gun component nếu có
             if (gunComponent != null) gunComponent.enabled = false;
             
+            // Kích hoạt hiệu ứng phát sáng nếu có
+            PickupGlow glow = GetComponent<PickupGlow>();
+            if (glow != null)
+            {
+                glow.enabled = true;
+            }
+            
+            // Bật tất cả Light components trên vũ khí khi ở chế độ pickup
+            Light[] lights = GetComponentsInChildren<Light>(true);
+            foreach (Light light in lights)
+            {
+                light.enabled = true;
+            }
+            
             // Không tự động bắt đầu hiệu ứng nổi ở đây nữa
             // Hiệu ứng nổi sẽ được bắt đầu sau khi súng rơi xuống đất từ ApplyDropForce
             
@@ -155,6 +190,20 @@ public class WeaponPickup : MonoBehaviour
             
             // Kích hoạt Gun component nếu có
             if (gunComponent != null) gunComponent.enabled = true;
+            
+            // Tắt hiệu ứng phát sáng khi đã được nhặt lên
+            PickupGlow glow = GetComponent<PickupGlow>();
+            if (glow != null)
+            {
+                glow.enabled = false;
+            }
+            
+            // Tắt tất cả Light components trên vũ khí khi được trang bị
+            Light[] lights = GetComponentsInChildren<Light>(true);
+            foreach (Light light in lights)
+            {
+                light.enabled = false;
+            }
         }
     }
     
