@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Import for UI components
+using Scripts;
 
 public class Gun : MonoBehaviour
 {
@@ -399,12 +400,10 @@ public class Gun : MonoBehaviour
             if (ZombieMiniboss != null)
             {
                 ZombieMiniboss.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             if (Boss != null)
             {
                 Boss.zombieGotHit(damage);
-                ScoreManager.AddScore((int)damage);
             }
             Rigidbody rb = hit.transform.GetComponent<Rigidbody>();
             if (rb != null)

@@ -57,7 +57,7 @@ namespace Scripts.UI
         [SerializeField] private bool useAnimation = true;
         
         [Header("Settings")]
-        [SerializeField] private string gameSceneName = "MainHub";
+        [SerializeField] private string gameSceneName = "Scene_A";
         [SerializeField] private string offlineSceneName = "OfflineMode";
         
         // Tham chiếu đến LoginManager
@@ -77,10 +77,7 @@ namespace Scripts.UI
             // Hiển thị panel welcome mặc định
             ShowPanel(welcomePanel);
         }
-        
-        /// <summary>
-        /// Thiết lập các sự kiện nút
-        /// </summary>
+
         private void SetupButtonListeners()
         {
             // Welcome panel
@@ -101,9 +98,6 @@ namespace Scripts.UI
             if (errorCloseButton) errorCloseButton.onClick.AddListener(() => ShowPanel(welcomePanel));
         }
         
-        /// <summary>
-        /// Thiết lập UI ban đầu
-        /// </summary>
         private void SetupUI()
         {
             // Hiển thị phiên bản
@@ -128,9 +122,6 @@ namespace Scripts.UI
             }
         }
         
-        /// <summary>
-        /// Hiển thị panel đăng nhập
-        /// </summary>
         public void ShowLoginPanel()
         {
             ShowPanel(loginPanel);
@@ -143,9 +134,6 @@ namespace Scripts.UI
             }
         }
         
-        /// <summary>
-        /// Hiển thị panel đăng ký
-        /// </summary>
         public void ShowRegisterPanel()
         {
             ShowPanel(registerPanel);
@@ -158,9 +146,6 @@ namespace Scripts.UI
             }
         }
         
-        /// <summary>
-        /// Hiển thị panel với hiệu ứng (nếu được bật)
-        /// </summary>
         private void ShowPanel(GameObject panelToShow)
         {
             // Ẩn tất cả các panel
@@ -177,9 +162,6 @@ namespace Scripts.UI
             }
         }
         
-        /// <summary>
-        /// Xử lý quá trình đăng nhập
-        /// </summary>
         private void HandleLogin()
         {
             if (loginUsernameInput == null || loginPasswordInput == null)
