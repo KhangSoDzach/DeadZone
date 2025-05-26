@@ -27563,6 +27563,7 @@ MonoBehaviour:
   shopUI: {fileID: 1188126213}
   player: {fileID: 4245544905332594579}
   interactDistance: 3
+  interactKey: 101
 --- !u!1001 &295530483
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -95402,7 +95403,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2048307975}
   m_HandleRect: {fileID: 2048307974}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -201357,6 +201358,7 @@ MonoBehaviour:
   shopUI: {fileID: 1188126213}
   player: {fileID: 4245544905332594579}
   interactDistance: 3
+  interactKey: 101
 --- !u!4 &2116186612
 Transform:
   m_ObjectHideFlags: 0
@@ -204340,6 +204342,11 @@ MonoBehaviour:
   xSensitivity: 10
   ySensitivity: 10
   damageVignette: {fileID: 0}
+  audioSource: {fileID: 0}
+  damageSounds:
+  - {fileID: 8300000, guid: fb54d3718f2698f4a894c26225dc3e4f, type: 3}
+  audioMixerGroup: {fileID: 0}
+  damageVolume: 0.7
 --- !u!224 &258266292833160244
 RectTransform:
   m_ObjectHideFlags: 0
@@ -222671,6 +222678,9 @@ MonoBehaviour:
   bloodDecalPrefab: {fileID: 100000, guid: 358b75ea5451cf143ab19029a189097d, type: 3}
   bloodDecalLifetime: 10
   bloodSplatterChance: 0.8
+  weaponName: Default Gun
+  currentLevel: 1
+  maxLevel: 5
 --- !u!224 &8400557649004111892
 RectTransform:
   m_ObjectHideFlags: 0
