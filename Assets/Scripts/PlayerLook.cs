@@ -34,17 +34,17 @@ public class PlayerLook : MonoBehaviour
     private float horizontalRecoilFactor = 0.3f; // How much horizontal vs vertical recoil
     private bool isFiring = false;          // Track if player is actively firing
 
-    
-    public void TakeDamageEffect()
+      public void TakeDamageEffect()
     {
         Debug.Log("TakeDamageEffect đã được gọi!");
         
-        // Lưu vị trí ban đầu của camera trước khi shake
-        if (!isShaking && cam != null)
+        // Luôn lưu vị trí ban đầu của camera khi bị đánh
+        if (cam != null)
             originalPosition = cam.transform.localPosition;
-        
+          // Luôn đặt lại các tham số shake khi bị đánh, bất kể trạng thái shake hiện tại
         isShaking = true;
         shakeTimer = shakeDuration;
+        shakeIntensity = 0.2f; // Đảm bảo đặt lại cường độ shake mạnh khi bị đánh
         
         // Kiểm tra nếu hiệu ứng viền đỏ chưa được tạo hoặc không tồn tại
         if (damageVignette == null || damageCanvas == null)
@@ -143,13 +143,12 @@ public class PlayerLook : MonoBehaviour
         
         // Giới hạn recoil ngang
         currentRecoilX = Mathf.Clamp(currentRecoilX + horizontalRecoil, -maxRecoilX, maxRecoilX);
-        
-        // Cũng thêm một chút camera shake nhẹ khi bắn
-        if (!isShaking)
+          // Chỉ thêm camera shake khi bắn nếu không đang có shake mạnh hơn từ việc bị đánh
+        if (!isShaking || shakeIntensity < 0.1f) // Chỉ áp dụng shake từ súng nếu không có shake hoặc shake hiện tại yếu
         {
             originalPosition = cam.transform.localPosition;
             isShaking = true;
-            shakeTimer = 0.1f; // Thời gian shake ngắn hơn khi bị thương
+            shakeTimer = 0.1f; // Thời gian shake ngắn hơn khi bắn
             shakeIntensity = 0.03f * recoilAmount; // Cường độ nhẹ hơn và tỉ lệ với recoil
         }
         
@@ -214,9 +213,7 @@ public class PlayerLook : MonoBehaviour
     {
         recoilBuildup = buildup;
         horizontalRecoilFactor = horizontalFactor;
-    }
-
-    // Cập nhật camera shake
+    }    // Cập nhật camera shake
     private void UpdateCameraShake()
     {
         if (isShaking && cam != null)
@@ -225,7 +222,7 @@ public class PlayerLook : MonoBehaviour
             
             if (shakeTimer > 0)
             {
-                // Tạo hiệu ứng shake ngẫu nhiên nhưng giữ nguyên vị trí Z
+                // Tạo hiệu ứng shake ngẫu nhiên với cường độ hiện tại
                 cam.transform.localPosition = new Vector3(
                     originalPosition.x + Random.Range(-1f, 1f) * shakeIntensity,
                     originalPosition.y + Random.Range(-1f, 1f) * shakeIntensity,
