@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Import for UI components
 using Scripts;
+using Scripts.API; // Add this using statement
 
 public class Gun : MonoBehaviour
 {
@@ -220,6 +221,12 @@ public class Gun : MonoBehaviour
     }    // Update is called once per frame
     void Update()
     {
+        // Check if game is paused before processing any input
+        if (PauseMenu.IsGamePaused)
+        {
+            return; // Exit early if game is paused
+        }
+
         if (isReloading)
         {
             return; // Prevent shooting while reloading
@@ -322,6 +329,12 @@ public class Gun : MonoBehaviour
 
     void Shoot()
     {
+        // Don't shoot if game is paused
+        if (PauseMenu.IsGamePaused)
+        {
+            return;
+        }
+        
         if (currentAmmo <= 0)
         {
             Debug.Log("Out of ammo!");

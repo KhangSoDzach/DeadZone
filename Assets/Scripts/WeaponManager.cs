@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Scripts.API; // Add this using statement
 
 public class WeaponManager : MonoBehaviour
 {
@@ -198,6 +199,12 @@ public class WeaponManager : MonoBehaviour
     
     private void Update()
     {
+        // Don't process weapon management if game is paused
+        if (PauseMenu.IsGamePaused)
+        {
+            return;
+        }
+
         // Kiểm tra và cập nhật các tham chiếu trước khi sử dụng
         UpdateReferences();
         

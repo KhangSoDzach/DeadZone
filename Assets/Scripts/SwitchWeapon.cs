@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Scripts.API; // Add this using statement
 
 public class SwitchWeapon : MonoBehaviour
 {
@@ -13,6 +14,12 @@ public class SwitchWeapon : MonoBehaviour
 
     void Update()
     {
+        // Don't process weapon switching if game is paused
+        if (PauseMenu.IsGamePaused)
+        {
+            return;
+        }
+
         int previousSelectedWeapon = selectedWeapon;
 
         // Switch weapon using scroll wheel

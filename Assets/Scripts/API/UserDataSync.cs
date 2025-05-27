@@ -7,10 +7,6 @@ using DevionGames;
 
 namespace Scripts.API
 {
-    /// <summary>
-    /// Đồng bộ dữ liệu người dùng giữa client và server
-    /// Có thể đặt component này vào scene chính của game để đảm bảo dữ liệu luôn được đồng bộ
-    /// </summary>
     public class UserDataSync : MonoBehaviour
     {
         [Header("Đồng bộ tự động")]

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Scripts.API; // Add this using statement
 
 public class InputManager : MonoBehaviour
 {
@@ -39,18 +40,30 @@ public class InputManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        movement.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
+        // Don't process movement if game is paused
+        if (!PauseMenu.IsGamePaused)
+        {
+            movement.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
+        }
     }
     
     void LateUpdate()
     {
-        look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
+        // Don't process look if game is paused
+        if (!PauseMenu.IsGamePaused)
+        {
+            look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
+        }
     }
     
     void Update()
     {
-        // Xử lý nhặt/vứt vũ khí thông qua WeaponManager
-        // Việc này đã được xử lý trong WeaponManager.Update()
+        // Only process weapon input if game is not paused
+        if (!PauseMenu.IsGamePaused)
+        {
+            // Xử lý nhặt/vứt vũ khí thông qua WeaponManager
+            // Việc này đã được xử lý trong WeaponManager.Update()
+        }
     }
     
     private void OnEnable()
