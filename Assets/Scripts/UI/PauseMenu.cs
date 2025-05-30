@@ -4,8 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro; // Add TextMeshPro namespace
-using Scripts.API; // Ensure GameAPI is accessible
-using DevionGames;
+
 namespace Scripts.API
 {
 
@@ -35,7 +34,7 @@ namespace Scripts.API
         [SerializeField] private Button confirmNoButton;
 
         [Header("Settings")]
-        [SerializeField] private string mainMenuSceneName = "MainMenu";
+        [SerializeField] private string mainMenuSceneName = "Menu";
         [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
         [SerializeField] private bool canPauseInShop = false;
 
@@ -197,41 +196,54 @@ namespace Scripts.API
 
         public void SaveGame()
         {
-            if (GameAPI.Instance == null || !GameAPI.Instance.IsLoggedIn)
+            // Check if user is logged in first
+            if (!GameAPI.Instance.IsLoggedIn)
             {
-                ShowSaveNotification("Not logged in - Cannot save game");
+                ShowMessage("You must be logged in to save the game.");
                 return;
             }
-
-            ShowSaveNotification("Saving game...");
-
-            // Try to save through GameSaveManager if available
-            if (GameSaveManager.Instance != null)
+            
+            // Check if data is loaded
+            if (!GameDataSynchronizer.Instance.IsDataLoaded)
             {
-                GameSaveManager.Instance.SaveGame();
-                ShowSaveNotification("Game saved successfully!");
-            }
-            // Fallback to direct API save
-            else if (GameDataSynchronizer.Instance != null)
-            {
-                GameDataSynchronizer.Instance.SaveGameData((success, message) =>
-                {
+                ShowMessage("Loading player data...");
+                GameDataSynchronizer.Instance.LoadGameData((success, error) => {
                     if (success)
                     {
-                        ShowSaveNotification("Game saved successfully!");
+                        PerformSave();
                     }
                     else
                     {
-                        ShowSaveNotification("Save failed: " + message);
+                        ShowMessage("Failed to load player data: " + error);
                     }
                 });
+                return;
             }
-            else
-            {
-                ShowSaveNotification("Save system not available");
-            }
+            
+            PerformSave();
         }
-
+        
+        private void PerformSave()
+        {
+            ShowMessage("Saving game...");
+            GameDataSynchronizer.Instance.SaveGameData((success, error) => {
+                if (success)
+                {
+                    ShowMessage("Game saved successfully!");
+                }
+                else
+                {
+                    ShowMessage("Failed to save game: " + error);
+                }
+            });
+        }
+        
+        private void ShowMessage(string message)
+        {
+            Debug.Log($"[PauseMenu] {message}");
+            // You can add UI feedback here if needed
+        }
+        
         private void ShowConfirmation(string message, System.Action confirmAction)
         {
             if (confirmationPanel && confirmationText)
@@ -258,9 +270,7 @@ namespace Scripts.API
         {
             if (confirmationPanel) confirmationPanel.SetActive(false);
             pendingConfirmAction = null;
-        }
-
-        public void ReturnToMainMenu()
+        }        public void ReturnToMainMenu()
         {
             // Clear pause state before leaving
             IsGamePaused = false;
@@ -277,8 +287,16 @@ namespace Scripts.API
             // Restore time scale
             Time.timeScale = 1f;
 
-            // Load main menu scene
-            SceneManager.LoadScene(mainMenuSceneName);
+            // Use SceneTransitionManager for proper cleanup
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.LoadMenuScene(mainMenuSceneName);
+            }
+            else
+            {
+                // Fallback to direct scene loading
+                SceneManager.LoadScene(mainMenuSceneName);
+            }
         }
 
         public void QuitGame()

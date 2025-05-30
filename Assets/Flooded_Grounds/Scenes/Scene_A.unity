@@ -39283,7 +39283,7 @@ MonoBehaviour:
   confirmNoButton: {fileID: 850002517}
   mainMenuSceneName: Menu
   pauseKey: 27
-  canPauseInShop: 0
+  canPauseInShop: 1
 --- !u!4 &414500665 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 418494, guid: d252560780ba70742afb43ce80fdc2c4, type: 3}
@@ -41506,19 +41506,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 447334516}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &447334516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -168471,19 +168459,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1766753424}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 414495276}
-        m_TargetAssemblyTypeName: Scripts.API.PauseMenu, Assembly-CSharp
-        m_MethodName: ReturnToMainMenu
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1766753424
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -48,11 +48,56 @@ public class ItemInfo : MonoBehaviour
     {
         if (shopManager != null)
         {
-            shopManager.BuyItem(itemID);
+            // Check if user is logged in and try to sync money with server
+            if (GameAPI.Instance != null && GameAPI.Instance.IsLoggedIn)
+            {
+                StartCoroutine(BuyItemWithServerSync());
+            }
+            else
+            {
+                // Fallback to local purchase
+                shopManager.BuyItem(itemID);
+            }
         }
         else
         {
             Debug.LogError("Shop Manager không được tìm thấy!");
         }
+    }
+    
+    private IEnumerator BuyItemWithServerSync()
+    {
+        // Get current server data first
+        yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+            if (success && GameAPI.Instance.PlayerData != null)
+            {
+                // Update local money with server money
+                // You'll need to implement this based on your money management system
+                // For example: MoneyManager.Instance.SetMoney(GameAPI.Instance.PlayerData.money);
+                
+                // Proceed with purchase - BuyItem returns void, so we call it directly
+                shopManager.BuyItem(itemID);
+                
+                // After purchase, update server with new money amount
+                // Note: You'll need to get the updated money value from your money management system
+                // GameAPI.Instance.PlayerData.money = MoneyManager.Instance.GetMoney();
+                StartCoroutine(GameAPI.Instance.SavePlayerData((saveSuccess, saveError) => {
+                    if (saveSuccess)
+                    {
+                        Debug.Log("Purchase saved to server successfully");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Failed to save purchase to server: {saveError}");
+                    }
+                }));
+            }
+            else
+            {
+                // If server sync fails, still allow local purchase
+                Debug.LogWarning("Server sync failed, proceeding with local purchase");
+                shopManager.BuyItem(itemID);
+            }
+        }));
     }
 }

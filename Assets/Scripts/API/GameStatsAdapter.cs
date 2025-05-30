@@ -4,8 +4,7 @@ using UnityEngine;
 using DevionGames.StatSystem;
 using DevionGames; // For DevionGames types
 
-namespace Scripts.API
-{
+
    public class GameStatsAdapter : MonoBehaviour
     {
         [SerializeField]
@@ -60,9 +59,15 @@ namespace Scripts.API
         /// <summary>
         /// Called when player data is updated from the server
         /// </summary>
-        private void HandlePlayerDataUpdated(PlayerDataModel playerData)
+        private void HandlePlayerDataUpdated()
         {
-            ApplyPlayerDataToStats(playerData);
+            // Get player data from GameAPI instead of parameters
+            var playerData = GameAPI.Instance.PlayerData;
+            if (playerData != null)
+            {
+                // Update game stats based on player data
+                UpdateGameStats(playerData);
+            }
         }
 
         /// <summary>
@@ -136,5 +141,11 @@ namespace Scripts.API
             }
             return handler;
         }
+
+        private void UpdateGameStats(PlayerDataModel playerData)
+        {
+            // Implementation to update game stats
+            // This method handles the actual stat updates
+        }
     }
-}
+

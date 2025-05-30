@@ -1,422 +1,1297 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
+using Newtonsoft.Json;
 
-namespace DevionGames
+public class GameAPI : MonoBehaviour
 {
-    [Serializable]
-    public class AuthData
+    private static GameAPI _instance;
+    public static GameAPI Instance
     {
-        public string token;
-    }
-
-    [Serializable]
-    public class LoginRequest
-    {
-        public string username;
-        public string password;
-    }
-
-    [Serializable]
-    public class RegisterRequest
-    {
-        public string username;
-        public string email;
-        public string password;
-    }
-
-    [Serializable]
-    public class Position
-    {
-        public float x;
-        public float y;
-        public float z;
-    }
-
-    [Serializable]
-    public class Checkpoint
-    {
-        public string sceneId;
-        public Position position;
-        public string timestamp;
-    }
-
-    [Serializable]
-    public class Weapon
-    {
-        public string id;
-        public string name;
-        public float damage;
-        public int ammo;
-        public int level;
-        public bool isUnlocked;
-    }
-
-    [Serializable]
-    public class Ammunition
-    {
-        public int pistol;
-        public int rifle;
-    }
-
-    [Serializable]
-    public class PlayerDataModel
-    {
-        public string userId;
-        public int money;
-        public float health;
-        public Ammunition ammunition;
-        public List<Weapon> weapons;
-        public string currentWeapon;
-        public Checkpoint checkpoint;
-        public int kills;
-        public int level;
-        public string lastSaved;
-    }
-
-    public class GameAPI : MonoBehaviour
-    {
-        private static GameAPI _instance;
-        public static GameAPI Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    GameObject go = new GameObject("GameAPI");
-                    _instance = go.AddComponent<GameAPI>();
-                    DontDestroyOnLoad(go);
-                }
-                return _instance;
-            }
-        }
-
-        private const string API_URL = "http://localhost:5000/api";
-        private string _token;
-        private PlayerDataModel _playerData;
-
-        public bool IsLoggedIn => !string.IsNullOrEmpty(_token);
-        public PlayerDataModel PlayerData => _playerData;
-
-        private void Awake()
+        get
         {
             if (_instance == null)
             {
-                _instance = this;
-                DontDestroyOnLoad(gameObject);
+                GameObject go = new GameObject("GameAPI");
+                _instance = go.AddComponent<GameAPI>();
+                DontDestroyOnLoad(go);
             }
-            else if (_instance != this)
-            {
-                Destroy(gameObject);
-            }
-
-            // Try to load token from PlayerPrefs
-            _token = PlayerPrefs.GetString("AuthToken", null);
+            return _instance;
         }
-
-        public IEnumerator Login(string username, string password, Action<bool, string> callback)
+    }
+    
+    [Header("API Settings")]
+    private const string API_URL = "http://localhost:5000/api"; // Hoặc IP server của bạn
+    [SerializeField] private float requestTimeout = 30f;
+    [SerializeField] private bool debugMode = true;
+    
+    // Authentication
+    public string AuthToken { get; private set; }
+    public PlayerDataModel PlayerData { get; private set; }
+    public bool IsLoggedIn => !string.IsNullOrEmpty(AuthToken);
+    
+    // Events
+    public delegate void PlayerDataLoadedHandler(PlayerDataModel playerData);
+    public event PlayerDataLoadedHandler OnPlayerDataLoaded;
+      private void Awake()
+    {
+        if (_instance == null)
         {
-            LoginRequest request = new LoginRequest
-            {
-                username = username,
-                password = password
-            };
-
-            string json = JsonUtility.ToJson(request);
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = new UnityWebRequest($"{API_URL}/auth/login", "POST"))
-            {
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+            DebugLog("GameAPI instance created");
+        }
+        else if (_instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+    
+    private void Start()
+    {
+        DebugLog("GameAPI started - checking for saved authentication...");
+        CheckSavedAuthentication();
+    }
+      private void CheckSavedAuthentication()
+    {
+        string savedToken = PlayerPrefs.GetString("AuthToken", "");
+        if (!string.IsNullOrEmpty(savedToken))
+        {
+            DebugLog($"Found saved token: {savedToken.Substring(0, Math.Min(10, savedToken.Length))}...");
+            StartCoroutine(LoginWithToken(savedToken, (success, error) => {
+                if (success)
                 {
-                    Debug.LogError($"Login Error: {www.error}");
-                    callback(false, www.error);
-                    yield break;
-                }
-
-                AuthData authData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
-                _token = authData.token;
-
-                // Save token
-                PlayerPrefs.SetString("AuthToken", _token);
-                PlayerPrefs.Save();
-
-                // After successful login, get player data
-                yield return StartCoroutine(GetPlayerData((success, errorMsg) => {
-                    callback(success, errorMsg);
-                }));
-            }
-        }
-
-        public IEnumerator Register(string username, string email, string password, Action<bool, string> callback)
-        {
-            RegisterRequest request = new RegisterRequest
-            {
-                username = username,
-                email = email,
-                password = password
-            };
-
-            string json = JsonUtility.ToJson(request);
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = new UnityWebRequest($"{API_URL}/auth/register", "POST"))
-            {
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError($"Register Error: {www.error}");
-                    callback(false, www.error);
-                    yield break;
-                }
-
-                AuthData authData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
-                _token = authData.token;
-
-                // Save token
-                PlayerPrefs.SetString("AuthToken", _token);
-                PlayerPrefs.Save();
-
-                // After successful registration, get player data
-                yield return StartCoroutine(GetPlayerData((success, errorMsg) => {
-                    callback(success, errorMsg);
-                }));
-            }
-        }
-
-        public void Logout()
-        {
-            _token = null;
-            _playerData = null;
-            PlayerPrefs.DeleteKey("AuthToken");
-            PlayerPrefs.Save();
-            
-            // Load login scene or main menu
-            SceneManager.LoadScene("MainMenu");
-        }
-
-        public IEnumerator GetPlayerData(Action<bool, string> callback)
-        {
-            if (string.IsNullOrEmpty(_token))
-            {
-                callback(false, "Not logged in");
-                yield break;
-            }
-
-            using (UnityWebRequest www = UnityWebRequest.Get($"{API_URL}/player/data"))
-            {
-                www.SetRequestHeader("x-auth-token", _token);
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError($"Get Player Data Error: {www.error}");
+                    DebugLog("Automatic authentication successful");
                     
-                    // If unauthorized, clear token
-                    if (www.responseCode == 401)
+                    // Check if we have player data, if not, try to fetch it
+                    if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id) || string.IsNullOrEmpty(PlayerData.username))
                     {
-                        _token = null;
+                        DebugLog("Player data missing after token verification, fetching...");
+                        StartCoroutine(GetPlayerData((dataSuccess, dataError) => {
+                            if (dataSuccess)
+                            {
+                                DebugLog("Player data loaded successfully after token verification");
+                            }
+                            else
+                            {
+                                DebugLog($"Failed to load player data after token verification: {dataError}");
+                                // Clear invalid token
+                                AuthToken = null;
+                                PlayerPrefs.DeleteKey("AuthToken");
+                                PlayerPrefs.Save();
+                            }
+                        }));
+                    }
+                }
+                else
+                {
+                    DebugLog($"Automatic authentication failed: {error}");
+                    // Only clear token if it's actually invalid, not just a server connectivity issue
+                    if (!error.Contains("Cannot reach server") && !error.Contains("connectivity"))
+                    {
                         PlayerPrefs.DeleteKey("AuthToken");
                         PlayerPrefs.Save();
                     }
-                    
-                    callback(false, www.error);
-                    yield break;
                 }
-
-                _playerData = JsonUtility.FromJson<PlayerDataModel>(www.downloadHandler.text);
-                callback(true, null);
-            }
-        }        // Update player data model before saving
-        public void UpdatePlayerDataModel(PlayerDataModel newData)
+            }));
+        }
+        else
         {
-            if (newData != null)
-            {
-                _playerData = newData;
-            }
+            DebugLog("No saved authentication token found");
+        }
+    }
+    
+    // Diagnostic method to check current state
+    public void LogCurrentState()
+    {
+        DebugLog("=== GameAPI Current State ===");
+        DebugLog($"IsLoggedIn: {IsLoggedIn}");
+        DebugLog($"AuthToken exists: {!string.IsNullOrEmpty(AuthToken)}");
+        DebugLog($"AuthToken: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        DebugLog($"PlayerData exists: {PlayerData != null}");
+        if (PlayerData != null)
+        {
+            DebugLog($"PlayerData.id: '{PlayerData.id}'");
+            DebugLog($"PlayerData.username: '{PlayerData.username}'");
+            DebugLog($"PlayerData.email: '{PlayerData.email}'");
+            DebugLog($"PlayerData.level: {PlayerData.level}");
+            DebugLog($"PlayerData.experience: {PlayerData.experience}");
+            DebugLog($"PlayerData.money: {PlayerData.money}");
+            DebugLog($"PlayerData.health: {PlayerData.health}");
+        }
+        DebugLog("=== End State ===");
+    }
+    
+    public IEnumerator Login(string username, string password, Action<bool, string> onComplete)
+    {
+        // Basic client-side validation
+        if (string.IsNullOrEmpty(username.Trim()) || string.IsNullOrEmpty(password.Trim()))
+        {
+            onComplete?.Invoke(false, "Username and password cannot be empty");
+            yield break;
         }
         
-        public IEnumerator SavePlayerData(Action<bool, string> callback)
+        if (username.Length < 3)
         {
-            if (string.IsNullOrEmpty(_token) || _playerData == null)
+            onComplete?.Invoke(false, "Username must be at least 3 characters long");
+            yield break;
+        }
+        
+        if (password.Length < 6)
+        {
+            onComplete?.Invoke(false, "Password must be at least 6 characters long");
+            yield break;
+        }
+        
+        var loginData = new
+        {
+            username = username.Trim(),
+            password = password
+        };
+        
+        string jsonData = JsonConvert.SerializeObject(loginData);
+        
+        using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/auth/login", "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = (int)requestTimeout;
+            
+            yield return request.SendWebRequest();
+        
+            if (request.result == UnityWebRequest.Result.Success)
             {
-                callback(false, "Not logged in or player data not loaded");
-                yield break;
-            }
-
-            string json = JsonUtility.ToJson(_playerData);
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = UnityWebRequest.Put($"{API_URL}/player/save", bodyRaw))
-            {
-                www.SetRequestHeader("x-auth-token", _token);
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
+                bool parseSuccess = false;
+                string parseError = "";
+                
+                try
                 {
-                    Debug.LogError($"Save Player Data Error: {www.error}");
-                    callback(false, www.error);
-                    yield break;
+                    DebugLog($"Login response received: {request.downloadHandler.text}");
+                    
+                    // Try to parse as our standard LoginResponse first
+                    var response = JsonConvert.DeserializeObject<LoginResponse>(request.downloadHandler.text);
+                    
+                    if (response == null)
+                    {
+                        DebugLog("Standard login response format not detected, trying alternative format...");
+                        // Try to parse the response in a more flexible way
+                        var dynamicResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.downloadHandler.text);
+                        
+                        if (dynamicResponse == null)
+                        {
+                            DebugLog("Error: Login response could not be parsed in any format");
+                            parseError = "Invalid server response structure";
+                        }
+                        else if (!dynamicResponse.TryGetValue("token", out object tokenObj) || tokenObj == null)
+                        {
+                            DebugLog("Error: No token found in dynamic response");
+                            parseError = "No authentication token received";
+                        }
+                        else
+                        {
+                            // Extract the token
+                            string token = tokenObj.ToString();
+                            if (string.IsNullOrEmpty(token))
+                            {
+                                DebugLog("Error: Empty token received in login response");
+                                parseError = "Empty authentication token received";
+                            }
+                            else
+                            {
+                                AuthToken = token;
+                                
+                                // Try to extract user data if it exists
+                                if (dynamicResponse.TryGetValue("user", out object userObj) && userObj != null)
+                                {
+                                    try
+                                    {
+                                        string userJson = JsonConvert.SerializeObject(userObj);
+                                        PlayerData = JsonConvert.DeserializeObject<PlayerDataModel>(userJson);
+                                        
+                                        // If user data is missing critical fields, try different property names
+                                        if (PlayerData != null && (string.IsNullOrEmpty(PlayerData.id) || string.IsNullOrEmpty(PlayerData.username)))
+                                        {
+                                            var userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(userJson);
+                                            if (userDict != null)
+                                            {
+                                                // Check for alternative field names
+                                                if (string.IsNullOrEmpty(PlayerData.id) && userDict.TryGetValue("_id", out object idObj))
+                                                    PlayerData.id = idObj.ToString();
+                                                
+                                                if (string.IsNullOrEmpty(PlayerData.username) && userDict.TryGetValue("name", out object nameObj))
+                                                    PlayerData.username = nameObj.ToString();
+                                            }
+                                        }
+                                    }
+                                    catch (Exception userEx)
+                                    {
+                                        DebugLog($"Warning: Failed to parse user data: {userEx.Message}");
+                                        PlayerData = null; // Clear invalid data
+                                    }
+                                }
+                                else
+                                {
+                                    DebugLog("Warning: No user data found in response");
+                                    PlayerData = null;
+                                }
+                                parseSuccess = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Standard response format was parsed successfully
+                        if (string.IsNullOrEmpty(response.token))
+                        {
+                            DebugLog("Error: No token received in login response");
+                            parseError = "No authentication token received";
+                        }
+                        else
+                        {
+                            AuthToken = response.token;
+                            PlayerData = response.user;
+                            parseSuccess = true;
+                        }
+                    }
                 }
-
-                _playerData = JsonUtility.FromJson<PlayerDataModel>(www.downloadHandler.text);
-                callback(true, null);
+                catch (Exception ex)
+                {
+                    DebugLog($"Login response parse error: {ex.Message}");
+                    DebugLog($"Raw response: {request.downloadHandler.text}");
+                    parseError = "Invalid server response";
+                }
+            
+                if (parseSuccess)
+                {
+                    // Save token to PlayerPrefs for persistence
+                    PlayerPrefs.SetString("AuthToken", AuthToken);
+                    PlayerPrefs.Save();
+                      DebugLog($"Login successful for user: {username}");
+                    DebugLog($"Token received and saved: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+                    
+                    // Validate the token immediately to catch any issues
+                    yield return StartCoroutine(ValidateCurrentToken((tokenValid, tokenError) => {
+                        if (!tokenValid)
+                        {
+                            DebugLog($"Token validation failed immediately after login: {tokenError}");
+                            // Don't fail login here, just log it - we'll try to get player data anyway
+                        }
+                        else
+                        {
+                            DebugLog("Token validation successful after login");
+                        }
+                    }));
+                    
+                      // Check if we have complete player data
+                    if (PlayerData != null && !string.IsNullOrEmpty(PlayerData.id) && !string.IsNullOrEmpty(PlayerData.username))
+                    {
+                        DebugLog($"Complete user data received - ID: '{PlayerData.id}', Username: '{PlayerData.username}', Email: '{PlayerData.email}'");
+                        OnPlayerDataLoaded?.Invoke(PlayerData);
+                        onComplete?.Invoke(true, "");
+                    }
+                    else
+                    {
+                        DebugLog("Incomplete user data in login response, fetching from server...");
+                        DebugLog($"Current PlayerData state: ID='{PlayerData?.id}', Username='{PlayerData?.username}'");
+                        
+                        // Wait a moment before fetching (some servers need time to process)
+                        yield return new WaitForSeconds(0.5f);
+                        
+                        // Use a separate coroutine to fetch player data
+                        StartCoroutine(FetchPlayerDataAfterLogin(onComplete));
+                    }
+                }
+                else
+                {
+                    onComplete?.Invoke(false, parseError);
+                }
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Login failed: {errorMsg}");
+                onComplete?.Invoke(false, errorMsg);
             }
         }
-
-        public IEnumerator UpdateMoney(int money, Action<bool, string> callback)
+    }    private IEnumerator FetchPlayerDataAfterLogin(Action<bool, string> onComplete)
+    {
+        DebugLog($"FetchPlayerDataAfterLogin: Starting with token: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        
+        // Add a small delay to allow server to process the token
+        yield return new WaitForSeconds(1f);
+        
+        // First, try to validate the token before fetching player data
+        bool tokenValid = false;
+        string tokenError = "";
+        
+        yield return StartCoroutine(ValidateCurrentToken((valid, error) => {
+            tokenValid = valid;
+            tokenError = error;
+        }));
+        
+        if (!tokenValid)
         {
-            if (string.IsNullOrEmpty(_token) || _playerData == null)
-            {
-                callback(false, "Not logged in or player data not loaded");
-                yield break;
-            }
-
-            string json = $"{{\"money\": {money}}}";
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = UnityWebRequest.Put($"{API_URL}/player/money", bodyRaw))
-            {
-                www.SetRequestHeader("x-auth-token", _token);
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError($"Update Money Error: {www.error}");
-                    callback(false, www.error);
-                    yield break;
-                }
-
-                _playerData = JsonUtility.FromJson<PlayerDataModel>(www.downloadHandler.text);
-                callback(true, null);
-            }
+            DebugLog($"Token validation failed after login: {tokenError}");
+            // Clear invalid token and report error
+            AuthToken = null;
+            PlayerPrefs.DeleteKey("AuthToken");
+            PlayerPrefs.Save();
+            onComplete?.Invoke(false, "Login failed: Invalid authentication token");
+            yield break;
         }
-
-        public IEnumerator UpdateCheckpoint(string sceneId, Vector3 position, Action<bool, string> callback)
-        {
-            if (string.IsNullOrEmpty(_token) || _playerData == null)
+        
+        DebugLog("Token validated successfully, fetching player data...");
+        
+        yield return StartCoroutine(GetPlayerData((dataSuccess, dataError) => {
+            if (dataSuccess && PlayerData != null && !string.IsNullOrEmpty(PlayerData.id))
             {
-                callback(false, "Not logged in or player data not loaded");
-                yield break;
+                DebugLog("Player data fetched successfully after login");
+                OnPlayerDataLoaded?.Invoke(PlayerData);
+                onComplete?.Invoke(true, "");
             }
-
-            Checkpoint checkpoint = new Checkpoint
+            else
             {
-                sceneId = sceneId,
-                position = new Position
+                DebugLog($"Failed to fetch player data after login: {dataError}");
+                
+                // If token is invalid, try to clear it and report login failure
+                if (dataError.Contains("Authorization expired") || dataError.Contains("Token is not valid"))
                 {
-                    x = position.x,
-                    y = position.y,
-                    z = position.z
+                    DebugLog("Clearing invalid token received during login");
+                    AuthToken = null;
+                    PlayerPrefs.DeleteKey("AuthToken");
+                    PlayerPrefs.Save();
+                    onComplete?.Invoke(false, "Login failed: Invalid token received from server");
                 }
-            };
-
-            string json = JsonUtility.ToJson(new { checkpoint });
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = UnityWebRequest.Put($"{API_URL}/player/checkpoint", bodyRaw))
-            {
-                www.SetRequestHeader("x-auth-token", _token);
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
+                else
                 {
-                    Debug.LogError($"Update Checkpoint Error: {www.error}");
-                    callback(false, www.error);
+                    onComplete?.Invoke(false, "Login successful but failed to load user data: " + dataError);
+                }
+            }
+        }));
+    }
+      public IEnumerator LoginWithToken(string token, Action<bool, string> onComplete)
+    {
+        DebugLog($"Attempting token verification with: {token?.Substring(0, Math.Min(10, token?.Length ?? 0))}...");
+        
+        // Try primary endpoint first
+        using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/auth/verify"))
+        {
+            request.SetRequestHeader("x-auth-token", token);
+            request.timeout = (int)requestTimeout;
+              yield return request.SendWebRequest();
+            
+            // Only log non-404 responses as errors, since we have a fallback for 404
+            if (request.responseCode != 404) {
+                DebugLog($"Primary token verification response code: {request.responseCode}");
+            }
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string responseText = request.downloadHandler.text;
+                    if (string.IsNullOrEmpty(responseText))
+                    {
+                        DebugLog("Error: Token verification returned empty response");
+                        onComplete?.Invoke(false, "Empty server response");
+                        yield break;
+                    }
+                      try {
+                        PlayerData = JsonConvert.DeserializeObject<PlayerDataModel>(responseText);
+                        
+                        if (PlayerData == null)
+                        {
+                            DebugLog("Error: Failed to parse user data from token verification");
+                            onComplete?.Invoke(false, "Invalid user data format");
+                            yield break;
+                        }
+                        
+                        // Check for missing critical fields
+                        if (string.IsNullOrEmpty(PlayerData.id) || string.IsNullOrEmpty(PlayerData.username))
+                        {
+                            DebugLog("Attempting to adapt data from token verification...");
+                            
+                            // Try to parse the raw response to look for alternative field names
+                            var rawData = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseText);
+                            if (rawData != null)
+                            {
+                                // Check for _id instead of id
+                                if (string.IsNullOrEmpty(PlayerData.id) && rawData.ContainsKey("_id"))
+                                {
+                                    PlayerData.id = rawData["_id"].ToString();
+                                    DebugLog($"Found alternative ID field: '{PlayerData.id}'");
+                                }
+                                
+                                // Check for name instead of username
+                                if (string.IsNullOrEmpty(PlayerData.username) && rawData.ContainsKey("name"))
+                                {
+                                    PlayerData.username = rawData["name"].ToString();
+                                    DebugLog($"Found alternative username field: '{PlayerData.username}'");
+                                }
+                                
+                                // Still missing critical fields?
+                                if (string.IsNullOrEmpty(PlayerData.id) || string.IsNullOrEmpty(PlayerData.username))
+                                {
+                                    DebugLog("Still missing critical fields after adaptation");
+                                    onComplete?.Invoke(false, "Invalid user data structure");
+                                    yield break;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception parseEx) {
+                        DebugLog($"Error parsing token verification response: {parseEx.Message}");
+                        onComplete?.Invoke(false, "Failed to parse user data");
+                        yield break;
+                    }
+                    
+                    AuthToken = token;
+                    PlayerPrefs.SetString("AuthToken", AuthToken);
+                    PlayerPrefs.Save();
+                    
+                    DebugLog($"Token verification successful - ID: '{PlayerData.id}', Username: '{PlayerData.username}'");
+                    onComplete?.Invoke(true, "");
                     yield break;
                 }
-
-                _playerData = JsonUtility.FromJson<PlayerDataModel>(www.downloadHandler.text);
-                callback(true, null);
-            }
-        }
-
-        public IEnumerator UpdateWeapons(List<Weapon> weapons, string currentWeapon, Action<bool, string> callback)
-        {
-            if (string.IsNullOrEmpty(_token) || _playerData == null)
-            {
-                callback(false, "Not logged in or player data not loaded");
-                yield break;
-            }
-
-            string json = JsonUtility.ToJson(new { weapons, currentWeapon });
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = UnityWebRequest.Put($"{API_URL}/player/weapons", bodyRaw))
-            {
-                www.SetRequestHeader("x-auth-token", _token);
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
+                catch (Exception ex)
                 {
-                    Debug.LogError($"Update Weapons Error: {www.error}");
-                    callback(false, www.error);
+                    DebugLog($"Token verification response parse error: {ex.Message}");
+                    onComplete?.Invoke(false, "Invalid server response");
                     yield break;
                 }
-
-                _playerData = JsonUtility.FromJson<PlayerDataModel>(www.downloadHandler.text);
-                callback(true, null);
             }
-        }
-
-        public IEnumerator UpdateAmmunition(int pistolAmmo, int rifleAmmo, Action<bool, string> callback)
-        {
-            if (string.IsNullOrEmpty(_token) || _playerData == null)
+              // If primary endpoint fails with 404, try fallback approach
+            if (request.responseCode == 404)
             {
-                callback(false, "Not logged in or player data not loaded");
-                yield break;
+                // Using a more informative but less alarming message
+                DebugLog("Using alternative endpoint for token verification (expected fallback)...");
+                yield return StartCoroutine(LoginWithTokenFallback(token, onComplete));
             }
-
-            Ammunition ammunition = new Ammunition
+            else
             {
-                pistol = pistolAmmo,
-                rifle = rifleAmmo
-            };
-
-            string json = JsonUtility.ToJson(new { ammunition });
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-            using (UnityWebRequest www = UnityWebRequest.Put($"{API_URL}/player/ammunition", bodyRaw))
-            {
-                www.SetRequestHeader("x-auth-token", _token);
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError($"Update Ammunition Error: {www.error}");
-                    callback(false, www.error);
-                    yield break;
-                }
-
-                _playerData = JsonUtility.FromJson<PlayerDataModel>(www.downloadHandler.text);
-                callback(true, null);
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Token verification failed: {errorMsg}");
+                onComplete?.Invoke(false, errorMsg);
             }
         }
     }
+    
+    private IEnumerator LoginWithTokenFallback(string token, Action<bool, string> onComplete)
+    {        // Fallback: Try to get player data directly via /player/data endpoint
+        DebugLog("Verifying token using player data endpoint...");
+        
+        using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/player/data"))
+        {
+            request.SetRequestHeader("x-auth-token", token);
+            request.timeout = (int)requestTimeout;
+            
+            yield return request.SendWebRequest();
+            
+            DebugLog($"Fallback token verification response code: {request.responseCode}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string responseText = request.downloadHandler.text;
+                    if (string.IsNullOrEmpty(responseText))
+                    {
+                        DebugLog("Error: Fallback verification returned empty response");
+                        onComplete?.Invoke(false, "Empty server response");
+                        yield break;
+                    }
+                    
+                    PlayerData = JsonConvert.DeserializeObject<PlayerDataModel>(responseText);
+                    
+                    if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id))
+                    {
+                        DebugLog("Error: Invalid player data from fallback verification");
+                        onComplete?.Invoke(false, "Invalid user data");
+                        yield break;
+                    }
+                    
+                    AuthToken = token;
+                    PlayerPrefs.SetString("AuthToken", AuthToken);
+                    PlayerPrefs.Save();
+                    
+                    DebugLog($"Fallback token verification successful - ID: '{PlayerData.id}', Username: '{PlayerData.username}'");
+                    onComplete?.Invoke(true, "");
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"Fallback verification parse error: {ex.Message}");
+                    onComplete?.Invoke(false, "Invalid server response");
+                }
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Fallback token verification also failed: {errorMsg}");
+                onComplete?.Invoke(false, errorMsg);
+            }
+        }
+    }
+    
+    public IEnumerator Register(string username, string email, string password, Action<bool, string> onComplete)
+    {
+        // Basic client-side validation
+        if (string.IsNullOrEmpty(username.Trim()) || string.IsNullOrEmpty(email.Trim()) || string.IsNullOrEmpty(password.Trim()))
+        {
+            onComplete?.Invoke(false, "All fields are required");
+            yield break;
+        }
+        
+        if (username.Length < 3)
+        {
+            onComplete?.Invoke(false, "Username must be at least 3 characters long");
+            yield break;
+        }
+        
+        if (password.Length < 6)
+        {
+            onComplete?.Invoke(false, "Password must be at least 6 characters long");
+            yield break;
+        }
+        
+        if (!IsValidEmail(email))
+        {
+            onComplete?.Invoke(false, "Please enter a valid email address");
+            yield break;
+        }
+        
+        var registerData = new
+        {
+            username = username.Trim(),
+            email = email.Trim().ToLower(),
+            password = password
+        };
+        
+        string jsonData = JsonConvert.SerializeObject(registerData);
+        
+        using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/auth/register", "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = (int)requestTimeout;
+            
+            yield return request.SendWebRequest();
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {                    var response = JsonConvert.DeserializeObject<LoginResponse>(request.downloadHandler.text);
+                    AuthToken = response.token;
+                    PlayerData = response.user;
+                    
+                    // Save token to PlayerPrefs for persistence
+                    PlayerPrefs.SetString("AuthToken", AuthToken);
+                    PlayerPrefs.Save();
+                    
+                    DebugLog($"Registration successful for user: {username}");
+                    onComplete?.Invoke(true, "");
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"Registration response parse error: {ex.Message}");
+                    onComplete?.Invoke(false, "Invalid server response");
+                }
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Registration failed: {errorMsg}");
+                onComplete?.Invoke(false, errorMsg);
+            }
+        }
+    }    public IEnumerator GetPlayerData(Action<bool, string> onComplete)
+    {
+        if (string.IsNullOrEmpty(AuthToken))
+        {
+            DebugLog("Error: No auth token available for GetPlayerData");
+            onComplete?.Invoke(false, "Not authenticated");
+            yield break;
+        }
+
+        DebugLog($"Getting player data with token: {AuthToken.Substring(0, Math.Min(10, AuthToken.Length))}...");
+        DebugLog($"Full API URL: {API_URL}/player/data");
+        
+        using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/player/data"))
+        {
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = (int)requestTimeout;
+            
+            DebugLog($"Request headers set - x-auth-token: {AuthToken.Substring(0, Math.Min(10, AuthToken.Length))}...");
+            DebugLog($"Request URL: {request.url}");
+            
+            yield return request.SendWebRequest();
+            
+            DebugLog($"GetPlayerData response code: {request.responseCode}");
+            DebugLog($"GetPlayerData response: {request.downloadHandler.text}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string responseText = request.downloadHandler.text;
+                    PlayerData = JsonConvert.DeserializeObject<PlayerDataModel>(responseText);
+                    
+                    if (PlayerData != null && !string.IsNullOrEmpty(PlayerData.id))
+                    {
+                        DebugLog($"Player data loaded successfully - ID: {PlayerData.id}, Username: {PlayerData.username}");
+                        OnPlayerDataLoaded?.Invoke(PlayerData);
+                        onComplete?.Invoke(true, "");
+                    }
+                    else
+                    {
+                        DebugLog("Error: Received invalid player data");
+                        DebugLog($"PlayerData is null: {PlayerData == null}");
+                        if (PlayerData != null)
+                        {
+                            DebugLog($"PlayerData.id: '{PlayerData.id}', PlayerData.username: '{PlayerData.username}'");
+                        }
+                        onComplete?.Invoke(false, "Invalid player data received");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"Error parsing player data: {ex.Message}");
+                    DebugLog($"Raw response that failed to parse: {request.downloadHandler.text}");
+                    onComplete?.Invoke(false, "Failed to parse player data");
+                }
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"GetPlayerData failed: {errorMsg}");
+                
+                // Check if it's an authorization error
+                if (request.responseCode == 401 || errorMsg.Contains("authorization") || errorMsg.Contains("token"))
+                {
+                    DebugLog("Authorization error detected - clearing invalid token");
+                    AuthToken = null;
+                    PlayerPrefs.DeleteKey("AuthToken");
+                    PlayerPrefs.Save();
+                    onComplete?.Invoke(false, "Authorization expired - please login again");
+                }
+                else
+                {
+                    onComplete?.Invoke(false, errorMsg);
+                }
+            }
+        }
+    }
+      public IEnumerator SavePlayerData(Action<bool, string> onComplete)
+    {
+        DebugLog("=== SavePlayerData Called ===");
+        DebugLog($"IsLoggedIn: {IsLoggedIn}");
+        DebugLog($"AuthToken exists: {!string.IsNullOrEmpty(AuthToken)}");
+        DebugLog($"AuthToken value: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        DebugLog($"PlayerData exists: {PlayerData != null}");
+        
+        if (!IsLoggedIn || PlayerData == null)
+        {
+            string errorMsg = !IsLoggedIn ? "Not logged in" : "No player data";
+            DebugLog($"Cannot save player data: {errorMsg}");
+            if (PlayerData == null)
+            {
+                DebugLog("PlayerData is null - this indicates a data loading issue");
+            }
+            if (string.IsNullOrEmpty(AuthToken))
+            {
+                DebugLog("AuthToken is null or empty - checking PlayerPrefs...");
+                string savedToken = PlayerPrefs.GetString("AuthToken", "");
+                if (!string.IsNullOrEmpty(savedToken))
+                {
+                    DebugLog($"Found saved token in PlayerPrefs: {savedToken.Substring(0, Math.Min(10, savedToken.Length))}...");
+                    AuthToken = savedToken;
+                    DebugLog("Restored AuthToken from PlayerPrefs");
+                }
+                else
+                {
+                    DebugLog("No saved token found in PlayerPrefs");
+                }
+            }
+            
+            // Check again after token restoration attempt
+            if (!IsLoggedIn)
+            {
+                onComplete?.Invoke(false, "No token, authorization denied");
+                yield break;
+            }
+        }
+        
+        // Validate player data has essential fields
+        if (string.IsNullOrEmpty(PlayerData.id) || string.IsNullOrEmpty(PlayerData.username))
+        {
+            DebugLog($"Invalid player data - ID: '{PlayerData.id}', Username: '{PlayerData.username}'");
+            DebugLog("This indicates the player data was not properly loaded from the server");
+            onComplete?.Invoke(false, "Invalid player data");
+            yield break;
+        }
+        
+        // Update timestamp before saving
+        PlayerData.lastLoginDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        
+        string jsonData = JsonConvert.SerializeObject(PlayerData);
+        DebugLog($"Saving player data for user: {PlayerData.username} (ID: {PlayerData.id})");
+        DebugLog($"Using AuthToken: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        
+        // Try primary save endpoint first (/api/player/save)
+        using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/player/save", "PUT"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.timeout = (int)requestTimeout;
+            
+            DebugLog($"Sending save request to: {API_URL}/player/save");
+            yield return request.SendWebRequest();
+            
+            DebugLog($"Save response code: {request.responseCode}");
+            DebugLog($"Save response: {request.downloadHandler.text}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Player data saved successfully");
+                onComplete?.Invoke(true, "");
+                yield break;
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Primary save endpoint failed: {errorMsg}");
+                
+                // If primary fails with 404, try alternative endpoint
+                if (request.responseCode == 404)
+                {
+                    DebugLog("Trying alternative save endpoint (/api/player/data)...");
+                    yield return StartCoroutine(SavePlayerDataAlternative(onComplete));
+                }
+                else
+                {
+                    onComplete?.Invoke(false, errorMsg);
+                }
+            }
+        }
+    }
+      private IEnumerator SavePlayerDataAlternative(Action<bool, string> onComplete)
+    {
+        if (!IsLoggedIn || PlayerData == null)
+        {
+            DebugLog("Alternative save failed: Not logged in or no player data");
+            onComplete?.Invoke(false, "Not logged in or no player data");
+            yield break;
+        }
+        
+        string jsonData = JsonConvert.SerializeObject(PlayerData);
+        DebugLog($"Attempting alternative save for user: {PlayerData.username} (ID: {PlayerData.id})");
+        DebugLog($"Using AuthToken: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        
+        using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/player/data", "PUT"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.timeout = (int)requestTimeout;
+            
+            DebugLog($"Sending alternative save request to: {API_URL}/player/data");
+            yield return request.SendWebRequest();
+            
+            DebugLog($"Alternative save response code: {request.responseCode}");
+            DebugLog($"Alternative save response: {request.downloadHandler.text}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Player data saved successfully (alternative endpoint)");
+                onComplete?.Invoke(true, "");
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Alternative save endpoint also failed: {errorMsg}");
+                onComplete?.Invoke(false, errorMsg);
+            }
+        }
+    }
+      // Test server connectivity without authentication
+    public IEnumerator TestServerConnectivity(System.Action<bool, string> onComplete)
+    {
+        DebugLog($"Testing server connectivity to: {API_URL}");
+        
+        // Test the base URL first
+        string testUrl = API_URL.Replace("/api", "");
+        using (UnityWebRequest request = UnityWebRequest.Get(testUrl))
+        {
+            request.timeout = 10;
+            yield return request.SendWebRequest();
+            
+            DebugLog($"Server test - URL: {testUrl}");
+            DebugLog($"Server test - Response code: {request.responseCode}");
+            DebugLog($"Server test - Error: {request.error}");
+            DebugLog($"Server test - Response: {request.downloadHandler.text}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Server connectivity test successful");
+                onComplete?.Invoke(true, "Server is reachable");
+            }
+            else
+            {
+                DebugLog($"Server connectivity test failed: {request.error}");
+                onComplete?.Invoke(false, "Cannot reach server: " + request.error);
+            }
+        }
+    }
+    
+    public IEnumerator TestAPIEndpoints(System.Action<bool, string> onComplete)
+    {
+        DebugLog("Testing API endpoints...");
+        
+        // Test health endpoint first
+        using (UnityWebRequest request = UnityWebRequest.Get(API_URL.Replace("/api", "")))
+        {
+            request.timeout = 10;
+            yield return request.SendWebRequest();
+            
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                DebugLog($"Server connectivity test failed: {request.error}");
+                onComplete?.Invoke(false, "Cannot reach server: " + request.error);
+                yield break;
+            }
+            
+            DebugLog("Server is reachable");
+        }
+        
+        // Test if user is logged in and can access player data
+        if (!IsLoggedIn)
+        {
+            DebugLog("API test: Not logged in");
+            onComplete?.Invoke(false, "Not logged in");
+            yield break;
+        }
+        
+        DebugLog($"Testing player data endpoint with token: {AuthToken?.Substring(0, Math.Min(10, AuthToken.Length))}...");
+        
+        // Test GET player data endpoint
+        using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/player/data"))
+        {
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = 10;
+            
+            yield return request.SendWebRequest();
+            
+            DebugLog($"Player data endpoint test - Response code: {request.responseCode}");
+            DebugLog($"Player data endpoint test - Response: {request.downloadHandler.text}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Player data GET endpoint test successful");
+                
+                // Try to parse the response
+                try
+                {
+                    var testData = JsonConvert.DeserializeObject<PlayerDataModel>(request.downloadHandler.text);
+                    if (testData != null && !string.IsNullOrEmpty(testData.id) && !string.IsNullOrEmpty(testData.username))
+                    {
+                        DebugLog($"API test successful - Valid player data: {testData.username} (ID: {testData.id})");
+                        onComplete?.Invoke(true, $"API working correctly. User: {testData.username}");
+                    }
+                    else
+                    {
+                        DebugLog($"API test warning - Invalid player data structure: ID='{testData?.id}', Username='{testData?.username}'");
+                        onComplete?.Invoke(false, "Server returns invalid player data structure");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"API test error - Failed to parse player data: {ex.Message}");
+                    onComplete?.Invoke(false, "Server response parsing error: " + ex.Message);
+                }
+            }
+            else
+            {
+                string errorMsg = $"Player data GET endpoint failed: {request.responseCode} - {request.error}";
+                DebugLog(errorMsg);
+                onComplete?.Invoke(false, errorMsg);
+            }
+        }
+    }
+    
+    private IEnumerator TestSaveEndpoints(System.Action<bool, string> onComplete)
+    {
+        DebugLog("Testing save endpoints...");
+        
+        if (PlayerData == null)
+        {
+            onComplete?.Invoke(false, "No player data to test save with");
+            yield break;
+        }
+        
+        string testData = JsonConvert.SerializeObject(PlayerData);
+        
+        // Test primary save endpoint
+        using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/player/save", "PUT"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(testData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.timeout = 10;
+            
+            yield return request.SendWebRequest();
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Primary save endpoint (/player/save) working");
+                onComplete?.Invoke(true, "All endpoints working, primary save endpoint available");
+                yield break;
+            }
+            else
+            {
+                DebugLog($"Primary save endpoint failed: {request.responseCode} - {request.error}");
+            }
+        }
+        
+        // Test alternative save endpoint
+        using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/player/data", "PUT"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(testData);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.timeout = 10;
+            
+            yield return request.SendWebRequest();
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Alternative save endpoint (/player/data) working");
+                onComplete?.Invoke(true, "Endpoints working, using alternative save endpoint");
+            }
+            else
+            {
+                DebugLog($"Alternative save endpoint also failed: {request.responseCode} - {request.error}");
+                onComplete?.Invoke(false, "Both save endpoints failed");
+            }
+        }
+    }
+    
+    public void Logout()
+    {
+        AuthToken = null;
+        PlayerData = null;
+        PlayerPrefs.DeleteKey("AuthToken");
+        PlayerPrefs.DeleteKey("LastCheckpoint");
+        PlayerPrefs.Save();
+        
+        // Clear data synchronizer
+        if (GameDataSynchronizer.Instance != null)
+        {
+            GameDataSynchronizer.Instance.ClearData();
+        }
+        
+        DebugLog("User logged out");
+    }
+    
+    // Method to restore AuthToken from PlayerPrefs if it gets lost
+    public void RestoreAuthTokenFromPrefs()
+    {
+        if (string.IsNullOrEmpty(AuthToken))
+        {
+            string savedToken = PlayerPrefs.GetString("AuthToken", "");
+            if (!string.IsNullOrEmpty(savedToken))
+            {
+                DebugLog($"Restoring AuthToken from PlayerPrefs: {savedToken.Substring(0, Math.Min(10, savedToken.Length))}...");
+                AuthToken = savedToken;
+                DebugLog("AuthToken restored successfully");
+            }
+            else
+            {
+                DebugLog("No saved AuthToken found in PlayerPrefs");
+            }
+        }
+        else
+        {
+            DebugLog($"AuthToken already exists: {AuthToken.Substring(0, Math.Min(10, AuthToken.Length))}...");
+        }
+    }
+    
+    // Method to force reload player data if it becomes corrupted
+    public void ForceReloadPlayerData(Action<bool, string> onComplete = null)
+    {
+        DebugLog("Force reloading player data...");
+        
+        if (!IsLoggedIn)
+        {
+            RestoreAuthTokenFromPrefs();
+            if (!IsLoggedIn)
+            {
+                DebugLog("Cannot reload player data: Not logged in");
+                onComplete?.Invoke(false, "Not logged in");
+                return;
+            }
+        }
+        
+        StartCoroutine(GetPlayerData((success, error) => {
+            if (success && PlayerData != null && !string.IsNullOrEmpty(PlayerData.id) && !string.IsNullOrEmpty(PlayerData.username))
+            {
+                DebugLog($"Player data force reload successful: {PlayerData.username} (ID: {PlayerData.id})");
+                onComplete?.Invoke(true, "Player data reloaded successfully");
+            }
+            else
+            {
+                DebugLog($"Player data force reload failed: {error}");
+                onComplete?.Invoke(false, error ?? "Failed to reload player data");
+            }
+        }));
+    }
+      // Method to validate if the current token is working
+    public IEnumerator ValidateCurrentToken(Action<bool, string> onComplete)
+    {
+        if (string.IsNullOrEmpty(AuthToken))
+        {
+            DebugLog("ValidateCurrentToken: No token to validate");
+            onComplete?.Invoke(false, "No token available");
+            yield break;
+        }
+
+        DebugLog($"Validating current token: {AuthToken.Substring(0, Math.Min(10, AuthToken.Length))}...");
+
+        // Try the primary verification endpoint first
+        using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/auth/verify"))
+        {
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.timeout = (int)requestTimeout;
+
+            yield return request.SendWebRequest();
+
+            DebugLog($"Token validation response code: {request.responseCode}");
+            
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Token validation successful via /auth/verify");
+                onComplete?.Invoke(true, "Token is valid");
+                yield break;
+            }
+            else if (request.responseCode == 404)
+            {
+                DebugLog("Auth verify endpoint not found (404), trying alternative method...");
+                // Fallback to player data endpoint
+                yield return StartCoroutine(ValidateTokenAlternative(onComplete));
+                yield break;
+            }
+            else
+            {
+                DebugLog($"Primary token validation failed: {request.responseCode} - {request.downloadHandler.text}");
+                // Try alternative validation
+                yield return StartCoroutine(ValidateTokenAlternative(onComplete));
+            }
+        }
+    }
+
+    private IEnumerator ValidateTokenAlternative(Action<bool, string> onComplete)
+    {
+        DebugLog("Trying alternative token validation via player data endpoint...");
+
+        using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/player/data"))
+        {
+            request.SetRequestHeader("x-auth-token", AuthToken);
+            request.timeout = (int)requestTimeout;
+
+            yield return request.SendWebRequest();
+
+            DebugLog($"Alternative token validation response code: {request.responseCode}");
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                DebugLog("Alternative token validation successful");
+                onComplete?.Invoke(true, "Token is valid (alternative check)");
+            }
+            else
+            {
+                string errorMsg = GetErrorMessage(request);
+                DebugLog($"Alternative token validation also failed: {errorMsg}");
+                
+                // Clear invalid token
+                if (request.responseCode == 401)
+                {
+                    DebugLog("Token is definitely invalid - clearing");
+                    AuthToken = null;
+                    PlayerPrefs.DeleteKey("AuthToken");
+                    PlayerPrefs.Save();
+                    onComplete?.Invoke(false, "Token is invalid");
+                }
+                else
+                {
+                    onComplete?.Invoke(false, errorMsg);
+                }
+            }
+        }
+    }
+
+    private string GetErrorMessage(UnityWebRequest request)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(request.downloadHandler.text))
+            {
+                var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(request.downloadHandler.text);
+                return errorResponse.error ?? request.error;
+            }
+        }
+        catch
+        {
+            // If JSON parsing fails, return the raw error
+        }
+        
+        return request.error;
+    }
+    
+    private void DebugLog(string message)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"[GameAPI] {message}");
+        }
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+            return false;
+            
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
+    // Thêm method debug vào GameAPI
+    public void DebugTokenInfo()
+    {
+        if (!string.IsNullOrEmpty(AuthToken))
+        {
+            try
+            {
+                // Decode JWT token để xem user ID
+                var parts = AuthToken.Split('.');
+                if (parts.Length >= 2)
+                {
+                    var payload = parts[1];
+                    // Add padding if needed
+                    while (payload.Length % 4 != 0)
+                        payload += "=";
+                
+                    var decodedBytes = System.Convert.FromBase64String(payload);
+                    var decodedText = System.Text.Encoding.UTF8.GetString(decodedBytes);
+                    DebugLog($"Token payload: {decodedText}");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugLog($"Failed to decode token: {ex.Message}");
+            }
+        }
+    }
+}
+
+// Data Models
+[System.Serializable]
+public class LoginResponse
+{
+    public string token;
+    public PlayerDataModel user;
+}
+
+[System.Serializable]
+public class ErrorResponse
+{
+    public string error;
+}
+
+[System.Serializable]
+public class PlayerDataModel
+{
+    public string id;
+    public string username;
+    public string email;
+    public int level = 1;
+    public int experience = 0;
+    public int money = 0;
+    public float health = 100f;
+    public CheckpointData checkpoint;
+    public List<WeaponData> weapons = new List<WeaponData>();
+    public string lastLoginDate;
+}
+
+[System.Serializable]
+public class CheckpointData
+{
+    public string sceneId;
+    public SerializableVector3 position; // Changed from Vector3 to SerializableVector3
+    public string timestamp;
+    public string additionalData;
+}
+
+[System.Serializable]
+public class SerializableVector3
+{
+    public float x;
+    public float y;
+    public float z;
+    
+    public SerializableVector3() { }
+    
+    public SerializableVector3(Vector3 vector)
+    {
+        x = vector.x;
+        y = vector.y;
+        z = vector.z;
+    }
+    
+    public Vector3 ToVector3()
+    {
+        return new Vector3(x, y, z);
+    }
+    
+    public static implicit operator Vector3(SerializableVector3 serializable)
+    {
+        return serializable?.ToVector3() ?? Vector3.zero;
+    }
+    
+    public static implicit operator SerializableVector3(Vector3 vector)
+    {
+        return new SerializableVector3(vector);
+    }
+}
+
+[System.Serializable]
+public class WeaponData
+{
+    public string id;
+    public string name;
+    public int damage;
+    public int level;
+    public bool isUnlocked;
+    public int ammo;
 }

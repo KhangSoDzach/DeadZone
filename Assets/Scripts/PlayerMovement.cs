@@ -26,15 +26,73 @@ public class PlayerMovement : MonoBehaviour
     // Tham chiếu đến HealthManager để xử lý thể lực
     private HealthManager healthManager;
 
-    // Start is called before the first frame update
+    // Biến để ngăn duplicate player
+    private static PlayerMovement instance;    // Start is called before the first frame update
     void Awake()
     {
+        // Check scene context first
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.Log("PlayerMovement: Skipping initialization in menu scene");
+            this.enabled = false;
+            return;
+        }
+
+        // Kiểm tra nếu đã có instance khác
+        if (instance != null && instance != this)
+        {
+            Debug.LogWarning("Duplicate player detected! Destroying this instance: " + gameObject.name);
+            Destroy(gameObject);
+            return;
+        }
+        
+        instance = this;
         DontDestroyOnLoad(this.gameObject);
+        
+        // Listen for scene changes
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
+    
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        string sceneName = scene.name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            // Disable player in menu scenes
+            this.enabled = false;
+            this.gameObject.SetActive(false);
+            Debug.Log("PlayerMovement: Disabled for menu scene");
+        }
+        else
+        {
+            // Re-enable player in gameplay scenes
+            this.gameObject.SetActive(true);
+            this.enabled = true;
+            Debug.Log("PlayerMovement: Enabled for gameplay scene");
+        }
+    }
+    
     void Start()
     {
         controller = GetComponent<CharacterController>();
         healthManager = GetComponent<HealthManager>();
+        
+        // Reset vận tốc để tránh bay đi
+        if (controller != null)
+        {
+            controller.enabled = false;
+            transform.position = transform.position; // Đảm bảo vị trí ổn định
+            controller.enabled = true;
+        }
+        
+        // Reset Rigidbody nếu có
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
         
         // Nếu không tìm thấy HealthManager trên đối tượng này, tìm kiếm trong toàn bộ player
         if (healthManager == null)
@@ -58,7 +116,17 @@ public class PlayerMovement : MonoBehaviour
             if (healthManager == null)
             {
                 Debug.LogWarning("Không thể tìm thấy HealthManager cho PlayerMovement. Hệ thống thể lực sẽ không hoạt động!");
+                // Don't disable the component, just log the warning
             }
+        }
+        
+        // Validate scene context
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.LogWarning($"PlayerMovement should not be active in scene: {sceneName}");
+            this.enabled = false;
+            return;
         }
     }
 
@@ -186,5 +254,14 @@ public class PlayerMovement : MonoBehaviour
         {
             isSprinting = false;
         }
+    }    void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+        }
+        
+        // Clean up scene change listener
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }

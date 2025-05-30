@@ -95,7 +95,47 @@ public class DeathScreenManager : MonoBehaviour
         Time.timeScale = 1f;
         deathScreenPanel.SetActive(false);
         
-        // Load scene đầu tiên của game
+        // Check if user is logged in for online play
+        if (GameAPI.Instance != null && GameAPI.Instance.IsLoggedIn)
+        {
+            // For logged in users, reset their data and reload
+            Debug.Log("Starting new game for logged in user");
+            StartCoroutine(ResetOnlinePlayerData());
+        }
+        else
+        {
+            // For offline play, just reload the scene
+            Debug.Log("Starting new offline game");
+            SceneManager.LoadScene(newGameSceneName);
+        }
+    }
+    
+    private System.Collections.IEnumerator ResetOnlinePlayerData()
+    {
+        // Reset player data for online users
+        if (GameAPI.Instance.PlayerData != null)
+        {
+            var playerData = GameAPI.Instance.PlayerData;
+            playerData.level = 1;
+            playerData.experience = 0;
+            playerData.money = 0;
+            playerData.health = 100f;
+            playerData.checkpoint = null;
+            if (playerData.weapons != null)
+            {
+                playerData.weapons.Clear();
+            }
+            
+            // Try to save the reset data
+            yield return StartCoroutine(GameAPI.Instance.SavePlayerData((success, error) => {
+                if (!success)
+                {
+                    Debug.LogWarning("Failed to save reset data: " + error);
+                }
+            }));
+        }
+        
+        // Load the new game scene
         SceneManager.LoadScene(newGameSceneName);
     }
 

@@ -1,8 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using System;
-using DevionGames;
+using System.Collections;
+using UnityEngine;
+using Scripts.API;
+using DevionGames.StatSystem;
 
 public class GameDataSynchronizer : MonoBehaviour
 {
@@ -15,22 +15,21 @@ public class GameDataSynchronizer : MonoBehaviour
             {
                 GameObject go = new GameObject("GameDataSynchronizer");
                 _instance = go.AddComponent<GameDataSynchronizer>();
-                DontDestroyOnLoad(go);
+                DontDestroyOnLoad(_instance.gameObject);
             }
             return _instance;
         }
     }
     
+    [Header("Settings")]
+    [SerializeField] private bool debugMode = true;
+    
     // Events
-    public delegate void PlayerDataUpdatedHandler(PlayerDataModel data);
+    public delegate void PlayerDataUpdatedHandler();
     public event PlayerDataUpdatedHandler OnPlayerDataUpdated;
     
-    // Status flags
+    // Properties
     public bool IsDataLoaded { get; private set; }
-    public PlayerDataModel CurrentPlayerData { get; private set; }
-    private bool _isSaving = false;
-    private float _lastSaveTime = 0f;
-    public float saveCooldown = 5f;
     
     private void Awake()
     {
@@ -45,215 +44,319 @@ public class GameDataSynchronizer : MonoBehaviour
         }
     }
     
-    private void Start()
+    public void LoadGameData(Action<bool, string> onComplete)
     {
-        if (GameAPI.Instance.IsLoggedIn)
+        if (!GameAPI.Instance.IsLoggedIn)
         {
-            LoadPlayerData();
+            onComplete?.Invoke(false, "Not logged in");
+            return;
         }
+        
+        StartCoroutine(LoadGameDataCoroutine(onComplete));
     }
     
-    public void LoadPlayerData()
+    private IEnumerator LoadGameDataCoroutine(Action<bool, string> onComplete)
     {
-        StartCoroutine(LoadPlayerDataCoroutine());
-    }
-    
-    private IEnumerator LoadPlayerDataCoroutine()
-    {
-        yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, message) => {
+        DebugLog("Loading game data...");
+        
+        yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
             if (success)
             {
-                CurrentPlayerData = GameAPI.Instance.PlayerData;
                 IsDataLoaded = true;
-                OnPlayerDataUpdated?.Invoke(CurrentPlayerData);
-                Debug.Log("Player data loaded successfully");
+                OnPlayerDataUpdated?.Invoke();
+                DebugLog("Game data loaded successfully");
             }
             else
             {
-                Debug.LogError("Failed to load player data: " + message);
-                IsDataLoaded = false;
+                DebugLog("Failed to load game data: " + error);
             }
+            
+            onComplete?.Invoke(success, error);
         }));
     }
     
-    public void SaveGameData(Action<bool, string> callback = null)
+    public void SaveGameData(Action<bool, string> onComplete)
     {
-        if (_isSaving || Time.time - _lastSaveTime < saveCooldown)
+        if (!GameAPI.Instance.IsLoggedIn)
         {
-            callback?.Invoke(false, "Save in progress or on cooldown");
+            onComplete?.Invoke(false, "Not logged in");
             return;
         }
         
-        if (!GameAPI.Instance.IsLoggedIn || !IsDataLoaded)
+        if (!IsDataLoaded)
         {
-            callback?.Invoke(false, "Not logged in or no data loaded");
+            onComplete?.Invoke(false, "No data loaded");
             return;
         }
         
-        _isSaving = true;
-        StartCoroutine(SaveGameDataCoroutine(callback));
+        StartCoroutine(SaveGameDataCoroutine(onComplete));
     }
-      private IEnumerator SaveGameDataCoroutine(Action<bool, string> callback)
+    
+    private IEnumerator SaveGameDataCoroutine(Action<bool, string> onComplete)
     {
-        // Update data from game objects
-        UpdateDataFromGame();
-          // Update GameAPI's PlayerData with our current data
-        GameAPI.Instance.UpdatePlayerDataModel(CurrentPlayerData);        // Save to server using GameAPI
-        yield return StartCoroutine(GameAPI.Instance.SavePlayerData((success, message) => {
-            _isSaving = false;
-            _lastSaveTime = Time.time;
-            
+        DebugLog("Saving game data...");
+        
+        // Update player data from game before saving
+        CollectDataFromGame();
+        
+        yield return StartCoroutine(GameAPI.Instance.SavePlayerData((success, error) => {
             if (success)
             {
-                Debug.Log("Game data saved successfully");
+                DebugLog("Game data saved successfully");
             }
             else
             {
-                Debug.LogError("Failed to save game data: " + message);
+                DebugLog("Failed to save game data: " + error);
             }
             
-            callback?.Invoke(success, message);
+            onComplete?.Invoke(success, error);
         }));
-    }
-    
-    private void UpdateDataFromGame()
-    {
-        if (CurrentPlayerData == null) return;
-        
-        // Get health from HealthManager
-        HealthManager healthManager = FindObjectOfType<HealthManager>();
-        if (healthManager != null)
-        {
-            CurrentPlayerData.health = healthManager.currentHealth;
-        }
-        
-        // Get money from ScoreManager
-        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
-        if (scoreManager != null)
-        {
-            CurrentPlayerData.money = scoreManager.currentScore;
-        }
-        
-        // Update player position for checkpoint
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {            CurrentPlayerData.checkpoint = new DevionGames.Checkpoint
-            {
-                sceneId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
-                position = new DevionGames.Position
-                {
-                    x = player.transform.position.x,
-                    y = player.transform.position.y,
-                    z = player.transform.position.z
-                }
-            };
-        }
-        
-        // Update weapon data
-        UpdateWeaponData();
-    }
-    
-    private void UpdateWeaponData()
-    {
-        WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
-        if (weaponManager != null && CurrentPlayerData != null)
-        {
-            // Update current weapon
-            if (weaponManager.CurrentGun != null)
-            {
-                CurrentPlayerData.currentWeapon = weaponManager.CurrentGun.weaponName;
-            }
-            
-            // Update ammunition
-            if (CurrentPlayerData.ammunition != null)
-            {
-                CurrentPlayerData.ammunition.pistol = weaponManager.GetAmmoCount("pistol");
-                CurrentPlayerData.ammunition.rifle = weaponManager.GetAmmoCount("rifle");
-            }
-            
-            // Update weapons data
-            if (CurrentPlayerData.weapons != null)
-            {
-                foreach (var weaponData in CurrentPlayerData.weapons)
-                {
-                    Gun gun = weaponManager.GetGunByName(weaponData.name);
-                    if (gun != null)
-                    {
-                        weaponData.level = gun.currentLevel;
-                        weaponData.damage = (int)gun.damage;
-                        weaponData.ammo = gun.currentAmmo;
-                    }
-                }
-            }
-        }
     }
     
     public void ApplyDataToGame()
     {
-        if (!IsDataLoaded || CurrentPlayerData == null) return;
-        
-        StartCoroutine(ApplyDataToGameCoroutine());
-    }
-    
-    private IEnumerator ApplyDataToGameCoroutine()
-    {
-        // Wait for a frame to let all game objects initialize
-        yield return null;
-        
-        // Apply health
-        HealthManager healthManager = FindObjectOfType<HealthManager>();
-        if (healthManager != null)
+        if (!IsDataLoaded || GameAPI.Instance.PlayerData == null)
         {
-            healthManager.SetHealth(CurrentPlayerData.health);
+            DebugLog("Cannot apply data to game: No data loaded");
+            return;
         }
         
-        // Apply score/money
-        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
-        if (scoreManager != null)
+        DebugLog("Applying data to game...");
+        // TODO: Apply player data to game components
+        // This is where you'd update health, money, weapons, etc. in your game
+    }      private void CollectDataFromGame()
+    {
+        if (GameAPI.Instance.PlayerData == null)
         {
-            scoreManager.SetScore(CurrentPlayerData.money);
+            DebugLog("Cannot collect data from game: No player data");
+            DebugLog($"GameAPI.Instance exists: {GameAPI.Instance != null}");
+            DebugLog($"GameAPI.Instance.IsLoggedIn: {GameAPI.Instance?.IsLoggedIn ?? false}");
+            DebugLog($"GameAPI.Instance.AuthToken exists: {!string.IsNullOrEmpty(GameAPI.Instance?.AuthToken)}");
+            
+            // Try to force reload player data
+            DebugLog("Attempting to force reload player data...");
+            StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+                if (success && GameAPI.Instance.PlayerData != null)
+                {
+                    DebugLog("Player data reloaded successfully, retrying data collection...");
+                    CollectDataFromGame(); // Retry after successful reload
+                }
+                else
+                {
+                    DebugLog($"Failed to reload player data: {error}");
+                }
+            }));
+            return;
         }
         
-        // Apply weapon data
-        ApplyWeaponData();
+        // Validate that the player data has essential fields
+        if (string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) || string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
+        {
+            DebugLog($"Cannot collect data from game: Invalid player data - ID: '{GameAPI.Instance.PlayerData.id}', Username: '{GameAPI.Instance.PlayerData.username}'");
+            DebugLog("Attempting to force reload player data due to invalid fields...");
+            
+            StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+                if (success && GameAPI.Instance.PlayerData != null && 
+                    !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
+                {
+                    DebugLog("Player data reloaded successfully after validation failure, retrying...");
+                    CollectDataFromGame(); // Retry after successful reload
+                }
+                else
+                {
+                    DebugLog($"Failed to reload player data after validation failure: {error}");
+                }
+            }));
+            return;
+        }
+          DebugLog($"Collecting data from game for user: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");
+        
+        // Collect current game state and update PlayerData
+        try
+        {
+            // 1. Collect health from StatsHandler
+            CollectHealthFromGame();
+            
+            // 2. Collect money from ScoreManager and StatsHandler
+            CollectMoneyFromGame();
+            
+            // 3. Collect weapon data from guns in scene
+            CollectWeaponsFromGame();
+            
+            DebugLog("Successfully collected all game data");
+        }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting game data: {ex.Message}");
+        }
+        
+        // Update last login timestamp
+        GameAPI.Instance.PlayerData.lastLoginDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
     }
     
-    private void ApplyWeaponData()
+    public void ClearData()
     {
-        WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
-        if (weaponManager != null && CurrentPlayerData != null)
+        IsDataLoaded = false;
+        DebugLog("Data cleared");
+    }
+    
+    private void DebugLog(string message)
+    {
+        if (debugMode)
         {
-            // Set ammo counts
-            if (CurrentPlayerData.ammunition != null)
+            Debug.Log($"[GameDataSynchronizer] {message}");
+        }
+    }
+    
+    /// <summary>
+    /// Collects current health from the StatsHandler system
+    /// </summary>
+    private void CollectHealthFromGame()
+    {
+        try
+        {
+            // Try to get health from DevionGames StatsHandler first
+            StatsHandler playerStatsHandler = FindObjectOfType<StatsHandler>();
+            if (playerStatsHandler != null)
             {
-                weaponManager.SetAmmoCount("pistol", CurrentPlayerData.ammunition.pistol);
-                weaponManager.SetAmmoCount("rifle", CurrentPlayerData.ammunition.rifle);
+                var healthStat = playerStatsHandler.GetStat("Health");
+                if (healthStat is DevionGames.StatSystem.Attribute healthAttribute)
+                {
+                    GameAPI.Instance.PlayerData.health = healthAttribute.CurrentValue;
+                    DebugLog($"Collected health from StatsHandler: {GameAPI.Instance.PlayerData.health}");
+                    return;
+                }
             }
             
-            // Setup weapons
-            if (CurrentPlayerData.weapons != null)
+            // Fallback: Try to get from GameStatsIntegration
+            GameStatsIntegration statsIntegration = FindObjectOfType<GameStatsIntegration>();
+            if (statsIntegration != null)
             {
-                foreach (var weaponData in CurrentPlayerData.weapons)
+                statsIntegration.UpdatePlayerDataFromStats();
+                DebugLog($"Updated health via GameStatsIntegration: {GameAPI.Instance.PlayerData.health}");
+                return;
+            }
+            
+            DebugLog("No health data source found, keeping current value");
+        }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting health: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Collects current money/score from ScoreManager and StatsHandler
+    /// </summary>
+    private void CollectMoneyFromGame()
+    {
+        try
+        {
+            int collectedMoney = 0;
+            bool moneyFound = false;
+            
+            // Try to get money from ScoreManager first (most direct source)
+            if (ScoreManager.Instance != null)
+            {
+                collectedMoney = ScoreManager.Score;
+                moneyFound = true;
+                DebugLog($"Collected money from ScoreManager: {collectedMoney}");
+            }
+            
+            // Also try StatsHandler for "Money" stat
+            if (!moneyFound)
+            {
+                StatsHandler playerStatsHandler = FindObjectOfType<StatsHandler>();
+                if (playerStatsHandler != null)
                 {
-                    if (weaponData.isUnlocked)
+                    var moneyStat = playerStatsHandler.GetStat("Money");
+                    if (moneyStat != null)
                     {
-                        weaponManager.UnlockWeapon(weaponData.name);
-                        
-                        Gun gun = weaponManager.GetGunByName(weaponData.name);
-                        if (gun != null)
-                        {
-                            gun.SetLevel(weaponData.level);
-                            gun.SetAmmo(weaponData.ammo);
-                        }
+                        collectedMoney = (int)playerStatsHandler.GetStatValue("Money");
+                        moneyFound = true;
+                        DebugLog($"Collected money from StatsHandler: {collectedMoney}");
                     }
                 }
             }
             
-            // Equip current weapon
-            if (!string.IsNullOrEmpty(CurrentPlayerData.currentWeapon))
+            // Update player data with collected money
+            if (moneyFound)
             {
-                weaponManager.EquipWeapon(CurrentPlayerData.currentWeapon);
+                GameAPI.Instance.PlayerData.money = collectedMoney;
+            }
+            else
+            {
+                DebugLog("No money data source found, keeping current value");
             }
         }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting money: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Collects current weapon data from guns in the scene
+    /// </summary>
+    private void CollectWeaponsFromGame()
+    {
+        try
+        {
+            // Use the GameAPIExtensions method to sync weapons from game
+            GameAPI.Instance.PlayerData.SyncWeaponsFromGame();
+            DebugLog($"Collected weapon data, total weapons: {GameAPI.Instance.PlayerData.weapons?.Count ?? 0}");
+            
+            // Also collect ammo data from WeaponManager if available
+            WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
+            if (weaponManager != null)
+            {
+                // Update ammo counts for pistol and rifle types
+                int pistolAmmo = weaponManager.GetAmmoCount("pistol");
+                int rifleAmmo = weaponManager.GetAmmoCount("rifle");
+                
+                DebugLog($"Collected ammo - Pistol: {pistolAmmo}, Rifle: {rifleAmmo}");
+                
+                // Update weapon ammo in player data
+                if (GameAPI.Instance.PlayerData.weapons != null)
+                {
+                    foreach (var weapon in GameAPI.Instance.PlayerData.weapons)
+                    {
+                        // Check if this is a pistol or rifle and update ammo accordingly
+                        Gun gun = FindGunByName(weapon.name);
+                        if (gun != null)
+                        {
+                            if (gun.isPistol)
+                            {
+                                weapon.ammo = gun.totalAmmo;
+                            }
+                            else
+                            {
+                                weapon.ammo = gun.totalAmmo;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting weapons: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Helper method to find a gun by name in the scene
+    /// </summary>
+    private Gun FindGunByName(string weaponName)
+    {
+        Gun[] allGuns = FindObjectsOfType<Gun>(true); // Include inactive guns
+        foreach (Gun gun in allGuns)
+        {
+            if (gun.name.Equals(weaponName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return gun;
+            }
+        }
+        return null;
     }
 }

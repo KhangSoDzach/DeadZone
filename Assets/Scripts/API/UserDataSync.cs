@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using DevionGames;
-
-namespace Scripts.API
-{
-    public class UserDataSync : MonoBehaviour
+using DevionGames.StatSystem;
+public class UserDataSync : MonoBehaviour
     {
         [Header("Đồng bộ tự động")]
         [SerializeField] private bool enableAutoSync = true;
@@ -127,7 +125,7 @@ namespace Scripts.API
         }
         
         /// <summary>
-        /// Coroutine để đồng bộ dữ liệu từ server
+        /// Coroutine để đồng bộ dữ liệu từ server với improved error handling
         /// </summary>
         private IEnumerator SyncFromServerCoroutine(Action<bool> onComplete)
         {
@@ -144,16 +142,23 @@ namespace Scripts.API
                         // TODO: Hiển thị thông báo thành công
                     }
                     
-                    // TODO: Cập nhật dữ liệu vào game
                     ApplyUserDataToGame();
                 }
                 else
                 {
-                    DebugLog("Lỗi khi đồng bộ từ server: " + errorMsg);
-                    
-                    if (showNotifications)
+                    // Only log as warning if it's not a connectivity issue during startup
+                    if (errorMsg.Contains("Cannot reach server") || errorMsg.Contains("connectivity"))
                     {
-                        // TODO: Hiển thị thông báo lỗi
+                        DebugLog($"Server không khả dụng khi khởi động: {errorMsg}");
+                    }
+                    else
+                    {
+                        DebugLog($"Lỗi khi đồng bộ từ server: {errorMsg}");
+                    }
+                    
+                    if (showNotifications && !errorMsg.Contains("Cannot reach server"))
+                    {
+                        // TODO: Hiển thị thông báo lỗi chỉ khi không phải lỗi kết nối
                     }
                 }
                 
@@ -170,6 +175,14 @@ namespace Scripts.API
             if (!GameAPI.Instance.IsLoggedIn)
             {
                 DebugLog("Không thể đồng bộ lên server: Người dùng chưa đăng nhập");
+                onComplete?.Invoke(false);
+                return;
+            }
+            
+            // Verify player data exists
+            if (GameAPI.Instance.PlayerData == null)
+            {
+                DebugLog("Không có dữ liệu người chơi để đồng bộ");
                 onComplete?.Invoke(false);
                 return;
             }
@@ -231,56 +244,122 @@ namespace Scripts.API
                 onComplete?.Invoke(success);
             }));
         }
-        
-        /// <summary>
+          /// <summary>
         /// Cập nhật dữ liệu từ game vào UserData
         /// </summary>
         private void UpdateUserDataFromGame()
         {
-            // TODO: Cập nhật dữ liệu từ game vào PlayerData
-            // Thực hiện cập nhật từ các thành phần khác nhau của game
-            // ScoreManager, HealthManager, WeaponManager, etc.
-            
-            // Ví dụ:
-            // if (ScoreManager.Instance != null)
-            // {
-            //     GameAPI.Instance.PlayerData.score = ScoreManager.Instance.Score;
-            // }
-            
-            DebugLog("Đã cập nhật dữ liệu từ game");
+            if (GameAPI.Instance.PlayerData == null)
+            {
+                DebugLog("Không thể cập nhật dữ liệu: PlayerData is null");
+                return;
+            }
+
+            DebugLog("Bắt đầu cập nhật dữ liệu từ game...");
+
+            try
+            {
+                // 1. Cập nhật tiền từ ScoreManager
+                if (ScoreManager.Instance != null)
+                {
+                    int currentMoney = ScoreManager.Score;
+                    GameAPI.Instance.PlayerData.money = currentMoney;
+                    DebugLog($"Cập nhật tiền từ ScoreManager: {currentMoney}");
+                }
+
+                // 2. Cập nhật máu từ StatsHandler
+                StatsHandler playerStatsHandler = FindObjectOfType<StatsHandler>();
+                if (playerStatsHandler != null)
+                {
+                    var healthStat = playerStatsHandler.GetStat("Health");
+                    if (healthStat is DevionGames.StatSystem.Attribute healthAttribute)
+                    {
+                        GameAPI.Instance.PlayerData.health = healthAttribute.CurrentValue;
+                        DebugLog($"Cập nhật máu từ StatsHandler: {GameAPI.Instance.PlayerData.health}");
+                    }
+                }
+
+                // 3. Cập nhật vũ khí và đạn
+                WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
+                if (weaponManager != null)
+                {
+                    // Sử dụng extension method để sync weapons
+                    GameAPI.Instance.PlayerData.SyncWeaponsFromGame();
+                    DebugLog("Đã đồng bộ dữ liệu vũ khí");
+                }
+
+                // 4. Cập nhật timestamp
+                GameAPI.Instance.PlayerData.lastLoginDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                DebugLog("Hoàn thành cập nhật dữ liệu từ game");
+            }
+            catch (System.Exception ex)
+            {
+                DebugLog($"Lỗi khi cập nhật dữ liệu từ game: {ex.Message}");
+            }
         }
-        
-        /// <summary>
+          /// <summary>
         /// Áp dụng dữ liệu từ UserData vào game
         /// </summary>
         private void ApplyUserDataToGame()
         {
-            // TODO: Áp dụng dữ liệu từ PlayerData vào game
-            // Cập nhật các thành phần khác nhau của game từ dữ liệu người dùng
-            
-            // Ví dụ:
-            // if (ScoreManager.Instance != null)
-            // {
-            //     ScoreManager.Instance.SetScore(GameAPI.Instance.PlayerData.score);
-            // }
-            
-            DebugLog("Đã áp dụng dữ liệu vào game");
+            if (GameAPI.Instance.PlayerData == null)
+            {
+                DebugLog("Không thể áp dụng dữ liệu: PlayerData is null");
+                return;
+            }
+
+            DebugLog("Bắt đầu áp dụng dữ liệu vào game...");
+
+            try
+            {
+                // 1. Áp dụng tiền vào ScoreManager
+                if (ScoreManager.Instance != null)
+                {
+                    ScoreManager.Score = GameAPI.Instance.PlayerData.money;
+                    DebugLog($"Áp dụng tiền vào ScoreManager: {GameAPI.Instance.PlayerData.money}");
+                }
+
+                // 2. Áp dụng máu vào StatsHandler
+                StatsHandler playerStatsHandler = FindObjectOfType<StatsHandler>();
+                if (playerStatsHandler != null)
+                {
+                    var healthStat = playerStatsHandler.GetStat("Health");
+                    if (healthStat is DevionGames.StatSystem.Attribute healthAttribute)
+                    {
+                        healthAttribute.CurrentValue = GameAPI.Instance.PlayerData.health;
+                        DebugLog($"Áp dụng máu vào StatsHandler: {GameAPI.Instance.PlayerData.health}");
+                    }
+                }
+
+                // 3. Áp dụng dữ liệu vũ khí
+                if (GameAPI.Instance.PlayerData.weapons != null)
+                {
+                    GameAPI.Instance.PlayerData.ApplyWeaponsToGame();
+                    DebugLog("Đã áp dụng dữ liệu vũ khí vào game");
+                }
+
+                DebugLog("Hoàn thành áp dụng dữ liệu vào game");
+            }
+            catch (System.Exception ex)
+            {
+                DebugLog($"Lỗi khi áp dụng dữ liệu vào game: {ex.Message}");
+            }
         }
-        
-        /// <summary>
+          /// <summary>
         /// Lưu dữ liệu người dùng đồng bộ (sử dụng khi thoát game)
         /// </summary>
         private void SaveUserDataImmediate()
         {
             DebugLog("Thực hiện lưu dữ liệu ngay lập tức");
             
-            // Lưu ý: API thực tế vẫn là bất đồng bộ, chúng ta chỉ cập nhật dữ liệu cục bộ
-            // và bắt đầu quá trình lưu, không đợi kết quả
+            // Trước khi lưu, cập nhật dữ liệu từ game
+            UpdateUserDataFromGame();
             
-            // TODO: Thêm code để lưu dữ liệu người dùng đồng bộ nếu cần
-            GameAPI.Instance.SavePlayerData((success, msg) => {
+            // Sử dụng coroutine để save data
+            StartCoroutine(GameAPI.Instance.SavePlayerData((success, msg) => {
                 DebugLog($"Kết quả lưu dữ liệu: {(success ? "Thành công" : "Thất bại - " + msg)}");
-            });
+            }));
         }
         
         /// <summary>
@@ -302,4 +381,4 @@ namespace Scripts.API
             return DateTime.Now - _lastSyncTime;
         }
     }
-}
+

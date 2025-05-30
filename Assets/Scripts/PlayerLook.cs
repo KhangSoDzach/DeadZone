@@ -73,6 +73,16 @@ public class PlayerLook : MonoBehaviour
             damageVignette.color = new Color(1, 0, 0, damageVignetteAlpha);
             Debug.Log("Đã đặt màu: " + damageVignette.color + ", Canvas active: " + damageCanvas.activeInHierarchy);
         }
+        else
+        {
+            // Nếu không thể tạo damage effect (có thể do không ở gameplay scene)
+            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+            if (sceneName.Contains("menu") || sceneName.Contains("login"))
+            {
+                Debug.Log("PlayerLook: Bỏ qua tạo damage effect trong menu scene");
+                return; // Don't create damage effects in menu scenes
+            }
+        }
         
         // Phát âm thanh khi bị thương
         PlayDamageSound();
@@ -111,6 +121,14 @@ public class PlayerLook : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Check scene context first
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.Log("PlayerLook: Skipping initialization in menu scene");
+            this.enabled = false;
+            return;
+        }
 
         cam = GetComponentInChildren<Camera>();
         if (cam == null)

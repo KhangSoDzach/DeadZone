@@ -47,11 +47,20 @@ public class StaminaBar : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Không tìm thấy HealthManager trong scene. Thanh thể lực sẽ không hoạt động.");
+                // Check if we're in a gameplay scene before showing warning
+                string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+                if (!sceneName.Contains("menu") && !sceneName.Contains("login"))
+                {
+                    Debug.LogWarning("Không tìm thấy HealthManager trong scene. Thanh thể lực sẽ không hoạt động.");
+                }
+                
+                // Vô hiệu hóa component này nếu không có HealthManager
+                this.enabled = false;
+                return;
             }
         }
         
-        // Thiết lập giá trị ban đầu
+        // Thiết lập giá trị ban đầu - chỉ khi có HealthManager
         if (healthManager != null && staminaBarImage != null)
         {
             targetFill = healthManager.currentStamina / healthManager.maxStamina;

@@ -11,13 +11,36 @@ public class InputManager : MonoBehaviour
     private PlayerMovement movement;
     private PlayerLook look;
     private WeaponManager weaponManager;
-
+    
+    // Biến để ngăn duplicate InputManager
+    private static InputManager instance;
+    
     // Start is called before the first frame update
     void Start()
     {
     }
+    
     void Awake()
     {
+        // Check scene context first
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.Log("InputManager: Skipping initialization in menu scene");
+            this.enabled = false;
+            return;
+        }
+
+        // Kiểm tra nếu đã có instance khác
+        if (instance != null && instance != this)
+        {
+            Debug.LogWarning("Duplicate InputManager detected! Destroying this instance: " + gameObject.name);
+            Destroy(gameObject);
+            return;
+        }
+        
+        instance = this;
+        
         playerInput = new PlayerInput();
         onFoot = playerInput.OnFoot;
         movement = GetComponent<PlayerMovement>();
@@ -35,6 +58,14 @@ public class InputManager : MonoBehaviour
         {
             // Có thể thêm nút riêng trong InputSystem nếu cần
             // Hoặc sử dụng các phím mặc định qua Update()
+        }
+    }
+    
+    void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
         }
     }
 

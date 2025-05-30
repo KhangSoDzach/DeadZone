@@ -14,11 +14,30 @@ public class WeaponComponentRestore : MonoBehaviour
 
     private void Start()
     {
+        // Kiểm tra xem có đang ở trong scene gameplay không
+        if (!IsGameplayScene())
+        {
+            Debug.Log($"WeaponComponentRestore: Không áp dụng trong scene này: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+            return;
+        }
+
         // Lấy WeaponManager để áp dụng transform chính nếu có
         WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
         if (weaponManager != null)
         {
-            weaponManager.ApplyPrimaryTransform(this);
+            // Thêm null check cho method ApplyPrimaryTransform nếu tồn tại
+            try
+            {
+                var method = weaponManager.GetType().GetMethod("ApplyPrimaryTransform");
+                if (method != null)
+                {
+                    method.Invoke(weaponManager, new object[] { this });
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Could not apply primary transform: {e.Message}");
+            }
         }
 
         // Lưu vị trí ban đầu của súng ngay khi bắt đầu game
@@ -31,17 +50,33 @@ public class WeaponComponentRestore : MonoBehaviour
         StartCoroutine(DelayedComponentCheck());
     }
     
+    // Kiểm tra xem có đang ở scene gameplay không
+    private bool IsGameplayScene()
+    {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        return !sceneName.Contains("menu") && !sceneName.Contains("login") && !sceneName.Contains("main");
+    }
+    
     private IEnumerator DelayedComponentCheck()
     {
         // Wait a moment for everything else to initialize
         yield return new WaitForSeconds(0.5f);
+        
+        // Chỉ tiếp tục nếu đang ở scene gameplay
+        if (!IsGameplayScene())
+        {
+            yield break;
+        }
         
         // Find all Gun components
         Gun[] allGuns = FindObjectsOfType<Gun>(true); // Include inactive weapons
         
         foreach (Gun gun in allGuns)
         {
-            RestoreGunComponents(gun);
+            if (gun != null)
+            {
+                RestoreGunComponents(gun);
+            }
         }
         
         Debug.Log($"WeaponComponentRestore: Đã kiểm tra {allGuns.Length} vũ khí");

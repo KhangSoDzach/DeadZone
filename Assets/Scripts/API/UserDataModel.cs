@@ -2,11 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Scripts.API
-{
-    /// <summary>
-    /// Model chứa thông tin người dùng được lưu trữ và đồng bộ với server
-    /// </summary>
+
     [Serializable]
     public class UserDataModel
     {
@@ -41,7 +37,7 @@ namespace Scripts.API
         public Dictionary<string, int> weaponLevels = new Dictionary<string, int>();
         
         // Thông tin nhân vật
-        public int health = 100;
+        public float health = 100;
         public int maxHealth = 100;
         public float moveSpeed = 5.0f;
         public float jumpHeight = 1.0f;
@@ -131,4 +127,4 @@ namespace Scripts.API
             return JsonUtility.FromJson<UserDataModel>(json);
         }
     }
-}
+

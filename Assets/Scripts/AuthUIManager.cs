@@ -42,22 +42,37 @@ public class AuthUIManager : MonoBehaviour
         loginButton.onClick.AddListener(OnLoginButtonClicked);
         registerButton.onClick.AddListener(OnRegisterButtonClicked);
         
-        // Check if user is already logged in
+        // Check if user is already logged in with proper data validation
         if (GameAPI.Instance.IsLoggedIn)
         {
             loadingPanel.SetActive(true);
-            StartCoroutine(GameAPI.Instance.GetPlayerData((success, errorMessage) => {
-                if (success)
-                {
-                    // Load game scene
-                    LoadGameScene();
-                }
-                else
-                {
-                    // Show login panel
-                    loadingPanel.SetActive(false);
-                }
-            }));
+            
+            // Verify we have complete player data
+            if (GameAPI.Instance.PlayerData != null && 
+                !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) && 
+                !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
+            {
+                // Complete data available, load game
+                LoadGameScene();
+            }
+            else
+            {
+                // Try to get complete player data
+                StartCoroutine(GameAPI.Instance.GetPlayerData((success, errorMessage) => {
+                    if (success && GameAPI.Instance.PlayerData != null && 
+                        !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
+                    {
+                        // Load game scene
+                        LoadGameScene();
+                    }
+                    else
+                    {
+                        // Show login panel - data incomplete
+                        loadingPanel.SetActive(false);
+                        Debug.LogWarning($"Failed to load complete player data: {errorMessage}");
+                    }
+                }));
+            }
         }
     }
     
@@ -80,6 +95,14 @@ public class AuthUIManager : MonoBehaviour
         StartCoroutine(GameAPI.Instance.Login(username, password, (success, errorMessage) => {
             if (success)
             {
+                // Save token for auto-login
+                if (!string.IsNullOrEmpty(GameAPI.Instance.AuthToken))
+                {
+                    PlayerPrefs.SetString("AuthToken", GameAPI.Instance.AuthToken);
+                    PlayerPrefs.SetString("LastCheckpoint", UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+                    PlayerPrefs.Save();
+                }
+                
                 // Load game scene
                 LoadGameScene();
             }
@@ -151,17 +174,17 @@ public class AuthUIManager : MonoBehaviour
         loginErrorText.gameObject.SetActive(false);
     }
     
-    private void SetActivePanel(GameObject panel)
+    private void SetActivePanel(GameObject activePanel)
     {
-        loginPanel.SetActive(panel == loginPanel);
-        registerPanel.SetActive(panel == registerPanel);
-        loadingPanel.SetActive(panel == loadingPanel);
+        loginPanel.SetActive(activePanel == loginPanel);
+        registerPanel.SetActive(activePanel == registerPanel);
+        loadingPanel.SetActive(activePanel == loadingPanel);
     }
     
-    private void ShowLoginError(string errorMessage)
+    private void ShowLoginError(string message)
     {
-        loginErrorText.text = errorMessage;
         loginErrorText.gameObject.SetActive(true);
+        loginErrorText.text = message;
     }
     
     private void ShowRegisterError(string errorMessage)
@@ -178,16 +201,6 @@ public class AuthUIManager : MonoBehaviour
     
     private void LoadGameScene()
     {
-        // If player has a checkpoint, load that scene
-        if (GameAPI.Instance.PlayerData != null && 
-            !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.checkpoint.sceneId))
-        {
-            SceneManager.LoadScene(GameAPI.Instance.PlayerData.checkpoint.sceneId);
-        }
-        else
-        {
-            // Load default game scene
-            SceneManager.LoadScene(gameSceneName);
-        }
+        UnityEngine.SceneManagement.SceneManager.LoadScene(gameSceneName);
     }
 }

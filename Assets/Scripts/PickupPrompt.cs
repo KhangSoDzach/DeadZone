@@ -13,14 +13,31 @@ public class PickupPrompt : MonoBehaviour
     
     private void Start()
     {
+        // Kiểm tra scene context
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.LogWarning($"PickupPrompt should not be active in scene: {sceneName}");
+            this.enabled = false;
+            return;
+        }
+
         // Kiểm tra nếu không có text UI
         if (promptText == null)
         {
             Debug.LogError("Chưa gán Text UI cho PickupPrompt");
+            this.enabled = false;
+            return;
         }
         
         // Tìm WeaponManager trong scene
         weaponManager = FindObjectOfType<WeaponManager>();
+        if (weaponManager == null)
+        {
+            Debug.LogWarning("Không tìm thấy WeaponManager trong scene");
+            this.enabled = false;
+            return;
+        }
         
         // Ban đầu ẩn thông báo
         HidePrompt();

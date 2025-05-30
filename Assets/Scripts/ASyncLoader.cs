@@ -7,14 +7,31 @@ using UnityEngine.SceneManagement;
 public class ASyncLoader : MonoBehaviour
 {
     [Header("Loading Settings")]
-    [SerializeField] private GameObject sceneToLoad; // Tên scene cần tải
-    [SerializeField] private GameObject mainMenu; // Thời gian delay trước khi bắt đầu tải
-    [Header("Loading Settings")]
-    [SerializeField] private Slider slider; // Thời gian delay trước khi bắt đầu tải
+    [SerializeField] private GameObject sceneToLoad; // UI panel for loading
+    [SerializeField] private GameObject mainMenu; // Main menu panel
+    [SerializeField] private Slider slider; // Progress slider
+    
     public void LoadLevelBtn(string levelToLoad)
     {
-        mainMenu.SetActive(false);
-        sceneToLoad.SetActive(true);
+        // Validate input
+        if (string.IsNullOrEmpty(levelToLoad))
+        {
+            Debug.LogError("ASyncLoader: Level name is empty!");
+            return;
+        }
+
+        // Check if scene exists
+        if (!Application.CanStreamedLevelBeLoaded(levelToLoad))
+        {
+            Debug.LogError($"ASyncLoader: Scene '{levelToLoad}' not found in build settings!");
+            return;
+        }
+
+        if (mainMenu != null)
+            mainMenu.SetActive(false);
+        
+        if (sceneToLoad != null)
+            sceneToLoad.SetActive(true);
 
         StartCoroutine(LoadLevelAsync(levelToLoad));
     }
@@ -22,11 +39,22 @@ public class ASyncLoader : MonoBehaviour
     IEnumerator LoadLevelAsync(string levelToLoad)
     {
         AsyncOperation operation = SceneManager.LoadSceneAsync(levelToLoad);
+        
+        if (operation == null)
+        {
+            Debug.LogError("Failed to start async scene loading!");
+            yield break;
+        }
 
         while (!operation.isDone)
         {
             float progress = Mathf.Clamp01(operation.progress / 0.9f); // Chuyển đổi progress về khoảng 0-1
-            slider.value = progress; // Cập nhật giá trị của slider
+            
+            if (slider != null)
+            {
+                slider.value = progress; // Cập nhật giá trị của slider
+            }
+            
             yield return null; // Chờ frame tiếp theo
         }
     }
