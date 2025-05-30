@@ -9,10 +9,6 @@ using UnityEngine.SceneManagement;
 
 namespace Scripts.API
 {
-    /// <summary>
-    /// LoginManager - Quản lý quá trình đăng nhập, đăng ký và lưu trữ thông tin người dùng.
-    /// Gắn script này vào GameObject trong scene đăng nhập/đăng ký.
-    /// </summary>
     public class LoginManager : MonoBehaviour
     {
         private static LoginManager _instance;
