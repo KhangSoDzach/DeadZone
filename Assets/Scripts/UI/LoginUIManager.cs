@@ -223,8 +223,7 @@ public class LoginUIManager : MonoBehaviour
             if (GameAPI.Instance.PlayerData != null && 
                 !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) && 
                 !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
-            {
-                DebugLog($"Player data already available from login: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");
+            {                DebugLog($"Player data already available from login: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");
                 
                 // Save login info if remember me is checked
                 if (rememberMeToggle && rememberMeToggle.isOn)
@@ -237,11 +236,10 @@ public class LoginUIManager : MonoBehaviour
                 UpdateLoadingStatus("Login complete!");
                 yield return new WaitForSeconds(0.5f);
                 
-                // Update welcome UI after successful login
-                UpdateWelcomeUI();
-                
-                DebugLog("Login successful, showing welcome panel");
+                // Update welcome UI after successful login with forced refresh
+                DebugLog("Login successful - forcing UI refresh to check saved game status");
                 ShowWelcomePanel();
+                StartCoroutine(RefreshPlayerDataAndUpdateUI());
             }
             else
             {
@@ -259,8 +257,7 @@ public class LoginUIManager : MonoBehaviour
                 }));
                 
                 if (dataLoaded)
-                {
-                    DebugLog($"User data loaded: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
+                {                    DebugLog($"User data loaded: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
                     
                     // Save login info if remember me is checked
                     if (rememberMeToggle && rememberMeToggle.isOn)
@@ -273,11 +270,10 @@ public class LoginUIManager : MonoBehaviour
                     UpdateLoadingStatus("Login complete!");
                     yield return new WaitForSeconds(0.5f);
                     
-                    // Update welcome UI after successful login
-                    UpdateWelcomeUI();
-                    
-                    DebugLog("Login successful, showing welcome panel");
+                    // Update welcome UI after successful login with forced refresh
+                    DebugLog("Login successful - forcing UI refresh to check saved game status");
                     ShowWelcomePanel();
+                    StartCoroutine(RefreshPlayerDataAndUpdateUI());
                 }
                 else
                 {
@@ -487,8 +483,7 @@ public class LoginUIManager : MonoBehaviour
         SetActivePanel(registerPanel);
         if (registerErrorText) registerErrorText.gameObject.SetActive(false);
     }
-    
-    private void ShowWelcomePanel()
+      private void ShowWelcomePanel()
     {
         SetActivePanel(welcomePanel);
         UpdateWelcomeUI(); // Update UI when showing welcome panel
@@ -501,6 +496,22 @@ public class LoginUIManager : MonoBehaviour
         if (loadingProgressBar) loadingProgressBar.value = 0;
     }
     
+    /// <summary>
+    /// Force refresh UI to check for saved game data
+    /// </summary>
+    public void ForceRefreshUI()
+    {
+        if (GameAPI.Instance.IsLoggedIn)
+        {
+            DebugLog("Force refreshing UI to check for saved game data...");
+            StartCoroutine(RefreshPlayerDataAndUpdateUI());
+        }
+        else
+        {
+            UpdateUIBasedOnLoginStatus(false, false);
+        }
+    }
+    
     private void SetActivePanel(GameObject activePanel)
     {
         if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
@@ -510,15 +521,65 @@ public class LoginUIManager : MonoBehaviour
     }
     
     // Add new methods for UI management
-    
-    /// <summary>
+      /// <summary>
     /// Update welcome panel UI based on login status
     /// </summary>
     private void UpdateWelcomeUI()
     {
         bool isLoggedIn = GameAPI.Instance.IsLoggedIn;
-        bool hasSavedGame = HasSavedGame();
         
+        // Force refresh player data before checking saved game
+        if (isLoggedIn && GameAPI.Instance.PlayerData != null)
+        {
+            StartCoroutine(RefreshPlayerDataAndUpdateUI());
+        }
+        else
+        {
+            UpdateUIBasedOnLoginStatus(isLoggedIn, false);
+        }
+    }
+    
+    /// <summary>
+    /// Refresh player data from server and update UI
+    /// </summary>
+    private IEnumerator RefreshPlayerDataAndUpdateUI()
+    {
+        bool isLoggedIn = GameAPI.Instance.IsLoggedIn;
+        bool hasSavedGame = false;
+        
+        // First check with current data
+        hasSavedGame = HasSavedGame();
+        
+        if (isLoggedIn && !hasSavedGame)
+        {
+            // Try to refresh data from server to get latest save state
+            DebugLog("No saved game detected locally, refreshing from server...");
+            bool dataRefreshed = false;
+            
+            yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+                dataRefreshed = success;
+                if (!success)
+                {
+                    DebugLog($"Failed to refresh player data: {error}");
+                }
+            }));
+            
+            if (dataRefreshed)
+            {
+                // Check again after refresh
+                hasSavedGame = HasSavedGame();
+                DebugLog($"After data refresh - Has saved game: {hasSavedGame}");
+            }
+        }
+        
+        UpdateUIBasedOnLoginStatus(isLoggedIn, hasSavedGame);
+    }
+    
+    /// <summary>
+    /// Update UI elements based on login and save status
+    /// </summary>
+    private void UpdateUIBasedOnLoginStatus(bool isLoggedIn, bool hasSavedGame)
+    {
         if (welcomeLoginButton) welcomeLoginButton.gameObject.SetActive(!isLoggedIn);
         if (welcomeRegisterButton) welcomeRegisterButton.gameObject.SetActive(!isLoggedIn);
         if (welcomePlayOfflineButton) welcomePlayOfflineButton.gameObject.SetActive(!isLoggedIn);
@@ -542,21 +603,66 @@ public class LoginUIManager : MonoBehaviour
         }
         
         DebugLog($"Welcome UI updated - Logged in: {isLoggedIn}, Has saved game: {hasSavedGame}");
-    }
-    
-    /// <summary>
+    }    /// <summary>
     /// Check if user has saved game data
     /// </summary>
     private bool HasSavedGame()
     {
         if (!GameAPI.Instance.IsLoggedIn || GameAPI.Instance.PlayerData == null)
+        {
+            DebugLog("HasSavedGame: User not logged in or no player data");
             return false;
+        }
         
         // Check if player has checkpoint data or meaningful progress
         var playerData = GameAPI.Instance.PlayerData;
-        return playerData.checkpoint != null && 
-               !string.IsNullOrEmpty(playerData.checkpoint.sceneId) ||
-               playerData.level > 1 || playerData.experience > 0 || playerData.money > 0;
+        
+        // Check for checkpoint data (highest priority)
+        bool hasCheckpoint = playerData.checkpoint != null && 
+                           !string.IsNullOrEmpty(playerData.checkpoint.sceneId);
+        
+        // Check for meaningful progress
+        bool hasProgress = playerData.level > 1 || 
+                          playerData.experience > 0 || 
+                          playerData.money > 0;
+        
+        // Check for weapons (if weapons list exists and has items)
+        bool hasWeapons = playerData.weapons != null && playerData.weapons.Count > 0;
+        
+        // Additional check for any meaningful game state
+        // Consider a user with default starting values as having no save
+        bool hasDefaultState = playerData.level == 1 && 
+                              playerData.experience == 0 && 
+                              playerData.money == 0 && 
+                              (playerData.weapons == null || playerData.weapons.Count == 0);
+        
+        bool hasSavedData = hasCheckpoint || hasProgress || hasWeapons;
+        
+        // Even with default values, if there's a checkpoint, it means they played
+        if (hasCheckpoint)
+        {
+            hasSavedData = true;
+        }
+        // If they have any progress at all, they have a save
+        else if (hasProgress || hasWeapons)
+        {
+            hasSavedData = true;
+        }
+        // Complete default state means no save
+        else if (hasDefaultState)
+        {
+            hasSavedData = false;
+        }
+        // Otherwise, consider it as having data (safety fallback)
+        else
+        {
+            hasSavedData = true;
+        }
+        
+        DebugLog($"HasSavedGame check - Checkpoint: {hasCheckpoint}, Progress: {hasProgress}, Weapons: {hasWeapons}, Default: {hasDefaultState}, Result: {hasSavedData}");
+        DebugLog($"Player stats - Level: {playerData.level}, XP: {playerData.experience}, Money: {playerData.money}, Weapons: {playerData.weapons?.Count ?? 0}");
+        
+        return hasSavedData;
     }
     
     /// <summary>
@@ -682,9 +788,7 @@ public class LoginUIManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
             LoadGameScene();
         }
-    }
-    
-    /// <summary>
+    }      /// <summary>
     /// Logout current user
     /// </summary>
     private void LogoutUser()
@@ -711,17 +815,29 @@ public class LoginUIManager : MonoBehaviour
         
         UpdateLoadingStatus("Logged out successfully!");
         
-        // Update UI and show welcome panel
-        StartCoroutine(ShowWelcomePanelAfterDelay(1f));
+        // Update UI and show welcome panel with proper UI refresh
+        StartCoroutine(ShowWelcomePanelAfterLogout(1f));
     }
-    
-    /// <summary>
+      /// <summary>
     /// Show welcome panel after a delay
     /// </summary>
     private System.Collections.IEnumerator ShowWelcomePanelAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
         ShowWelcomePanel();
+    }
+      /// <summary>
+    /// Show welcome panel after logout with UI refresh
+    /// </summary>
+    private System.Collections.IEnumerator ShowWelcomePanelAfterLogout(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // Update UI state after logout to ensure buttons are properly refreshed
+        UpdateWelcomeUI();
+        ShowWelcomePanel();
+        
+        DebugLog("UI refreshed after logout - continue button should be hidden");
     }
       // Add this method for debugging
     public void TestAPIConnection()

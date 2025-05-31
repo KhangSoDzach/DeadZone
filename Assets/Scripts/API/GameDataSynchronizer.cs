@@ -169,9 +169,7 @@ public class GameDataSynchronizer : MonoBehaviour
             }));
             return;
         }
-          DebugLog($"Collecting data from game for user: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");
-        
-        // Collect current game state and update PlayerData
+          DebugLog($"Collecting data from game for user: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");        // Collect current game state and update PlayerData
         try
         {
             // 1. Collect health from StatsHandler
@@ -182,6 +180,15 @@ public class GameDataSynchronizer : MonoBehaviour
             
             // 3. Collect weapon data from guns in scene
             CollectWeaponsFromGame();
+            
+            // 4. Collect level and experience from StatsHandler
+            CollectLevelAndExperienceFromGame();
+            
+            // 5. Collect zombie kills from ZombieKillTracker
+            CollectZombieKillsFromGame();
+            
+            // 6. Collect player position for checkpoint
+            CollectPlayerPositionFromGame();
             
             DebugLog("Successfully collected all game data");
         }
@@ -343,8 +350,7 @@ public class GameDataSynchronizer : MonoBehaviour
             DebugLog($"Error collecting weapons: {ex.Message}");
         }
     }
-    
-    /// <summary>
+      /// <summary>
     /// Helper method to find a gun by name in the scene
     /// </summary>
     private Gun FindGunByName(string weaponName)
@@ -358,5 +364,129 @@ public class GameDataSynchronizer : MonoBehaviour
             }
         }
         return null;
+    }
+    
+    /// <summary>
+    /// Collects current level and experience from the StatsHandler system
+    /// </summary>
+    private void CollectLevelAndExperienceFromGame()
+    {
+        try
+        {
+            StatsHandler playerStatsHandler = FindObjectOfType<StatsHandler>();
+            if (playerStatsHandler != null)
+            {
+                // Try to get Level stat
+                var levelStat = playerStatsHandler.GetStat("Level");
+                if (levelStat != null)
+                {
+                    GameAPI.Instance.PlayerData.level = (int)playerStatsHandler.GetStatValue("Level");
+                    DebugLog($"Collected level from StatsHandler: {GameAPI.Instance.PlayerData.level}");
+                }
+                
+                // Try to get Experience stat
+                var experienceStat = playerStatsHandler.GetStat("Experience");
+                if (experienceStat != null)
+                {
+                    GameAPI.Instance.PlayerData.experience = (int)playerStatsHandler.GetStatValue("Experience");
+                    DebugLog($"Collected experience from StatsHandler: {GameAPI.Instance.PlayerData.experience}");
+                }
+                
+                // If no stats found, try alternative names
+                if (levelStat == null)
+                {
+                    var altLevelStat = playerStatsHandler.GetStat("level");
+                    if (altLevelStat != null)
+                    {
+                        GameAPI.Instance.PlayerData.level = (int)playerStatsHandler.GetStatValue("level");
+                        DebugLog($"Collected level from StatsHandler (alt): {GameAPI.Instance.PlayerData.level}");
+                    }
+                }
+                
+                if (experienceStat == null)
+                {
+                    var altExpStat = playerStatsHandler.GetStat("experience") ?? playerStatsHandler.GetStat("exp") ?? playerStatsHandler.GetStat("XP");
+                    if (altExpStat != null)
+                    {
+                        string statName = altExpStat.Name;
+                        GameAPI.Instance.PlayerData.experience = (int)playerStatsHandler.GetStatValue(statName);
+                        DebugLog($"Collected experience from StatsHandler (alt: {statName}): {GameAPI.Instance.PlayerData.experience}");
+                    }
+                }
+            }
+            else
+            {
+                DebugLog("No StatsHandler found for level/experience collection");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting level and experience: {ex.Message}");
+        }
+    }
+      /// <summary>
+    /// Collects current zombie kill count from the ZombieKillTracker
+    /// </summary>
+    private void CollectZombieKillsFromGame()
+    {
+        try
+        {
+            // Get kills from ZombieKillTracker
+            int killCount = ZombieKillTracker.Instance.GetKillCount();
+            GameAPI.Instance.PlayerData.kills = killCount;
+            DebugLog($"Collected zombie kills from ZombieKillTracker: {killCount}");
+            
+            // Alternative: Try to get from StatsHandler if available
+            StatsHandler playerStatsHandler = FindObjectOfType<StatsHandler>();
+            if (playerStatsHandler != null)
+            {
+                var killStat = playerStatsHandler.GetStat("Kills") ?? playerStatsHandler.GetStat("kills") ?? playerStatsHandler.GetStat("ZombieKills");
+                if (killStat != null)
+                {
+                    int statKills = (int)playerStatsHandler.GetStatValue(killStat.Name);
+                    // Use the higher value between tracker and stats
+                    GameAPI.Instance.PlayerData.kills = Mathf.Max(killCount, statKills);
+                    DebugLog($"Also found kills in StatsHandler: {statKills}, using max: {GameAPI.Instance.PlayerData.kills}");
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting zombie kills: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Collects current player position for checkpoint saving
+    /// </summary>
+    private void CollectPlayerPositionFromGame()
+    {
+        try
+        {
+            // Find the player object
+            GameObject player = GameObject.FindWithTag("Player");
+            if (player != null)
+            {
+                // Update checkpoint data with current position
+                if (GameAPI.Instance.PlayerData.checkpoint == null)
+                {
+                    GameAPI.Instance.PlayerData.checkpoint = new CheckpointData();
+                }
+                
+                GameAPI.Instance.PlayerData.checkpoint.position = new SerializableVector3(player.transform.position);
+                GameAPI.Instance.PlayerData.checkpoint.sceneId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                GameAPI.Instance.PlayerData.checkpoint.timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                
+                DebugLog($"Collected player position: {player.transform.position} in scene: {GameAPI.Instance.PlayerData.checkpoint.sceneId}");
+            }
+            else
+            {
+                DebugLog("No player object found with 'Player' tag for position collection");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            DebugLog($"Error collecting player position: {ex.Message}");
+        }
     }
 }

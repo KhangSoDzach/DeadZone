@@ -84,15 +84,20 @@ public class GameAPI : MonoBehaviour
                             }
                         }));
                     }
-                }
-                else
+                }                else
                 {
                     DebugLog($"Automatic authentication failed: {error}");
-                    // Only clear token if it's actually invalid, not just a server connectivity issue
-                    if (!error.Contains("Cannot reach server") && !error.Contains("connectivity"))
+                    // Only clear token if it's definitely an authentication error (401)
+                    // Don't clear for server connectivity issues, 404s, or other errors
+                    if (error.Contains("Token is invalid") || error.Contains("401") || error.Contains("Authorization expired"))
                     {
+                        DebugLog("Token is definitely invalid - clearing saved authentication");
                         PlayerPrefs.DeleteKey("AuthToken");
                         PlayerPrefs.Save();
+                    }
+                    else
+                    {
+                        DebugLog("Server connectivity issue - keeping token for later retry");
                     }
                 }
             }));
@@ -376,17 +381,18 @@ public class GameAPI : MonoBehaviour
       public IEnumerator LoginWithToken(string token, Action<bool, string> onComplete)
     {
         DebugLog($"Attempting token verification with: {token?.Substring(0, Math.Min(10, token?.Length ?? 0))}...");
-        
-        // Try primary endpoint first
+          // Try primary endpoint first
         using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/auth/verify"))
         {
             request.SetRequestHeader("x-auth-token", token);
             request.timeout = (int)requestTimeout;
               yield return request.SendWebRequest();
             
-            // Only log non-404 responses as errors, since we have a fallback for 404
-            if (request.responseCode != 404) {
-                DebugLog($"Primary token verification response code: {request.responseCode}");
+            // Log response code but don't spam for 404s since we have fallback
+            if (request.responseCode == 404) {
+                DebugLog("Auth verify endpoint not found (404), trying alternative method...");
+            } else {
+                DebugLog($"Token verification response code: {request.responseCode}");
             }
             
             if (request.result == UnityWebRequest.Result.Success)
@@ -463,26 +469,33 @@ public class GameAPI : MonoBehaviour
                     onComplete?.Invoke(false, "Invalid server response");
                     yield break;
                 }
-            }
-              // If primary endpoint fails with 404, try fallback approach
+            }            // If primary endpoint fails with 404, try fallback approach
             if (request.responseCode == 404)
             {
-                // Using a more informative but less alarming message
-                DebugLog("Using alternative endpoint for token verification (expected fallback)...");
+                // 404 is expected when server doesn't have /auth/verify endpoint
+                DebugLog("Auth verify endpoint not found (404) - using alternative method...");
                 yield return StartCoroutine(LoginWithTokenFallback(token, onComplete));
             }
             else
             {
                 string errorMsg = GetErrorMessage(request);
-                DebugLog($"Token verification failed: {errorMsg}");
-                onComplete?.Invoke(false, errorMsg);
+                // Only fail if it's definitely an authentication error
+                if (request.responseCode == 401)
+                {
+                    DebugLog($"Token is invalid (401): {errorMsg}");
+                    onComplete?.Invoke(false, "Token is invalid");
+                }
+                else
+                {
+                    DebugLog($"Server error or connectivity issue: {errorMsg} - trying fallback");
+                    yield return StartCoroutine(LoginWithTokenFallback(token, onComplete));
+                }
             }
         }
     }
-    
-    private IEnumerator LoginWithTokenFallback(string token, Action<bool, string> onComplete)
+      private IEnumerator LoginWithTokenFallback(string token, Action<bool, string> onComplete)
     {        // Fallback: Try to get player data directly via /player/data endpoint
-        DebugLog("Verifying token using player data endpoint...");
+        DebugLog("Trying alternative token validation via player data endpoint...");
         
         using (UnityWebRequest request = UnityWebRequest.Get($"{API_URL}/player/data"))
         {
@@ -507,11 +520,36 @@ public class GameAPI : MonoBehaviour
                     
                     PlayerData = JsonConvert.DeserializeObject<PlayerDataModel>(responseText);
                     
+                    // Validate the loaded data
                     if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id))
                     {
                         DebugLog("Error: Invalid player data from fallback verification");
-                        onComplete?.Invoke(false, "Invalid user data");
-                        yield break;
+                        
+                        // Try to restore from last saved state if available
+                        string lastUserData = PlayerPrefs.GetString("LastUserData", "");
+                        if (!string.IsNullOrEmpty(lastUserData))
+                        {
+                            DebugLog("Attempting to restore from last saved user data...");
+                            try
+                            {
+                                var restoredData = JsonConvert.DeserializeObject<PlayerDataModel>(lastUserData);
+                                if (restoredData != null && !string.IsNullOrEmpty(restoredData.id))
+                                {
+                                    PlayerData = restoredData;
+                                    DebugLog($"Restored user data: {PlayerData.username} (ID: {PlayerData.id})");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                DebugLog($"Failed to restore saved user data: {ex.Message}");
+                            }
+                        }
+                        
+                        if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id))
+                        {
+                            onComplete?.Invoke(false, "Invalid user data");
+                            yield break;
+                        }
                     }
                     
                     AuthToken = token;
@@ -519,6 +557,7 @@ public class GameAPI : MonoBehaviour
                     PlayerPrefs.Save();
                     
                     DebugLog($"Fallback token verification successful - ID: '{PlayerData.id}', Username: '{PlayerData.username}'");
+                    OnPlayerDataLoaded?.Invoke(PlayerData);
                     onComplete?.Invoke(true, "");
                 }
                 catch (Exception ex)
@@ -665,24 +704,30 @@ public class GameAPI : MonoBehaviour
                     DebugLog($"Raw response that failed to parse: {request.downloadHandler.text}");
                     onComplete?.Invoke(false, "Failed to parse player data");
                 }
-            }
-            else
+            }            else
             {
                 string errorMsg = GetErrorMessage(request);
                 DebugLog($"GetPlayerData failed: {errorMsg}");
                 
                 // Check if it's an authorization error
-                if (request.responseCode == 401 || errorMsg.Contains("authorization") || errorMsg.Contains("token"))
+                if (request.responseCode == 401)
                 {
-                    DebugLog("Authorization error detected - clearing invalid token");
+                    DebugLog("Authorization error detected (401) - token is invalid, clearing");
                     AuthToken = null;
+                    PlayerData = null;
                     PlayerPrefs.DeleteKey("AuthToken");
                     PlayerPrefs.Save();
                     onComplete?.Invoke(false, "Authorization expired - please login again");
                 }
+                else if (request.responseCode == 404)
+                {
+                    DebugLog("Player data endpoint not found (404) - server may be missing endpoint");
+                    onComplete?.Invoke(false, "Server endpoint not available - please try again later");
+                }
                 else
                 {
-                    onComplete?.Invoke(false, errorMsg);
+                    DebugLog($"Server error or connectivity issue (code: {request.responseCode}) - not clearing data");
+                    onComplete?.Invoke(false, $"Failed to load data: {errorMsg}");
                 }
             }
         }
@@ -990,9 +1035,17 @@ public class GameAPI : MonoBehaviour
             }
         }
     }
-    
-    public void Logout()
+      public void Logout()
     {
+        DebugLog("Starting logout process...");
+        
+        // Save current PlayerData state before clearing
+        if (PlayerData != null && !string.IsNullOrEmpty(PlayerData.id))
+        {
+            DebugLog($"Saving logout state for user: {PlayerData.username} (ID: {PlayerData.id})");
+            PlayerPrefs.SetString("LastUserData", JsonConvert.SerializeObject(PlayerData));
+        }
+        
         AuthToken = null;
         PlayerData = null;
         PlayerPrefs.DeleteKey("AuthToken");
@@ -1059,8 +1112,7 @@ public class GameAPI : MonoBehaviour
                 onComplete?.Invoke(false, error ?? "Failed to reload player data");
             }
         }));
-    }
-      // Method to validate if the current token is working
+    }    // Method to validate if the current token is working
     public IEnumerator ValidateCurrentToken(Action<bool, string> onComplete)
     {
         if (string.IsNullOrEmpty(AuthToken))
@@ -1080,31 +1132,55 @@ public class GameAPI : MonoBehaviour
 
             yield return request.SendWebRequest();
 
-            DebugLog($"Token validation response code: {request.responseCode}");
+            if (request.responseCode != 404) {
+                DebugLog($"Token validation response code: {request.responseCode}");
+            }
             
             if (request.result == UnityWebRequest.Result.Success)
             {
                 DebugLog("Token validation successful via /auth/verify");
+                
+                // Try to update PlayerData if it's missing or incomplete
+                if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id))
+                {
+                    try
+                    {
+                        string responseText = request.downloadHandler.text;
+                        if (!string.IsNullOrEmpty(responseText))
+                        {
+                            var updatedData = JsonConvert.DeserializeObject<PlayerDataModel>(responseText);
+                            if (updatedData != null && !string.IsNullOrEmpty(updatedData.id))
+                            {
+                                PlayerData = updatedData;
+                                DebugLog($"Updated PlayerData from verification: {PlayerData.username} (ID: {PlayerData.id})");
+                                OnPlayerDataLoaded?.Invoke(PlayerData);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugLog($"Could not parse player data from verification response: {ex.Message}");
+                    }
+                }
+                
                 onComplete?.Invoke(true, "Token is valid");
                 yield break;
             }
             else if (request.responseCode == 404)
             {
                 DebugLog("Auth verify endpoint not found (404), trying alternative method...");
-                // Fallback to player data endpoint
+                // Fallback to player data endpoint - DON'T CLEAR TOKEN YET
                 yield return StartCoroutine(ValidateTokenAlternative(onComplete));
                 yield break;
             }
             else
             {
                 DebugLog($"Primary token validation failed: {request.responseCode} - {request.downloadHandler.text}");
-                // Try alternative validation
+                // Try alternative validation before giving up
                 yield return StartCoroutine(ValidateTokenAlternative(onComplete));
             }
         }
-    }
-
-    private IEnumerator ValidateTokenAlternative(Action<bool, string> onComplete)
+    }private IEnumerator ValidateTokenAlternative(Action<bool, string> onComplete)
     {
         DebugLog("Trying alternative token validation via player data endpoint...");
 
@@ -1119,26 +1195,48 @@ public class GameAPI : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                DebugLog("Alternative token validation successful");
+                DebugLog("Alternative token validation successful - token is still valid");
+                
+                // Try to load player data from this response if we don't have it
+                if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id))
+                {
+                    try
+                    {
+                        var playerDataFromResponse = JsonConvert.DeserializeObject<PlayerDataModel>(request.downloadHandler.text);
+                        if (playerDataFromResponse != null && !string.IsNullOrEmpty(playerDataFromResponse.id))
+                        {
+                            PlayerData = playerDataFromResponse;
+                            DebugLog($"Restored player data from validation: {PlayerData.username} (ID: {PlayerData.id})");
+                            OnPlayerDataLoaded?.Invoke(PlayerData);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugLog($"Could not parse player data from validation response: {ex.Message}");
+                    }
+                }
+                
                 onComplete?.Invoke(true, "Token is valid (alternative check)");
             }
             else
             {
                 string errorMsg = GetErrorMessage(request);
                 DebugLog($"Alternative token validation also failed: {errorMsg}");
-                
-                // Clear invalid token
+                  // Only clear token if it's definitely a 401 (Unauthorized) error
+                // Don't clear for network errors, 404s, or server errors
                 if (request.responseCode == 401)
                 {
-                    DebugLog("Token is definitely invalid - clearing");
+                    DebugLog("Token is definitely invalid (401 Unauthorized) - clearing");
                     AuthToken = null;
+                    PlayerData = null;
                     PlayerPrefs.DeleteKey("AuthToken");
                     PlayerPrefs.Save();
                     onComplete?.Invoke(false, "Token is invalid");
                 }
                 else
                 {
-                    onComplete?.Invoke(false, errorMsg);
+                    DebugLog($"Server error or connectivity issue (code: {request.responseCode}) - keeping token for retry");
+                    onComplete?.Invoke(false, $"Server connectivity issue: {errorMsg}");
                 }
             }
         }
@@ -1239,6 +1337,7 @@ public class PlayerDataModel
     public int experience = 0;
     public int money = 0;
     public float health = 100f;
+    public int kills = 0;  // Add zombie kills tracking
     public CheckpointData checkpoint;
     public List<WeaponData> weapons = new List<WeaponData>();
     public string lastLoginDate;
