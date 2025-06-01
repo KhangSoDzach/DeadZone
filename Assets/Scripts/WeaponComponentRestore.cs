@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -102,8 +103,8 @@ public class WeaponComponentRestore : MonoBehaviour
         if (gun.ammoText == null)
         {
             // Find UI components by common naming patterns
-            Text[] allTexts = FindObjectsOfType<Text>();
-            foreach (Text text in allTexts)
+            TextMeshProUGUI[] texts = Object.FindObjectsOfType<TextMeshProUGUI>();
+            foreach (TextMeshProUGUI text in texts)
             {
                 if (text.name.ToLower().Contains("ammo"))
                 {

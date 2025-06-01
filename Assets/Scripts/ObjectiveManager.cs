@@ -17,7 +17,7 @@ public class ObjectiveManager : MonoBehaviour
 
     void Start()
     {
-        UpdateObjective("Find key in villa");
+        UpdateObjective("Find key in Clinic Villa");
     }
 
     public void UpdateObjective(string message)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Import for UI components
 using Scripts;
-
+using TMPro;
 public class Gun : MonoBehaviour
 {
     public float damage = 10f; 
@@ -24,7 +24,7 @@ public class Gun : MonoBehaviour
     public float impactForce = 10f; // Force of the impact effect
     public float fireRate = 0.5f; // Rate of fire in seconds
     private float nextFireTime = 0f; // Time when the gun can fire again
-    public Text ammoText; // Reference to the UI Text for displaying ammo
+    public TMP_Text ammoText; // Reference to the UI Text for displaying ammo
 
     [Header("Recoil Settings")]
     public float recoilAmount = 1.0f;               // How much recoil each shot produces
@@ -153,9 +153,9 @@ public class Gun : MonoBehaviour
         // Try to find UI references
         if (ammoText == null)
         {
-            Text[] allTexts = FindObjectsOfType<Text>();
-            
-            foreach (Text text in allTexts)
+            TMP_Text[] allTexts = FindObjectsOfType<TMP_Text>();
+
+            foreach (TMP_Text text in allTexts)
             {
                 if (ammoText == null && text.name.ToLower().Contains("ammo"))
                 {

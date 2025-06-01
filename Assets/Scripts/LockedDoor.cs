@@ -28,7 +28,7 @@ public class LockedDoor : MonoBehaviour
                     hasUnlocked = true;
                     instructionUI.SetActive(false);
                     LoadScene();
-                    ObjectiveManager.Instance.UpdateObjective("Find the vaccine");
+                    ObjectiveManager.Instance.UpdateObjective("Find the Vaccine");
                    
                 }
                 else

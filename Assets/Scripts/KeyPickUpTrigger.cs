@@ -22,7 +22,7 @@ public class KeyPickupTrigger : MonoBehaviour
             if (instructionUI != null)
                 instructionUI.SetActive(false);
 
-            ObjectiveManager.Instance.UpdateObjective("Unlock a basement door in white villa");
+            ObjectiveManager.Instance.UpdateObjective("Unlock a basement door in White Mansion");
             gameObject.SetActive(false); 
         }
     }

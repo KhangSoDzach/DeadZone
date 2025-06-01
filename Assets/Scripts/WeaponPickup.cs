@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -470,31 +471,30 @@ public class WeaponPickup : MonoBehaviour
             gunComponent.UpdateAmmoUI();
         }
     }
-    
+
     // Helper method để tìm UI Text từ đường dẫn đã lưu
-    private Text FindUITextFromPath(string path)
+    private TextMeshProUGUI FindUITextFromPath(string path)
     {
         if (string.IsNullOrEmpty(path)) return null;
-        
+
         GameObject obj = GameObject.Find(path);
         if (obj != null)
         {
-            return obj.GetComponent<Text>();
+            return obj.GetComponent<TextMeshProUGUI>();
         }
-        
-        // Nếu không tìm thấy, tìm kiếm tất cả Text components
-        Text[] texts = Object.FindObjectsOfType<Text>();
-        foreach (Text text in texts)
+
+        TextMeshProUGUI[] texts = Object.FindObjectsOfType<TextMeshProUGUI>();
+        foreach (TextMeshProUGUI text in texts)
         {
             if (text.name.ToLower().Contains("ammo"))
             {
                 return text;
             }
         }
-        
+
         return null;
     }
-    
+
     // Helper method để lấy đường dẫn đầy đủ của GameObject trong hierarchy
     private string GetGameObjectPath(GameObject obj)
     {
