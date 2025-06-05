@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Scripts.API;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -88,6 +89,9 @@ public class ShopManagement : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
+        
+        // Notify PauseMenu about shop state
+        NotifyPauseMenuOfShopState();
     }
     
     void Update()
@@ -707,6 +711,8 @@ public class ShopManagement : MonoBehaviour
             // Lock cursor to interact with UI
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            
+            NotifyPauseMenuOfShopState();
         }
     }
 
@@ -731,5 +737,19 @@ public class ShopManagement : MonoBehaviour
         
         // No rifle found
         return false;
+    }
+
+    // Method to notify pause menu when shop state changes
+    private void NotifyPauseMenuOfShopState()
+    {
+        PauseMenu pauseMenu = FindObjectOfType<PauseMenu>();
+        if (pauseMenu != null && isShopOpen)
+        {
+            // Ensure pause menu is closed when shop opens
+            if (pauseMenu.IsPaused)
+            {
+                pauseMenu.ContinueGame();
+            }
+        }
     }
 }

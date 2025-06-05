@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Để sử dụng UI elements
+using UnityEngine.Audio; // Để sử dụng AudioMixerGroup
 
 public class PlayerLook : MonoBehaviour
 {
@@ -23,6 +24,14 @@ public class PlayerLook : MonoBehaviour
     private float damageVignetteSpeed = 2.5f;
     private GameObject damageCanvas;
     private Sprite damageSprite;
+    
+    // Thêm biến âm thanh khi bị thương
+    [Header("Damage Audio")]
+    public AudioSource audioSource;
+    public AudioClip[] damageSounds; // Mảng các âm thanh khi bị thương
+    public AudioMixerGroup audioMixerGroup; // Mixer group để điều chỉnh âm lượng
+    [Range(0f, 1f)]
+    public float damageVolume = 0.7f; // Âm lượng mặc định
 
     // Thêm biến cho hiệu ứng giật khi bắn
     private float currentRecoilX = 0f;      // Recoil on X axis (left-right)
@@ -34,17 +43,17 @@ public class PlayerLook : MonoBehaviour
     private float horizontalRecoilFactor = 0.3f; // How much horizontal vs vertical recoil
     private bool isFiring = false;          // Track if player is actively firing
 
-    
-    public void TakeDamageEffect()
+      public void TakeDamageEffect()
     {
         Debug.Log("TakeDamageEffect đã được gọi!");
         
-        // Lưu vị trí ban đầu của camera trước khi shake
-        if (!isShaking && cam != null)
+        // Luôn lưu vị trí ban đầu của camera khi bị đánh
+        if (cam != null)
             originalPosition = cam.transform.localPosition;
-        
+          // Luôn đặt lại các tham số shake khi bị đánh, bất kể trạng thái shake hiện tại
         isShaking = true;
         shakeTimer = shakeDuration;
+        shakeIntensity = 0.2f; // Đảm bảo đặt lại cường độ shake mạnh khi bị đánh
         
         // Kiểm tra nếu hiệu ứng viền đỏ chưa được tạo hoặc không tồn tại
         if (damageVignette == null || damageCanvas == null)
@@ -64,11 +73,62 @@ public class PlayerLook : MonoBehaviour
             damageVignette.color = new Color(1, 0, 0, damageVignetteAlpha);
             Debug.Log("Đã đặt màu: " + damageVignette.color + ", Canvas active: " + damageCanvas.activeInHierarchy);
         }
+        else
+        {
+            // Nếu không thể tạo damage effect (có thể do không ở gameplay scene)
+            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+            if (sceneName.Contains("menu") || sceneName.Contains("login"))
+            {
+                Debug.Log("PlayerLook: Bỏ qua tạo damage effect trong menu scene");
+                return; // Don't create damage effects in menu scenes
+            }
+        }
+        
+        // Phát âm thanh khi bị thương
+        PlayDamageSound();
+    }
+    
+    // Phương thức phát âm thanh khi bị thương
+    private void PlayDamageSound()
+    {
+        // Kiểm tra nếu damageSounds có giá trị và có ít nhất 1 âm thanh
+        if (damageSounds != null && damageSounds.Length > 0)
+        {
+            // Nếu không có AudioSource, tạo mới
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.outputAudioMixerGroup = audioMixerGroup;
+            }
+            
+            // Chọn ngẫu nhiên một âm thanh bị thương từ mảng
+            AudioClip damageClip = damageSounds[Random.Range(0, damageSounds.Length)];
+            
+            // Phát âm thanh
+            if (damageClip != null)
+            {
+                audioSource.volume = damageVolume;
+                audioSource.PlayOneShot(damageClip);
+                Debug.Log("Đã phát âm thanh bị thương: " + damageClip.name);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Không có âm thanh bị thương nào được cấu hình!");
+        }
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        // Check scene context first
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.Log("PlayerLook: Skipping initialization in menu scene");
+            this.enabled = false;
+            return;
+        }
 
         cam = GetComponentInChildren<Camera>();
         if (cam == null)
@@ -87,6 +147,22 @@ public class PlayerLook : MonoBehaviour
 
         // Tạo hiệu ứng viền đỏ
         CreateDamageVignetteEffect();
+        
+        // Khởi tạo AudioSource nếu chưa được gán
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                Debug.Log("Đã tạo AudioSource mới cho player");
+            }
+            // Gán mixer group nếu đã được cấu hình
+            if (audioMixerGroup != null)
+            {
+                audioSource.outputAudioMixerGroup = audioMixerGroup;
+            }
+        }
     }
 
     // Update is called once per frame
@@ -143,13 +219,12 @@ public class PlayerLook : MonoBehaviour
         
         // Giới hạn recoil ngang
         currentRecoilX = Mathf.Clamp(currentRecoilX + horizontalRecoil, -maxRecoilX, maxRecoilX);
-        
-        // Cũng thêm một chút camera shake nhẹ khi bắn
-        if (!isShaking)
+          // Chỉ thêm camera shake khi bắn nếu không đang có shake mạnh hơn từ việc bị đánh
+        if (!isShaking || shakeIntensity < 0.1f) // Chỉ áp dụng shake từ súng nếu không có shake hoặc shake hiện tại yếu
         {
             originalPosition = cam.transform.localPosition;
             isShaking = true;
-            shakeTimer = 0.1f; // Thời gian shake ngắn hơn khi bị thương
+            shakeTimer = 0.1f; // Thời gian shake ngắn hơn khi bắn
             shakeIntensity = 0.03f * recoilAmount; // Cường độ nhẹ hơn và tỉ lệ với recoil
         }
         
@@ -214,9 +289,7 @@ public class PlayerLook : MonoBehaviour
     {
         recoilBuildup = buildup;
         horizontalRecoilFactor = horizontalFactor;
-    }
-
-    // Cập nhật camera shake
+    }    // Cập nhật camera shake
     private void UpdateCameraShake()
     {
         if (isShaking && cam != null)
@@ -225,7 +298,7 @@ public class PlayerLook : MonoBehaviour
             
             if (shakeTimer > 0)
             {
-                // Tạo hiệu ứng shake ngẫu nhiên nhưng giữ nguyên vị trí Z
+                // Tạo hiệu ứng shake ngẫu nhiên với cường độ hiện tại
                 cam.transform.localPosition = new Vector3(
                     originalPosition.x + Random.Range(-1f, 1f) * shakeIntensity,
                     originalPosition.y + Random.Range(-1f, 1f) * shakeIntensity,

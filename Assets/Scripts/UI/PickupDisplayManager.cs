@@ -27,7 +27,14 @@ public class PickupDisplayManager : MonoBehaviour
     
     private void Awake()
     {
-        // Singleton pattern
+        // Check scene context first
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.Log("PickupDisplayManager: Skipping initialization in menu scene");
+            this.enabled = false;
+            return;
+        }        // Singleton pattern
         if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
@@ -40,11 +47,43 @@ public class PickupDisplayManager : MonoBehaviour
         // Make sure panel is hidden at start
         if (displayPanel != null)
             displayPanel.SetActive(false);
+            
+        // Listen for scene changes
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        string sceneName = scene.name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            // Hide in menu scenes
+            this.gameObject.SetActive(false);
+            Debug.Log("PickupDisplayManager: Disabled for menu scene");
+        }
+        else
+        {
+            // Show in gameplay scenes
+            this.gameObject.SetActive(true);
+            Debug.Log("PickupDisplayManager: Enabled for gameplay scene");
+        }
+    }
+    
+    private void OnDestroy()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
     }
     
     // Display weapon pickup notification
     public void ShowWeaponPickup(string weaponName, int ammo, float damage, bool isAutomatic)
     {
+        // Check if we're in appropriate scene for showing pickups
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            return; // Don't show pickups in menu scenes
+        }
+
         string description = $"Đạn: {ammo}  |  Sát thương: {damage}  |  {(isAutomatic ? "Tự động" : "Bán tự động")}";
         ShowDisplay(weaponName, description, defaultWeaponIcon);
     }

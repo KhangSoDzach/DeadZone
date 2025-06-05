@@ -23,6 +23,22 @@ public class PlayerAnimation : MonoBehaviour
     [SerializeField] private float moveThreshold = 0.1f;
     private Vector3 lastPosition;
     
+    // Biến để ngăn duplicate PlayerAnimation
+    private static PlayerAnimation instance;
+    
+    void Awake()
+    {
+        // Kiểm tra nếu đã có instance khác
+        if (instance != null && instance != this)
+        {
+            Debug.LogWarning("Duplicate PlayerAnimation detected! Destroying this instance: " + gameObject.name);
+            Destroy(this);
+            return;
+        }
+        
+        instance = this;
+    }
+    
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -93,5 +109,13 @@ public class PlayerAnimation : MonoBehaviour
         // Kích hoạt cả hai tham số khi chạy lùi
         animator.SetBool(IS_BACKWARD, isBackward); // Luôn kích hoạt khi đi lùi
         animator.SetBool(IS_BACKWARD_RUNNING, isRunningBackward); // Kích hoạt khi chạy lùi
+    }
+    
+    void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+        }
     }
 }

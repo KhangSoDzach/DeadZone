@@ -111,9 +111,7 @@ public class GameSaveManager : MonoBehaviour
         {
             SaveGameImmediate();
         }
-    }
-
-    public void SaveGame()
+    }    public void SaveGame()
     {
         if (Time.time - lastSaveTime < 10f)
         {
@@ -121,36 +119,130 @@ public class GameSaveManager : MonoBehaviour
             return;
         }
 
+        // Check if properly logged in
         if (!GameAPI.Instance.IsLoggedIn)
         {
             Debug.LogWarning("Cannot save: Not logged in");
+            // Try to restore auth token
+            GameAPI.Instance.RestoreAuthTokenFromPrefs();
+            if (!GameAPI.Instance.IsLoggedIn)
+            {
+                Debug.LogError("Still not logged in after token restoration attempt");
+                return;
+            }
+        }
+        
+        // Ensure player data exists and is valid
+        if (GameAPI.Instance.PlayerData == null || 
+            string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) || 
+            string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
+        {
+            Debug.LogWarning("No valid player data found, attempting to reload from server...");
+            StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+                if (success && GameAPI.Instance.PlayerData != null && 
+                    !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
+                {
+                    Debug.Log("Player data reloaded successfully, attempting save...");
+                    SaveGame(); // Retry save
+                }
+                else
+                {
+                    Debug.LogError($"Failed to reload player data for save: {error}");
+                }
+            }));
+            return;
+        }
+        
+        // Check if GameDataSynchronizer exists and is loaded
+        if (GameDataSynchronizer.Instance != null && !GameDataSynchronizer.Instance.IsDataLoaded)
+        {
+            Debug.LogWarning("GameDataSynchronizer data not loaded. Loading data first...");
+            // Try to load data first, then save
+            GameDataSynchronizer.Instance.LoadGameData((success, error) => {
+                if (success)
+                {
+                    // Now try to save
+                    PerformSave();
+                }
+                else
+                {
+                    Debug.LogError("Failed to load data before saving: " + error);
+                    // Try to save anyway with current data
+                    PerformSaveDirectly();
+                }
+            });
             return;
         }
 
-        lastSaveTime = Time.time;
-        GameDataSynchronizer.Instance.SaveGameData((success, message) =>
-        {
+        PerformSave();
+    }
+    
+    private IEnumerator LoadDataThenSave()
+    {
+        yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
             if (success)
             {
-                Debug.Log("Game saved successfully");
+                Debug.Log("Player data loaded successfully, proceeding with save");
+                PerformSave();
             }
             else
             {
-                Debug.LogError("Failed to save game: " + message);
+                Debug.LogError("Failed to load player data before saving: " + error);
             }
-        });
+        }));
+    }
+    
+    private void PerformSave()
+    {
+        if (GameDataSynchronizer.Instance != null)
+        {
+            lastSaveTime = Time.time;
+            GameDataSynchronizer.Instance.SaveGameData((success, message) =>
+            {
+                if (success)
+                {
+                    Debug.Log("Game saved successfully");
+                }
+                else
+                {
+                    Debug.LogError("Failed to save game: " + message);
+                }
+            });
+        }
+        else
+        {
+            // Fallback to direct save
+            PerformSaveDirectly();
+        }
+    }
+    
+    private void PerformSaveDirectly()
+    {
+        lastSaveTime = Time.time;
+        StartCoroutine(GameAPI.Instance.SavePlayerData((success, message) =>
+        {
+            if (success)
+            {
+                Debug.Log("Game saved successfully (direct)");
+            }
+            else
+            {
+                Debug.LogError("Failed to save game (direct): " + message);
+            }
+        }));
     }
 
     // Synchronous save for critical moments like app quitting
     private void SaveGameImmediate()
     {
-        if (!GameAPI.Instance.IsLoggedIn)
+        if (!GameAPI.Instance.IsLoggedIn || !GameDataSynchronizer.Instance.IsDataLoaded)
         {
+            Debug.LogWarning("Cannot perform immediate save: Not logged in or no data loaded");
             return;
         }
 
         Debug.Log("Performing immediate save...");
-        // Here we just update the data but can't guarantee the API call completes
-        // since the application is quitting
+        // Collect current game state before app quits
+        GameDataSynchronizer.Instance.SaveGameData(null);
     }
 }

@@ -160,21 +160,54 @@ public class APIManager : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 // Parse response
-                var response = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.downloadHandler.text);
+                bool parseSuccess = false;
+                string parseError = "";
                 
-                if (response != null && response.ContainsKey("token"))
+                try
                 {
-                    authToken = response["token"];
-                    PlayerPrefs.SetString("AuthToken", authToken);
-                    isLoggedIn = true;
+                    var response = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.downloadHandler.text);
                     
-                    // Get player data                    StartCoroutine(FetchPlayerData());
-                    
-                    callback(true, "Login successful!");
+                    if (response != null && response.ContainsKey("token"))
+                    {
+                        authToken = response["token"].ToString();
+                        PlayerPrefs.SetString("AuthToken", authToken);
+                        isLoggedIn = true;
+                        
+                        // Try to extract user data from response
+                        if (response.ContainsKey("user") && response["user"] != null)
+                        {
+                            string userJson = JsonConvert.SerializeObject(response["user"]);
+                            playerData = JsonConvert.DeserializeObject<PlayerData>(userJson);
+                        }
+                        
+                        parseSuccess = true;
+                    }
+                    else
+                    {
+                        parseError = "Login failed: Invalid response";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError("Login response parse error: " + ex.Message);
+                    parseError = "Login failed: Invalid response format";
+                }
+                
+                if (parseSuccess)
+                {
+                    // If no user data or incomplete data, fetch from server
+                    if (playerData == null || string.IsNullOrEmpty(playerData.userId))
+                    {
+                        StartCoroutine(FetchPlayerDataAfterLogin(callback));
+                    }
+                    else
+                    {
+                        callback(true, "Login successful!");
+                    }
                 }
                 else
                 {
-                    callback(false, "Login failed: Invalid response");
+                    callback(false, parseError);
                 }
             }
             else
@@ -200,6 +233,12 @@ public class APIManager : MonoBehaviour
         }
     }
 
+    private IEnumerator FetchPlayerDataAfterLogin(System.Action<bool, string> callback)
+    {
+        yield return StartCoroutine(FetchPlayerData());
+        callback(true, "Login successful!");
+    }
+
     // Validate saved token
     private IEnumerator ValidateToken()
     {
@@ -213,7 +252,8 @@ public class APIManager : MonoBehaviour
             {
                 isLoggedIn = true;
                 Debug.Log("Token is valid, user is authenticated");
-                  // Get player data
+                
+                // Get player data to ensure we have complete information
                 StartCoroutine(FetchPlayerData());
             }
             else
@@ -290,32 +330,72 @@ public class APIManager : MonoBehaviour
         string jsonData = JsonConvert.SerializeObject(data);
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
 
-        using (UnityWebRequest request = new UnityWebRequest(baseUrl + "/player/save", "PUT"))
+        // Try multiple endpoint variations
+        string[] possibleEndpoints = {
+            baseUrl + "/player/save",
+            baseUrl + "/player/data", 
+            baseUrl + "/player/update",
+            baseUrl + "/player"
+        };
+
+        bool saveSuccessful = false;
+        string lastError = "";
+
+        foreach (string endpoint in possibleEndpoints)
         {
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("x-auth-token", authToken);
+            Debug.Log($"[APIManager] Trying to save to: {endpoint}");
             
-            yield return request.SendWebRequest();
-            
-            if (request.result == UnityWebRequest.Result.Success)
+            using (UnityWebRequest request = new UnityWebRequest(endpoint, "PUT"))
             {
-                // Update local player data
-                playerData = JsonConvert.DeserializeObject<PlayerData>(request.downloadHandler.text);
-                Debug.Log("Player data saved successfully");
+                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.SetRequestHeader("x-auth-token", authToken);
                 
-                // Notify any listeners that player data has been updated
-                OnPlayerDataLoaded?.Invoke(playerData);
+                yield return request.SendWebRequest();
                 
-                callback?.Invoke(true, "Data saved successfully");
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    // Update local player data
+                    try
+                    {
+                        playerData = JsonConvert.DeserializeObject<PlayerData>(request.downloadHandler.text);
+                    }
+                    catch
+                    {
+                        // If response parsing fails, keep the data we sent
+                        playerData = data;
+                    }
+                    
+                    Debug.Log($"[APIManager] Player data saved successfully to: {endpoint}");
+                    
+                    // Notify any listeners that player data has been updated
+                    OnPlayerDataLoaded?.Invoke(playerData);
+                    
+                    saveSuccessful = true;
+                    break;
+                }
+                else
+                {
+                    lastError = "Failed to save player data: " + request.error;
+                    Debug.LogError($"[APIManager] Failed to save to {endpoint}: {lastError}");
+                    
+                    // If not 404, break early as it might be a different issue
+                    if (!request.error.Contains("404"))
+                    {
+                        break;
+                    }
+                }
             }
-            else
-            {
-                string errorMsg = "Failed to save player data: " + request.error;
-                Debug.LogError(errorMsg);
-                callback?.Invoke(false, errorMsg);
-            }
+        }
+        
+        if (saveSuccessful)
+        {
+            callback?.Invoke(true, "Data saved successfully");
+        }
+        else
+        {
+            callback?.Invoke(false, lastError);
         }
     }
 
@@ -579,4 +659,18 @@ public class Position
     public float x;
     public float y;
     public float z;
+    
+    public Position() { }
+    
+    public Position(Vector3 vector)
+    {
+        x = vector.x;
+        y = vector.y;
+        z = vector.z;
+    }
+    
+    public Vector3 ToVector3()
+    {
+        return new Vector3(x, y, z);
+    }
 }

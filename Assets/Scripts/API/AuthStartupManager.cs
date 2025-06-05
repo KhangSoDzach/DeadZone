@@ -22,6 +22,14 @@ public class AuthStartupManager : MonoBehaviour
     
     private void CheckForAutoLogin()
     {
+        // Check if we're in a login scene - if so, don't auto-login
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (currentScene.ToLower().Contains("login") || currentScene.ToLower().Contains("menu"))
+        {
+            ShowStatus("In login scene - skipping auto-login check");
+            return;
+        }
+
         if (GameAPI.Instance.IsLoggedIn)
         {
             ShowStatus("Found saved login session. Authenticating...");
@@ -31,19 +39,19 @@ public class AuthStartupManager : MonoBehaviour
             {
                 if (success)
                 {
-                    ShowStatus("Auto-login successful. Loading game...");
-                    LoadGameScene();
+                    ShowStatus("Auto-login successful. Game ready.");
+                    // Don't load scene - we're already in game
                 }
                 else
                 {
-                    ShowStatus("Session expired. Please log in again.");
+                    ShowStatus("Session expired. Need to login again.");
                     LoadLoginScene();
                 }
             }));
         }
         else
         {
-            ShowStatus("No saved session found.");
+            ShowStatus("No saved session found. Loading login scene.");
             LoadLoginScene();
         }
     }

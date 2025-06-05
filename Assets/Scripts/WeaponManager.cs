@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Scripts.API; // Add this using statement
 
 public class WeaponManager : MonoBehaviour
 {
@@ -44,6 +45,15 @@ public class WeaponManager : MonoBehaviour
 
     private void Start()
     {
+        // Check if we're in a gameplay scene before initializing
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.LogWarning($"WeaponManager should not be active in scene: {sceneName}");
+            this.enabled = false;
+            return;
+        }
+
         Debug.Log("Khởi tạo WeaponManager...");
 
         // Kiểm tra số lượng prefab
@@ -75,7 +85,7 @@ public class WeaponManager : MonoBehaviour
         playerCamera = Camera.main;
         if (playerCamera == null)
         {
-            Debug.LogError("Không tìm thấy camera chính!");
+            Debug.LogWarning("Không tìm thấy camera chính! WeaponManager sẽ tìm kiếm camera khi cần thiết.");
         }
         
         // Lấy reference đến SwitchWeapon nếu có
@@ -85,8 +95,8 @@ public class WeaponManager : MonoBehaviour
             Debug.LogWarning("Không tìm thấy component SwitchWeapon trên đối tượng này. Chức năng chuyển đổi vũ khí có thể bị giới hạn.");
         }
         
-        // Nếu không có dropPoint, tạo một điểm drop mặc định
-        if (dropPoint == null)
+        // Nếu không có dropPoint, tạo một điểm drop mặc định chỉ khi có camera
+        if (dropPoint == null && playerCamera != null)
         {
             Debug.Log("Không có dropPoint được chỉ định, tạo dropPoint mặc định.");
             GameObject dropPointObj = new GameObject("DropPoint");
@@ -95,7 +105,7 @@ public class WeaponManager : MonoBehaviour
             dropPoint = dropPointObj.transform;
         }
         
-        // Đảm bảo vũ khí đã có trong inspector không bị tắt khi khởi động
+        // Đảm bảo vũ khí đã có trong inspector không bị tắt khi khởi động - chỉ khi có weaponHolder
         if (weaponHolder != null && weaponHolder.childCount > 0)
         {
             PreserveExistingWeapons();
@@ -198,6 +208,12 @@ public class WeaponManager : MonoBehaviour
     
     private void Update()
     {
+        // Don't process weapon management if game is paused
+        if (PauseMenu.IsGamePaused)
+        {
+            return;
+        }
+
         // Kiểm tra và cập nhật các tham chiếu trước khi sử dụng
         UpdateReferences();
         

@@ -4,12 +4,7 @@ using UnityEngine;
 using DevionGames.StatSystem;
 using DevionGames;
 
-namespace Scripts.API
-{
-    /// <summary>
-    /// This class provides integration between the Dead Zone WebAPI system and the DevionGames StatSystem
-    /// It handles synchronizing player stats between the server and the StatsManager
-    /// </summary>
+
     public class StatsManagerIntegration : MonoBehaviour
     {
         [SerializeField]
@@ -46,17 +41,21 @@ namespace Scripts.API
         private void Start()
         {
             // Register for player data events
-            GameDataSynchronizer.Instance.OnPlayerDataUpdated += OnPlayerDataUpdated;
+            if (GameAPI.Instance != null)
+            {
+                GameAPI.Instance.OnPlayerDataLoaded += OnPlayerDataUpdated;
+            }
         }
 
         private void OnDestroy()
         {
             // Unregister from player data events
-            if (GameDataSynchronizer.Instance != null)
+            if (GameAPI.Instance != null)
             {
-                GameDataSynchronizer.Instance.OnPlayerDataUpdated -= OnPlayerDataUpdated;
+                GameAPI.Instance.OnPlayerDataLoaded -= OnPlayerDataUpdated;
             }
         }
+
         /// <summary>
         /// Called when player data is updated from the server
         /// Updates the StatsManager with the loaded player stats
@@ -81,7 +80,7 @@ namespace Scripts.API
             if (playerStatsHandler == null) return;
 
             // Apply health stat
-            if (playerStatsHandler.GetStat("Health") is Attribute healthStat)
+            if (playerStatsHandler.GetStat("Health") is DevionGames.StatSystem.Attribute healthStat)
             {
                 healthStat.CurrentValue = playerData.health;
             }
@@ -92,22 +91,23 @@ namespace Scripts.API
                 playerStatsHandler.GetStat("Money").Add(playerData.money - playerStatsHandler.GetStatValue("Money"));
             }
 
-            // Apply other stats based on your game's stats configuration
-            // Example: Experience, Level, Stamina, etc.
-            // if (playerStatsHandler.GetStat("Experience") != null)
-            // {
-            //     playerStatsHandler.GetStat("Experience").Add(playerData.experience - playerStatsHandler.GetStatValue("Experience"));
-            // }
+            // Apply level
+            if (playerStatsHandler.GetStat("Level") != null)
+            {
+                playerStatsHandler.GetStat("Level").Add(playerData.level - playerStatsHandler.GetStatValue("Level"));
+            }
 
             Debug.Log("Player stats updated from server data");
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Updates the PlayerDataModel with current stats from the StatsManager
         /// </summary>
         public void UpdatePlayerDataFromStats()
         {
-            if (GameDataSynchronizer.Instance == null || GameDataSynchronizer.Instance.CurrentPlayerData == null)
+            if (GameAPI.Instance == null || GameAPI.Instance.PlayerData == null)
             {
-                Debug.LogWarning("Cannot update player data from stats: GameDataSynchronizer not initialized");
+                Debug.LogWarning("Cannot update player data from stats: GameAPI not initialized");
                 return;
             }
 
@@ -115,23 +115,22 @@ namespace Scripts.API
             if (playerStatsHandler == null) return;
 
             // Update health
-            if (playerStatsHandler.GetStat("Health") is Attribute healthStat)
+            if (playerStatsHandler.GetStat("Health") is DevionGames.StatSystem.Attribute healthStat)
             {
-                GameDataSynchronizer.Instance.CurrentPlayerData.health = (int)healthStat.CurrentValue;
+                GameAPI.Instance.PlayerData.health = healthStat.CurrentValue;
             }
 
             // Update money/score
             if (playerStatsHandler.GetStat("Money") != null)
             {
-                GameDataSynchronizer.Instance.CurrentPlayerData.money = (int)playerStatsHandler.GetStatValue("Money");
+                GameAPI.Instance.PlayerData.money = (int)playerStatsHandler.GetStatValue("Money");
             }
 
-            // Update other stats based on your game's stats configuration
-            // Example: Experience, Level, Stamina, etc.
-            // if (playerStatsHandler.GetStat("Experience") != null)
-            // {
-            //     PlayerDataManager.Instance.PlayerData.experience = (int)playerStatsHandler.GetStatValue("Experience");
-            // }
+            // Update level
+            if (playerStatsHandler.GetStat("Level") != null)
+            {
+                GameAPI.Instance.PlayerData.level = (int)playerStatsHandler.GetStatValue("Level");
+            }
 
             Debug.Log("Player data updated from stats");
         }
@@ -141,7 +140,7 @@ namespace Scripts.API
         /// </summary>
         public StatsHandler GetStatsHandler()
         {
-            StatsHandler handler = StatsManager.GetStatsHandler(playerStatsHandlerName);
+            StatsHandler handler = DevionGames.StatSystem.StatsManager.GetStatsHandler(playerStatsHandlerName);
             if (handler == null)
             {
                 Debug.LogWarning($"Could not find StatsHandler with name '{playerStatsHandlerName}'");
@@ -150,4 +149,4 @@ namespace Scripts.API
             return handler;
         }
     }
-}
+

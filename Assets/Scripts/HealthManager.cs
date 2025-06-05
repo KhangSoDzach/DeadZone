@@ -63,6 +63,15 @@ public class HealthManager : MonoBehaviour
 
     void Start()
     {
+        // Check scene context first
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        if (sceneName.Contains("menu") || sceneName.Contains("login"))
+        {
+            Debug.Log("HealthManager: Skipping initialization in menu scene");
+            this.enabled = false;
+            return;
+        }
+
         // Khởi tạo giá trị sức khỏe và thể lực
         currentHealth = maxHealth;
         currentStamina = maxStamina;
@@ -168,7 +177,16 @@ public class HealthManager : MonoBehaviour
         
         // Vô hiệu hóa điều khiển người chơi
         var playerMovement = GetComponent<PlayerMovementScript>();
-        if (playerMovement != null)
+        if (playerMovement == null)
+        {
+            // Try alternative component names
+            var altMovement = GetComponent<PlayerMovement>();
+            if (altMovement != null)
+            {
+                altMovement.enabled = false;
+            }
+        }
+        else
         {
             playerMovement.enabled = false;
         }
