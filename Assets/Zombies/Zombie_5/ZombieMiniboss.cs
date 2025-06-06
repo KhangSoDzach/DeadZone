@@ -252,7 +252,7 @@ public class ZombieMiniboss : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 50 || remainHeath == 100 || remainHeath == 150|| remainHeath == 250|| remainHeath == 200)
+        if (remainHeath <= 50 || remainHeath <= 90 || remainHeath <= 150 || remainHeath <= 200)
         {
             //Reaction hit
             aniZombie.SetTrigger("isHit");

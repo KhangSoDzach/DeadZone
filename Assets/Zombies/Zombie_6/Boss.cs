@@ -43,7 +43,7 @@ public class Boss : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 15f;
-    private float zombieHealth = 300f;
+    private float zombieHealth = 1000f;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -85,14 +85,14 @@ public class Boss : MonoBehaviour
                     audioSource.PlayOneShot(idleGroanSound);
                 }
 
-                nextSoundTime = Time.time + 15f;
+                nextSoundTime = Time.time + 20f;
             }
         }
         if (playerExistenceRadius && !playerInAttackingRadius)
         {
             jumpAttackTimer += Time.deltaTime;
 
-            if (jumpAttackTimer >= 5f)
+            if (jumpAttackTimer >= 15f)
             {
                 JumpAttacking();
             }
@@ -101,7 +101,7 @@ public class Boss : MonoBehaviour
         {
             jumpAttackTimer += Time.deltaTime;
             heavyAttackTimer += Time.deltaTime;
-            if (heavyAttackTimer >= 25f)
+            if (heavyAttackTimer >= 5f)
             {
                 HeavyAttacking();
             }
@@ -331,7 +331,7 @@ public class Boss : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 50 || remainHeath == 100 || remainHeath == 150 || remainHeath == 250 || remainHeath == 200)
+        if (remainHeath == 100 || remainHeath == 200 || remainHeath == 400 || remainHeath == 600 || remainHeath == 800)
         {
             aniZombie.SetTrigger("isHit");
             zombieAgent.isStopped = true;

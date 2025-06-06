@@ -194,7 +194,7 @@ public class Zombie_1 : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 40|| remainHeath == 60 || remainHeath == 80)
+        if (remainHeath <= 20 || remainHeath <= 50)
         {
             //Reaction hit
             aniZombie.SetTrigger("isHit");
@@ -250,22 +250,18 @@ public class Zombie_1 : MonoBehaviour
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
 
-        // Kiểm tra tỷ lệ rơi tiền
         if (Random.value <= dropChance)
         {
-            // Xác định số lượng đồng tiền rơi ra
             int coinCount = Random.Range(minCoinsDropped, maxCoinsDropped + 1);
             
             for (int i = 0; i < coinCount; i++)
             {
-                // Tạo vị trí rơi ngẫu nhiên xung quanh zombie
                 Vector3 randomOffset = new Vector3(
                     Random.Range(-0.5f, 0.5f),
-                    0.1f,  // Đặt cao hơn một chút so với mặt đất
+                    0.1f,  
                     Random.Range(-0.5f, 0.5f)
                 );
                 
-                // Tạo đồng tiền
                 if (moneyPrefab != null)
                 {
                     Instantiate(moneyPrefab, transform.position + randomOffset, Quaternion.Euler(0, Random.Range(0, 360), 0));
