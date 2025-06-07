@@ -232,7 +232,12 @@ public class PlayerLook : MonoBehaviour
         CancelInvoke("StopFiring");
         Invoke("StopFiring", 0.2f);
     }
-    
+    public void SetSensitivity(float sensitivity)
+    {
+        xSensitivity = sensitivity;
+        ySensitivity = sensitivity;
+    }
+        
     // Đánh dấu khi ngừng bắn để bắt đầu hồi phục nhanh hơn
     private void StopFiring()
     {

@@ -44,12 +44,6 @@ public class AmmoPickup : MonoBehaviour
     
     private void Update()
     {
-        // Xoay hộp đạn
-        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
-        
-        // Di chuyển lên xuống nhẹ
-        float newY = startPosition.y + Mathf.Sin(Time.time * floatSpeed) * floatHeight;
-        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
     }
     
     // Được gọi từ WeaponManager hoặc Player khi nhặt đạn

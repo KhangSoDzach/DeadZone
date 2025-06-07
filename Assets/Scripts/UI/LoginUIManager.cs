@@ -16,6 +16,7 @@ public class LoginUIManager : MonoBehaviour
     [SerializeField] private Button welcomeContinueButton;
     [SerializeField] private Button welcomeNewGameButton; // Add new game button
     [SerializeField] private Button welcomeLogoutButton; // Add logout button
+    [SerializeField] private Button welcomeSettingsButton; // Add settings button
     [SerializeField] private TMP_Text welcomeVersionText;
     [SerializeField] private TMP_Text welcomeUserText; // Add user info text
     
@@ -42,6 +43,13 @@ public class LoginUIManager : MonoBehaviour
     [SerializeField] private GameObject loadingPanel;
     [SerializeField] private TMP_Text loadingStatusText;
     [SerializeField] private Slider loadingProgressBar;
+    
+    [Header("Settings Panel")]
+    [SerializeField] private GameObject settingsPanel;
+    
+    [Header("Option Panel")]
+    [SerializeField] private GameObject optionPanel;
+    [SerializeField] private Button optionButton; // Add option button
     
     [Header("Settings")]
     [SerializeField] private string gameSceneName = "Scene_A";
@@ -97,6 +105,8 @@ public class LoginUIManager : MonoBehaviour
         if (welcomeContinueButton) welcomeContinueButton.onClick.AddListener(ContinueGame);
         if (welcomeNewGameButton) welcomeNewGameButton.onClick.AddListener(StartNewGame); // Add new game listener
         if (welcomeLogoutButton) welcomeLogoutButton.onClick.AddListener(LogoutUser); // Add logout listener
+        if (welcomeSettingsButton) welcomeSettingsButton.onClick.AddListener(ShowSettingsPanel); // Add settings listener
+        if (optionButton) optionButton.onClick.AddListener(ShowOptionPanel); // Add option button listener
         
         // Login panel buttons
         if (loginSubmitButton) loginSubmitButton.onClick.AddListener(OnLoginButtonClicked);
@@ -121,6 +131,11 @@ public class LoginUIManager : MonoBehaviour
         
         // Show welcome panel by default
         ShowWelcomePanel();
+        
+        // Ensure settings panel is hidden
+        if (settingsPanel) settingsPanel.SetActive(false);
+        // Ensure option panel is hidden
+        if (optionPanel) optionPanel.SetActive(false);
     }
       private void CheckAutoLogin()
     {
@@ -483,7 +498,8 @@ public class LoginUIManager : MonoBehaviour
         SetActivePanel(registerPanel);
         if (registerErrorText) registerErrorText.gameObject.SetActive(false);
     }
-      private void ShowWelcomePanel()
+    
+    private void ShowWelcomePanel()
     {
         SetActivePanel(welcomePanel);
         UpdateWelcomeUI(); // Update UI when showing welcome panel
@@ -496,28 +512,14 @@ public class LoginUIManager : MonoBehaviour
         if (loadingProgressBar) loadingProgressBar.value = 0;
     }
     
-    /// <summary>
-    /// Force refresh UI to check for saved game data
-    /// </summary>
-    public void ForceRefreshUI()
-    {
-        if (GameAPI.Instance.IsLoggedIn)
-        {
-            DebugLog("Force refreshing UI to check for saved game data...");
-            StartCoroutine(RefreshPlayerDataAndUpdateUI());
-        }
-        else
-        {
-            UpdateUIBasedOnLoginStatus(false, false);
-        }
-    }
-    
     private void SetActivePanel(GameObject activePanel)
     {
         if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
         if (loginPanel) loginPanel.SetActive(activePanel == loginPanel);
         if (registerPanel) registerPanel.SetActive(activePanel == registerPanel);
         if (loadingPanel) loadingPanel.SetActive(activePanel == loadingPanel);
+        if (settingsPanel) settingsPanel.SetActive(activePanel == settingsPanel);
+        if (optionPanel) optionPanel.SetActive(activePanel == optionPanel);
     }
     
     // Add new methods for UI management
@@ -1019,5 +1021,15 @@ public class LoginUIManager : MonoBehaviour
             UpdateLoadingStatus("Login test complete");
             StartCoroutine(ShowWelcomePanelAfterDelay(3f));
         }
+    }
+    
+    private void ShowSettingsPanel()
+    {
+        SetActivePanel(settingsPanel);
+    }
+    
+    private void ShowOptionPanel()
+    {
+        SetActivePanel(optionPanel);
     }
 }

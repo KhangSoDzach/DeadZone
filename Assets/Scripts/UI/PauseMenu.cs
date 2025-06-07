@@ -18,9 +18,25 @@ namespace Scripts.API
         [SerializeField] private Button mainMenuButton;
         [SerializeField] private Button quitGameButton;
 
-        [Header("Option Panel (Optional)")]
+        [Header("Option Panel")]
         [SerializeField] private GameObject optionPanel;
-        [SerializeField] private Button optionBackButton;
+        [SerializeField] private TMP_Text optionTitleText;
+        [SerializeField] private Slider optionVolumeSlider;
+        [SerializeField] private TMP_Text optionVolumeValueText;
+        [SerializeField] private TMP_Dropdown optionResolutionDropdown;
+        [SerializeField] private Toggle optionFullscreenToggle;
+        [SerializeField] private Button optionSaveButton;
+        [SerializeField] private Button optionCancelButton;
+        [SerializeField] private Button optionBackButton; // Thêm back button
+
+        // Thêm các button và panel cho từng mục (template từ SettingMenu)
+        [Header("Option Subpanels")]
+        [SerializeField] private Button videoButton;
+        [SerializeField] private Button audioButton;
+        [SerializeField] private Button gameplayButton;
+        [SerializeField] private GameObject videoPanel;
+        [SerializeField] private GameObject audioPanel;
+        [SerializeField] private GameObject gameplayPanel;
 
         [Header("Save Notification")]
         [SerializeField] private GameObject saveNotificationPanel;
@@ -49,6 +65,9 @@ namespace Scripts.API
         // Static property to check pause state from other scripts
         public static bool IsGamePaused { get; private set; } = false;
 
+        private Resolution[] resolutions;
+        private int currentResolutionIndex = 0;
+
         private void Start()
         {
             // Find shop manager
@@ -74,13 +93,20 @@ namespace Scripts.API
         {
             // Main pause menu buttons
             if (continueButton) continueButton.onClick.AddListener(ContinueGame);
-            if (optionButton) optionButton.onClick.AddListener(OpenOptions);
+            if (optionButton) optionButton.onClick.AddListener(ShowOptionPanel);
             if (saveGameButton) saveGameButton.onClick.AddListener(SaveGame);
             if (mainMenuButton) mainMenuButton.onClick.AddListener(() => ShowConfirmation("Return to Main Menu?", ReturnToMainMenu));
             if (quitGameButton) quitGameButton.onClick.AddListener(() => ShowConfirmation("Quit Game?", QuitGame));
 
             // Option panel buttons
-            if (optionBackButton) optionBackButton.onClick.AddListener(CloseOptions);
+            if (optionSaveButton) optionSaveButton.onClick.AddListener(SaveOptionSettings);
+            if (optionCancelButton) optionCancelButton.onClick.AddListener(CancelOptionSettings);
+            if (optionBackButton) optionBackButton.onClick.AddListener(OnBackToPauseMenu); // Gắn back button
+
+            // Các button chuyển panel (template từ SettingMenu)
+            if (videoButton) videoButton.onClick.AddListener(ShowVideoPanel);
+            if (audioButton) audioButton.onClick.AddListener(ShowAudioPanel);
+            if (gameplayButton) gameplayButton.onClick.AddListener(ShowGameplayPanel);
 
             // Confirmation dialog buttons
             if (confirmYesButton) confirmYesButton.onClick.AddListener(ConfirmAction);
@@ -100,9 +126,70 @@ namespace Scripts.API
             {
                 saveGameButton.interactable = GameAPI.Instance.IsLoggedIn;
             }
+
+            // Option panel UI setup
+            SetupOptionPanelUI();
+
+            // Ẩn các subpanel khi khởi tạo
+            if (videoPanel) videoPanel.SetActive(false);
+            if (audioPanel) audioPanel.SetActive(false);
+            if (gameplayPanel) gameplayPanel.SetActive(false);
         }
 
-        public void TogglePause()
+        private void SetupOptionPanelUI()
+        {
+            if (optionPanel == null) return;
+
+            // Volume
+            if (optionVolumeSlider)
+            {
+                optionVolumeSlider.minValue = 0f;
+                optionVolumeSlider.maxValue = 1f;
+                optionVolumeSlider.value = PlayerPrefs.GetFloat("Volume", 1f);
+                optionVolumeSlider.onValueChanged.AddListener(OnOptionVolumeChanged);
+                OnOptionVolumeChanged(optionVolumeSlider.value);
+            }
+
+            // Resolution
+            if (optionResolutionDropdown)
+            {
+                optionResolutionDropdown.ClearOptions();
+                resolutions = Screen.resolutions;
+                var options = new System.Collections.Generic.List<string>();
+                currentResolutionIndex = 0;
+                for (int i = 0; i < resolutions.Length; i++)
+                {
+                    string option = resolutions[i].width + " x " + resolutions[i].height;
+                    options.Add(option);
+                    if (resolutions[i].width == Screen.currentResolution.width &&
+                        resolutions[i].height == Screen.currentResolution.height)
+                    {
+                        currentResolutionIndex = i;
+                    }
+                }
+                optionResolutionDropdown.AddOptions(options);
+                optionResolutionDropdown.value = PlayerPrefs.GetInt("ResolutionIndex", currentResolutionIndex);
+                optionResolutionDropdown.RefreshShownValue();
+            }
+
+            // Fullscreen
+            if (optionFullscreenToggle)
+            {
+                optionFullscreenToggle.isOn = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
+            }
+
+            // Title
+            if (optionTitleText) optionTitleText.text = "Options";
+        }
+
+        private void OnOptionVolumeChanged(float value)
+        {
+            if (optionVolumeValueText)
+                optionVolumeValueText.text = Mathf.RoundToInt(value * 100f) + "%";
+            AudioListener.volume = value;
+        }
+
+        private void TogglePause()
         {
             // Check if we can pause (not in shop unless allowed)
             if (!canPauseInShop && shopManager != null && shopManager.IsShopOpen())
@@ -172,6 +259,81 @@ namespace Scripts.API
             Cursor.lockState = CursorLockMode.Locked;
 
             Debug.Log("Game Resumed");
+        }
+
+        public void ShowOptionPanel()
+        {
+            if (pauseMenuPanel) pauseMenuPanel.SetActive(false);
+            if (optionPanel) optionPanel.SetActive(true);
+
+            // Khi mở option panel, mặc định mở videoPanel (hoặc panel nào bạn muốn)
+            ShowVideoPanel();
+
+            if (optionVolumeSlider) optionVolumeSlider.value = PlayerPrefs.GetFloat("Volume", 1f);
+            if (optionResolutionDropdown) optionResolutionDropdown.value = PlayerPrefs.GetInt("ResolutionIndex", currentResolutionIndex);
+            if (optionFullscreenToggle) optionFullscreenToggle.isOn = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
+        }
+
+        // Hàm back về pause menu từ option panel
+        private void OnBackToPauseMenu()
+        {
+            if (optionPanel) optionPanel.SetActive(false);
+            if (pauseMenuPanel) pauseMenuPanel.SetActive(true);
+        }
+
+        // Các hàm chuyển panel (template từ SettingMenu)
+        private void ShowVideoPanel()
+        {
+            if (videoPanel) videoPanel.SetActive(true);
+            if (audioPanel) audioPanel.SetActive(false);
+            if (gameplayPanel) gameplayPanel.SetActive(false);
+        }
+
+        private void ShowAudioPanel()
+        {
+            if (videoPanel) videoPanel.SetActive(false);
+            if (audioPanel) audioPanel.SetActive(true);
+            if (gameplayPanel) gameplayPanel.SetActive(false);
+        }
+
+        private void ShowGameplayPanel()
+        {
+            if (videoPanel) videoPanel.SetActive(false);
+            if (audioPanel) audioPanel.SetActive(false);
+            if (gameplayPanel) gameplayPanel.SetActive(true);
+        }
+
+        public void SaveOptionSettings()
+        {
+            if (optionVolumeSlider)
+            {
+                PlayerPrefs.SetFloat("Volume", optionVolumeSlider.value);
+                AudioListener.volume = optionVolumeSlider.value;
+            }
+
+            if (optionResolutionDropdown && resolutions != null && resolutions.Length > 0)
+            {
+                int resIndex = optionResolutionDropdown.value;
+                PlayerPrefs.SetInt("ResolutionIndex", resIndex);
+                Resolution res = resolutions[resIndex];
+                Screen.SetResolution(res.width, res.height, optionFullscreenToggle && optionFullscreenToggle.isOn);
+            }
+
+            if (optionFullscreenToggle)
+            {
+                PlayerPrefs.SetInt("Fullscreen", optionFullscreenToggle.isOn ? 1 : 0);
+                Screen.fullScreen = optionFullscreenToggle.isOn;
+            }
+
+            PlayerPrefs.Save();
+            if (optionPanel) optionPanel.SetActive(false);
+            if (pauseMenuPanel) pauseMenuPanel.SetActive(true);
+        }
+
+        public void CancelOptionSettings()
+        {
+            if (optionPanel) optionPanel.SetActive(false);
+            if (pauseMenuPanel) pauseMenuPanel.SetActive(true);
         }
 
         public void OpenOptions()

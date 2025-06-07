@@ -123,15 +123,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   delegates: []
-  useDistance: 1.2
-  triggerType: 9
+  useDistance: 1
+  triggerType: 8
   key: 102
   actionTemplate: {fileID: 0}
-  actions: []
+  actions:
+  - rid: 5226178285195493376
+  - rid: 5226178285195493377
   m_Interruptable: 0
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 5226178285195493376
+      type: {class: Pickup, ns: DevionGames.InventorySystem, asm: DevionGames.InventorySystem}
+      data:
+        m_Type: DevionGames.InventorySystem.Pickup
+        m_Enabled: 1
+        m_WindowName: Inventory
+        m_DestroyWhenEmpty: 1
+        m_Amount: 1
+    - rid: 5226178285195493377
+      type: {class: CanPickup, ns: DevionGames.InventorySystem, asm: DevionGames.InventorySystem}
+      data:
+        m_Type: DevionGames.InventorySystem.CanPickup
+        m_Enabled: 1
+        m_WindowName: Inventory
 --- !u!114 &3007696666282739272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,7 +160,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68165cdf1896c89479a91b2478670c0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveable: 1
+  saveable: 0
   m_Items:
   - {fileID: -9007112319356383190, guid: 697135e7161f3ae468fd08579e0406d9, type: 2}
   m_Amounts: 01000000
