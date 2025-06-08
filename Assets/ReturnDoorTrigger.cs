@@ -65,7 +65,7 @@ public class ReturnDoorTrigger : MonoBehaviour
 
     void LoadScene()
     {
-        SceneManager.LoadScene("Scene_A");
+        SceneManager.LoadScene("FinalScene");
     }
 
 }

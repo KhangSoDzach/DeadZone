@@ -4119,15 +4119,15 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 922fc3d20eef26445b742d4a2f9a6515, type: 3}
+  m_audioClip: {fileID: 8300000, guid: 0e6fb5fd2e33e524c80d537dbe9961f8, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.534
   m_Pitch: 1
   Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 128
+  Priority: 178
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -4280,7 +4280,7 @@ MonoBehaviour:
   playerInAttackingRadius: 0
   attackDamage: 10
   audioSource: {fileID: 1438435075}
-  idleGroanSound: {fileID: 8300000, guid: 922fc3d20eef26445b742d4a2f9a6515, type: 3}
+  idleGroanSound: {fileID: 8300000, guid: 0e6fb5fd2e33e524c80d537dbe9961f8, type: 3}
   heavyAttackDamage: 30
   jumpAttackDamage: 30
   bossName: The Abyss
@@ -4299,8 +4299,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: fe5bad562c9dc1b44906124ad9af206a, type: 3}
-  m_PlayOnAwake: 0
+  m_audioClip: {fileID: 8300000, guid: 485119e281e85fc469c1f6337eec40e2, type: 3}
+  m_PlayOnAwake: 1
   m_Volume: 0.386
   m_Pitch: 1
   Loop: 0
