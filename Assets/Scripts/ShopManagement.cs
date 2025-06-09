@@ -47,13 +47,13 @@ public class ShopManagement : MonoBehaviour
 
     void Start()
     {
-        // Initialize the shop items
-        shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 300 });
+        // Initialize the shop items        shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 300 });
         shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 200 });
         shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 300 });
         shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 }); 
-        shopItemsList.Add(new ShopItem { id = 5, name = "Upgrade", price = 0 });
+        shopItemsList.Add(new ShopItem { id = 5, name = "Weapon Upgrade", price = 0 });
         shopItemsList.Add(new ShopItem { id = 6, name = "AK-47", price = 50 });
+        shopItemsList.Add(new ShopItem { id = 7, name = "Character Upgrade", price = 0 });
         // Find player's gun if present
         playerGun = FindObjectOfType<Gun>();
         
@@ -162,12 +162,19 @@ public class ShopManagement : MonoBehaviour
                 ShowGunShopPanel();
                 return;
             }
-            
-            // Special case for "Upgrade" option
+              // Special case for "Weapon Upgrade" option
             if (itemID == 5)
             {
-                // Show upgrade panel instead of purchasing
+                // Show weapon upgrade panel instead of purchasing
                 ShowWeaponUpgradePanel();
+                return;
+            }
+            
+            // Special case for "Character Upgrade" option
+            if (itemID == 7)
+            {
+                // Show character upgrade panel instead of purchasing
+                ShowCharacterUpgradePanel();
                 return;
             }
             
@@ -659,16 +666,126 @@ public class ShopManagement : MonoBehaviour
             ShowNotification("Weapon Upgrade system not available!");   
             Debug.Log("WeaponUpgradeManager not found in scene!");
         }
-    }
-      // Method to be called from WeaponUpgradeManager to return to main shop
-    public void ReturnFromUpgradePanel()
+    }    // Method to show character upgrade panel
+    public void ShowCharacterUpgradePanel()
     {
-        if (mainShopPanel != null)
+        // Find the CharacterUpgradeManager in scene
+        CharacterUpgradeManager upgradeManager = FindObjectOfType<CharacterUpgradeManager>();
+        
+        if (upgradeManager != null)
         {
-            mainShopPanel.SetActive(true);
+            Debug.Log("ShopManagement: Found CharacterUpgradeManager - showing upgrade panel");
+            
+            // Try to hide shop panels first (though the character manager will also do this)
+            if (mainShopPanel != null)
+            {
+                mainShopPanel.SetActive(false);
+                Debug.Log("ShopManagement: Main shop panel hidden");
+            }
+                
+            if (gunShopPanel != null)
+            {
+                gunShopPanel.SetActive(false);
+                Debug.Log("ShopManagement: Gun shop panel hidden");
+            }
+            
+            // Also hide any weapon upgrade panels that might be open
+            WeaponUpgradeManager weaponManager = FindObjectOfType<WeaponUpgradeManager>();
+            if (weaponManager != null)
+            {
+                if (weaponManager.weaponTypeSelectionPanel != null)
+                {
+                    weaponManager.weaponTypeSelectionPanel.SetActive(false);
+                    Debug.Log("ShopManagement: Weapon type selection panel hidden");
+                }
+                
+                if (weaponManager.weaponUpgradePanel != null)
+                {
+                    weaponManager.weaponUpgradePanel.SetActive(false);
+                    Debug.Log("ShopManagement: Weapon upgrade panel hidden");
+                }
+            }
+            
+            // Then show the character upgrade panel
+            upgradeManager.ShowCharacterUpgradePanel(playerMoney, this);
             
             // Set shop as open to disable weapon firing
             isShopOpen = true;
+            
+            // Lock cursor to interact with UI
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            ShowNotification("Character Upgrade system not available!");   
+            Debug.LogError("CharacterUpgradeManager not found in scene!");
+        }
+    }    // Method to be called from WeaponUpgradeManager or CharacterUpgradeManager to return to main shop
+    public void ReturnFromUpgradePanel()
+    {
+        Debug.Log("ShopManagement: ReturnFromUpgradePanel called");
+        
+        // First deactivate ALL panels to ensure clean state
+        
+        // Ensure any character upgrade panel is closed
+        CharacterUpgradeManager characterManager = FindObjectOfType<CharacterUpgradeManager>();
+        if (characterManager != null && characterManager.characterUpgradePanel != null)
+        {
+            characterManager.characterUpgradePanel.SetActive(false);
+            Debug.Log("ShopManagement: Character upgrade panel hidden");
+        }
+        
+        // Ensure any weapon upgrade panels are closed
+        WeaponUpgradeManager weaponManager = FindObjectOfType<WeaponUpgradeManager>();
+        if (weaponManager != null)
+        {
+            if (weaponManager.weaponTypeSelectionPanel != null)
+            {
+                weaponManager.weaponTypeSelectionPanel.SetActive(false);
+                Debug.Log("ShopManagement: Weapon type selection panel hidden");
+            }
+                
+            if (weaponManager.weaponUpgradePanel != null)
+            {
+                weaponManager.weaponUpgradePanel.SetActive(false);
+                Debug.Log("ShopManagement: Weapon upgrade panel hidden");
+            }
+        }
+        else
+        {
+            // As a fallback, try to find the panels by name and hide them
+            GameObject weaponTypePanel = GameObject.Find("WeaponTypeSelectionPanel");
+            if (weaponTypePanel != null)
+            {
+                weaponTypePanel.SetActive(false);
+                Debug.Log("ShopManagement: Found and hid weapon type panel by name");
+            }
+            
+            GameObject weaponUpgradePanel = GameObject.Find("WeaponUpgradePanel");
+            if (weaponUpgradePanel != null)
+            {
+                weaponUpgradePanel.SetActive(false);
+                Debug.Log("ShopManagement: Found and hid weapon upgrade panel by name");
+            }
+        }
+        
+        // Also close shop panels to ensure clean state
+        if (gunShopPanel != null)
+            gunShopPanel.SetActive(false);
+        
+        // Then show the main shop panel
+        if (mainShopPanel != null)
+        {
+            mainShopPanel.SetActive(true);
+            Debug.Log("ShopManagement: Main shop panel activated");
+            
+            // Set shop as open to disable weapon firing
+            isShopOpen = true;
+        }
+        else
+        {
+            Debug.LogError("ShopManagement: mainShopPanel is null!");
         }
     }
     

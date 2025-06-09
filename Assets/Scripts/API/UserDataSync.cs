@@ -340,6 +340,11 @@ public class UserDataSync : MonoBehaviour
                 }
 
                 DebugLog("Hoàn thành áp dụng dữ liệu vào game");
+                // Đồng bộ trạng thái chìa khóa từ PlayerData về InventoryForKey
+                if (InventoryForKey.Instance != null)
+                {
+                    InventoryForKey.Instance.SyncFromPlayerData();
+                }
             }
             catch (System.Exception ex)
             {
