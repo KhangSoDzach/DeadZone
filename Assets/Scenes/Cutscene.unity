@@ -205,8 +205,8 @@ MonoBehaviour:
   m_text: "\"The city, once full of life, now lies in silence and ruin...\nA strange
     virus spread faster than anyone could imagine.\nOrdinary people turned into mindless,
     bloodthirsty creatures.\nGovernments collapsed. The military fell. Cities were
-    sealed off and abandoned.\nYou are one of the last survivors, searching for a
-    way out...\n\u2026or at least, a way to survive one more day.\""
+    abandoned.\nYou are one of the last survivors, searching for a way out...\n\u2026or
+    at least, a way to survive one more day.\""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
@@ -215,7 +215,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 16777215
+    rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -455,7 +455,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 255
+    rgba: 4278190335
   m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3

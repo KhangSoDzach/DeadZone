@@ -103,7 +103,7 @@ MonoBehaviour:
   delegates: []
   useDistance: 1
   triggerType: 8
-  key: 102
+  key: 101
   actionTemplate: {fileID: 0}
   actions:
   - rid: 5226178285195493376

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class SubtitleManager : MonoBehaviour
 {
@@ -44,6 +45,6 @@ public class SubtitleManager : MonoBehaviour
 
     void EndScene()
     {
-        Debug.Log("Subtitle ended.");
+        SceneManager.LoadScene("Menu");
     }
 }
