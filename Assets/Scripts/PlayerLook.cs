@@ -142,8 +142,8 @@ public class PlayerLook : MonoBehaviour
         // Lưu vị trí ban đầu của camera
         originalPosition = cam.transform.localPosition;
 
-        xSensitivity = 30f;
-        ySensitivity = 20f;
+        xSensitivity = 5f;
+        ySensitivity = 5f;
 
         // Tạo hiệu ứng viền đỏ
         CreateDamageVignetteEffect();
