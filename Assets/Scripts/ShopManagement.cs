@@ -36,7 +36,9 @@ public class ShopManagement : MonoBehaviour
     // Prefabs for spawned items
     [Header("Item Prefabs")]
     public GameObject medkitPrefab;
-    public GameObject ak47Prefab;  // Add reference to AK-47 prefab
+    public GameObject m4a1Prefab;  // Đổi từ ak47Prefab sang m4a1Prefab
+    public GameObject mp5Prefab;   // Thêm prefab cho MP5
+    public GameObject uziPrefab;   // Thêm prefab cho UZI
     public int pistolAmmoAmount = 10;
     public int rifleAmmoAmount = 30;  // Add rifle ammo amount
 
@@ -52,8 +54,10 @@ public class ShopManagement : MonoBehaviour
         shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 300 });
         shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 }); 
         shopItemsList.Add(new ShopItem { id = 5, name = "Weapon Upgrade", price = 0 });
-        shopItemsList.Add(new ShopItem { id = 6, name = "AK-47", price = 50 });
+        shopItemsList.Add(new ShopItem { id = 6, name = "M4A1", price = 50 }); // Đổi tên AK-47 thành M4A1
         shopItemsList.Add(new ShopItem { id = 7, name = "Character Upgrade", price = 0 });
+        shopItemsList.Add(new ShopItem { id = 8, name = "MP5", price = 40 });  // Thêm MP5
+        shopItemsList.Add(new ShopItem { id = 9, name = "UZI", price = 35 });  // Thêm UZI
         // Find player's gun if present
         playerGun = FindObjectOfType<Gun>();
         
@@ -199,8 +203,14 @@ public class ShopManagement : MonoBehaviour
                     case 3: // Rifle Ammo
                         AddRifleAmmo();  // Add method for rifle ammo
                         break;
-                    case 6: // AK-47
-                        BuyAK47();      // Add method to buy AK-47
+                    case 6: // M4A1
+                        BuyM4A1();      // Đổi từ BuyAK47 sang BuyM4A1
+                        break;
+                    case 8: // MP5
+                        BuyMP5();
+                        break;
+                    case 9: // UZI
+                        BuyUZI();
                         break;
                     default:
                         Debug.Log("Bought: " + item.name);
@@ -525,76 +535,132 @@ public class ShopManagement : MonoBehaviour
                 ShowNotification("No rifle found to add ammo to!");
             }
         }
-    }    // Buy AK-47 gun
-    private void BuyAK47()
+    }    // Buy M4A1 gun
+    private void BuyM4A1()
     {
-        // Check if AK-47 prefab is assigned
-        if (ak47Prefab == null)
+        if (m4a1Prefab == null)
         {
-            Debug.LogError("AK-47 prefab is not assigned in ShopManagement!");
-            
-            // Refund money
+            Debug.LogError("M4A1 prefab is not assigned in ShopManagement!");
             playerMoney += shopItemsList.Find(i => i.id == 6).price;
-            
             if (ScoreManager.Instance != null)
-            {
                 ScoreManager.Score = playerMoney;
-            }
-            
             UpdateMoneyText();
             return;
         }
-        
-        // Try to add directly to inventory using Devion Games Inventory System
-        // Find the item (Item component or ItemCollection) in the prefab
-        DevionGames.InventorySystem.ItemCollection itemCollection = ak47Prefab.GetComponent<DevionGames.InventorySystem.ItemCollection>();
-        
+        DevionGames.InventorySystem.ItemCollection itemCollection = m4a1Prefab.GetComponent<DevionGames.InventorySystem.ItemCollection>();
         if (itemCollection != null && itemCollection.Count > 0)
         {
-            // Get the first item from the collection
-            DevionGames.InventorySystem.Item ak47Item = itemCollection[0];
-            
-            // Create an instance of the item
-            DevionGames.InventorySystem.Item instance = DevionGames.InventorySystem.InventoryManager.CreateInstance(ak47Item);
-            
-            // Try to add it to the player's inventory
+            DevionGames.InventorySystem.Item m4a1Item = itemCollection[0];
+            DevionGames.InventorySystem.Item instance = DevionGames.InventorySystem.InventoryManager.CreateInstance(m4a1Item);
             if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
             {
-                ShowNotification("AK-47 added to inventory!");
-                Debug.Log("Added AK-47 to inventory");
+                ShowNotification("M4A1 added to inventory!");
+                Debug.Log("Added M4A1 to inventory");
                 return;
             }
         }
-        
-        // If we couldn't add to inventory, fallback to spawning
         GameObject player = GameObject.FindWithTag("Player");
         if (player != null)
         {
-            // Spawn position in front of the player
             Vector3 spawnPosition = player.transform.position + player.transform.forward * 1f;
-            
-            // Simply instantiate the AK-47 prefab - the prefab should already have all needed components
-            GameObject newAK47 = Instantiate(ak47Prefab, spawnPosition, Quaternion.identity);
-            
-            // Make sure it's in the Pickups layer so the player can interact with it
-            newAK47.layer = LayerMask.NameToLayer("Pickups");
-            
-            ShowNotification("AK-47 purchased! Pick up the weapon to use it.");
-            Debug.Log("Spawned AK-47 at: " + spawnPosition);
+            GameObject newM4A1 = Instantiate(m4a1Prefab, spawnPosition, Quaternion.identity);
+            newM4A1.layer = LayerMask.NameToLayer("Pickups");
+            ShowNotification("M4A1 purchased! Pick up the weapon to use it.");
+            Debug.Log("Spawned M4A1 at: " + spawnPosition);
         }
         else
         {
             ShowNotification("Lỗi: Không tìm thấy người chơi!");
-            Debug.LogWarning("Player object not found when trying to spawn AK-47");
-            
-            // Refund money since we couldn't spawn the weapon
+            Debug.LogWarning("Player object not found when trying to spawn M4A1");
             playerMoney += shopItemsList.Find(i => i.id == 6).price;
-            
             if (ScoreManager.Instance != null)
-            {
                 ScoreManager.Score = playerMoney;
+            UpdateMoneyText();
+        }
+    }
+    // Buy MP5 gun
+    private void BuyMP5()
+    {
+        if (mp5Prefab == null)
+        {
+            Debug.LogError("MP5 prefab is not assigned in ShopManagement!");
+            playerMoney += shopItemsList.Find(i => i.id == 8).price;
+            if (ScoreManager.Instance != null)
+                ScoreManager.Score = playerMoney;
+            UpdateMoneyText();
+            return;
+        }
+        DevionGames.InventorySystem.ItemCollection itemCollection = mp5Prefab.GetComponent<DevionGames.InventorySystem.ItemCollection>();
+        if (itemCollection != null && itemCollection.Count > 0)
+        {
+            DevionGames.InventorySystem.Item mp5Item = itemCollection[0];
+            DevionGames.InventorySystem.Item instance = DevionGames.InventorySystem.InventoryManager.CreateInstance(mp5Item);
+            if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
+            {
+                ShowNotification("MP5 added to inventory!");
+                Debug.Log("Added MP5 to inventory");
+                return;
             }
-            
+        }
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            Vector3 spawnPosition = player.transform.position + player.transform.forward * 1f;
+            GameObject newMP5 = Instantiate(mp5Prefab, spawnPosition, Quaternion.identity);
+            newMP5.layer = LayerMask.NameToLayer("Pickups");
+            ShowNotification("MP5 purchased! Pick up the weapon to use it.");
+            Debug.Log("Spawned MP5 at: " + spawnPosition);
+        }
+        else
+        {
+            ShowNotification("Erro: Player not found!");
+            Debug.LogWarning("Player object not found when trying to spawn MP5");
+            playerMoney += shopItemsList.Find(i => i.id == 8).price;
+            if (ScoreManager.Instance != null)
+                ScoreManager.Score = playerMoney;
+            UpdateMoneyText();
+        }
+    }
+    // Buy UZI gun
+    private void BuyUZI()
+    {
+        if (uziPrefab == null)
+        {
+            Debug.LogError("UZI prefab is not assigned in ShopManagement!");
+            playerMoney += shopItemsList.Find(i => i.id == 9).price;
+            if (ScoreManager.Instance != null)
+                ScoreManager.Score = playerMoney;
+            UpdateMoneyText();
+            return;
+        }
+        DevionGames.InventorySystem.ItemCollection itemCollection = uziPrefab.GetComponent<DevionGames.InventorySystem.ItemCollection>();
+        if (itemCollection != null && itemCollection.Count > 0)
+        {
+            DevionGames.InventorySystem.Item uziItem = itemCollection[0];
+            DevionGames.InventorySystem.Item instance = DevionGames.InventorySystem.InventoryManager.CreateInstance(uziItem);
+            if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
+            {
+                ShowNotification("UZI added to inventory!");
+                Debug.Log("Added UZI to inventory");
+                return;
+            }
+        }
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            Vector3 spawnPosition = player.transform.position + player.transform.forward * 1f;
+            GameObject newUZI = Instantiate(uziPrefab, spawnPosition, Quaternion.identity);
+            newUZI.layer = LayerMask.NameToLayer("Pickups");
+            ShowNotification("UZI purchased! Pick up the weapon to use it.");
+            Debug.Log("Spawned UZI at: " + spawnPosition);
+        }
+        else
+        {
+            ShowNotification("Lỗi: Không tìm thấy người chơi!");
+            Debug.LogWarning("Player object not found when trying to spawn UZI");
+            playerMoney += shopItemsList.Find(i => i.id == 9).price;
+            if (ScoreManager.Instance != null)
+                ScoreManager.Score = playerMoney;
             UpdateMoneyText();
         }
     }
