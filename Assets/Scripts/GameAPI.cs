@@ -1341,6 +1341,8 @@ public class PlayerDataModel
     public CheckpointData checkpoint;
     public List<WeaponData> weapons = new List<WeaponData>();
     public string lastLoginDate;
+    // Thêm trường để lưu trạng thái chìa khóa
+    public bool hasKey = false;
 }
 
 [System.Serializable]

@@ -218,6 +218,11 @@ public class GameSaveManager : MonoBehaviour
     
     private void PerformSaveDirectly()
     {
+        // Đồng bộ trạng thái chìa khóa trước khi save
+        if (InventoryForKey.Instance != null && GameAPI.Instance.PlayerData != null)
+        {
+            GameAPI.Instance.PlayerData.hasKey = InventoryForKey.Instance.hasKey;
+        }
         lastSaveTime = Time.time;
         StartCoroutine(GameAPI.Instance.SavePlayerData((success, message) =>
         {

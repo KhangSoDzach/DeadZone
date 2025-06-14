@@ -18,5 +18,19 @@ public class InventoryForKey : MonoBehaviour
     public void PickUpKey()
     {
         hasKey = true;
+        // Đồng bộ với PlayerData nếu có
+        if (GameAPI.Instance != null && GameAPI.Instance.PlayerData != null)
+        {
+            GameAPI.Instance.PlayerData.hasKey = true;
+        }
+    }
+
+    // Hàm để đồng bộ trạng thái từ PlayerData sang InventoryForKey
+    public void SyncFromPlayerData()
+    {
+        if (GameAPI.Instance != null && GameAPI.Instance.PlayerData != null)
+        {
+            hasKey = GameAPI.Instance.PlayerData.hasKey;
+        }
     }
 }
