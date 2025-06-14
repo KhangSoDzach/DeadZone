@@ -160,6 +160,18 @@ public class SwitchWeapon : MonoBehaviour
                         
                         gunComponent.OnWeaponEnabled();
                         
+                        // Force refresh animator sau khi weapon được kích hoạt
+                        if (gunComponent.animator != null)
+                        {
+                            gunComponent.animator.enabled = false;
+                            gunComponent.animator.enabled = true;
+                            gunComponent.animator.Rebind();
+                            gunComponent.animator.Update(0);
+                            
+                            // Reset về trạng thái idle
+                            gunComponent.animator.SetBool("Reloading", false);
+                        }
+                        
                         // Đảm bảo WeaponComponentRestore cập nhật lại tất cả các thành phần
                         if (componentRestore != null)
                         {

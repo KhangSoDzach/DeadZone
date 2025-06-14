@@ -64,8 +64,7 @@ public class GameAPI : MonoBehaviour
                 if (success)
                 {
                     DebugLog("Automatic authentication successful");
-                    
-                    // Check if we have player data, if not, try to fetch it
+                      // Check if we have player data, if not, try to fetch it
                     if (PlayerData == null || string.IsNullOrEmpty(PlayerData.id) || string.IsNullOrEmpty(PlayerData.username))
                     {
                         DebugLog("Player data missing after token verification, fetching...");
@@ -81,6 +80,22 @@ public class GameAPI : MonoBehaviour
                                 AuthToken = null;
                                 PlayerPrefs.DeleteKey("AuthToken");
                                 PlayerPrefs.Save();
+                            }
+                        }));
+                    }
+                    else
+                    {
+                        // Always refresh player data on startup to ensure we have latest saved data
+                        DebugLog("Player data exists but refreshing from server to get latest save state...");
+                        StartCoroutine(GetPlayerData((dataSuccess, dataError) => {
+                            if (dataSuccess)
+                            {
+                                DebugLog("Fresh player data loaded successfully on startup");
+                            }
+                            else
+                            {
+                                DebugLog($"Failed to refresh player data on startup: {dataError}");
+                                // Keep existing data if refresh fails
                             }
                         }));
                     }
@@ -781,14 +796,59 @@ public class GameAPI : MonoBehaviour
             yield break;
         }
         
-        // Update timestamp before saving
+        // Ensure we have the latest data before saving by collecting from game state
+        DebugLog("Collecting latest game state before saving...");
+        if (GameDataSynchronizer.Instance != null)
+        {
+            // Collect fresh data from the game before saving
+            try
+            {
+                var collectDataMethod = typeof(GameDataSynchronizer).GetMethod("CollectDataFromGame", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                collectDataMethod?.Invoke(GameDataSynchronizer.Instance, null);
+                DebugLog("Successfully collected latest game data before save");
+            }
+            catch (System.Exception ex)
+            {
+                DebugLog($"Error collecting game data before save: {ex.Message}");
+            }
+        }
+        
+        // Update timestamp before saving to ensure data freshness
         PlayerData.lastLoginDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         
-        string jsonData = JsonConvert.SerializeObject(PlayerData);
+        // Create comprehensive save payload with user identification for server-side overwrite
+        var savePayload = new {
+            // Ensure user identification for proper overwrite
+            userId = PlayerData.id,
+            username = PlayerData.username,
+            email = PlayerData.email,
+            
+            // Game progress data that should overwrite existing data
+            level = PlayerData.level,
+            experience = PlayerData.experience,
+            money = PlayerData.money,
+            health = PlayerData.health,
+            kills = PlayerData.kills,
+            lastLoginDate = PlayerData.lastLoginDate,
+            
+            // Checkpoint data for position saving
+            checkpoint = PlayerData.checkpoint,
+            
+            // Weapons data
+            weapons = PlayerData.weapons,
+            
+            // Additional field to force server-side overwrite
+            forceOverwrite = true,
+            saveTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
+        };
+        
+        string jsonData = JsonConvert.SerializeObject(savePayload);
         DebugLog($"Saving player data for user: {PlayerData.username} (ID: {PlayerData.id})");
         DebugLog($"Using AuthToken: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        DebugLog($"Save payload size: {jsonData.Length} characters");
         
-        // Try primary save endpoint first (/api/player/save)
+        // Try primary save endpoint first (/api/player/save) with overwrite semantics
         using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/player/save", "PUT"))
         {
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
@@ -796,6 +856,8 @@ public class GameAPI : MonoBehaviour
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.SetRequestHeader("x-auth-token", AuthToken);
+            // Add header to explicitly request overwrite behavior
+            request.SetRequestHeader("X-Force-Overwrite", "true");
             request.timeout = (int)requestTimeout;
             
             DebugLog($"Sending save request to: {API_URL}/player/save");
@@ -806,8 +868,28 @@ public class GameAPI : MonoBehaviour
             
             if (request.result == UnityWebRequest.Result.Success)
             {
-                DebugLog("Player data saved successfully");
-                onComplete?.Invoke(true, "");
+                DebugLog("Player data saved successfully with overwrite");
+                
+                // Verify the save was successful by checking response
+                try
+                {
+                    var responseData = JsonConvert.DeserializeObject<PlayerDataModel>(request.downloadHandler.text);
+                    if (responseData != null && responseData.id == PlayerData.id)
+                    {
+                        DebugLog("Save verification successful - data properly overwritten on server");
+                        onComplete?.Invoke(true, "Data saved and verified");
+                    }
+                    else
+                    {
+                        DebugLog("Save response doesn't match sent data - possible server issue");
+                        onComplete?.Invoke(true, "Data saved but verification failed");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    DebugLog($"Error parsing save response: {ex.Message}");
+                    onComplete?.Invoke(true, "Data saved but response parsing failed");
+                }
                 yield break;
             }
             else
@@ -827,8 +909,7 @@ public class GameAPI : MonoBehaviour
                 }
             }
         }
-    }
-      private IEnumerator SavePlayerDataAlternative(Action<bool, string> onComplete)
+    }    private IEnumerator SavePlayerDataAlternative(Action<bool, string> onComplete)
     {
         if (!IsLoggedIn || PlayerData == null)
         {
@@ -837,9 +918,36 @@ public class GameAPI : MonoBehaviour
             yield break;
         }
         
-        string jsonData = JsonConvert.SerializeObject(PlayerData);
+        // Create comprehensive save payload for alternative endpoint with overwrite semantics
+        var savePayload = new {
+            // Ensure user identification for proper overwrite
+            userId = PlayerData.id,
+            username = PlayerData.username,
+            email = PlayerData.email,
+            
+            // Game progress data that should overwrite existing data
+            level = PlayerData.level,
+            experience = PlayerData.experience,
+            money = PlayerData.money,
+            health = PlayerData.health,
+            kills = PlayerData.kills,
+            lastLoginDate = PlayerData.lastLoginDate,
+            
+            // Checkpoint data for position saving
+            checkpoint = PlayerData.checkpoint,
+            
+            // Weapons data
+            weapons = PlayerData.weapons,
+            
+            // Additional field to force server-side overwrite
+            forceOverwrite = true,
+            saveTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
+        };
+        
+        string jsonData = JsonConvert.SerializeObject(savePayload);
         DebugLog($"Attempting alternative save for user: {PlayerData.username} (ID: {PlayerData.id})");
         DebugLog($"Using AuthToken: {AuthToken?.Substring(0, Math.Min(10, AuthToken?.Length ?? 0))}...");
+        DebugLog($"Alternative save payload size: {jsonData.Length} characters");
         
         using (UnityWebRequest request = new UnityWebRequest($"{API_URL}/player/data", "PUT"))
         {
@@ -848,6 +956,9 @@ public class GameAPI : MonoBehaviour
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.SetRequestHeader("x-auth-token", AuthToken);
+            // Add header to explicitly request overwrite behavior
+            request.SetRequestHeader("X-Force-Overwrite", "true");
+            request.SetRequestHeader("X-Save-Mode", "OVERWRITE");
             request.timeout = (int)requestTimeout;
             
             DebugLog($"Sending alternative save request to: {API_URL}/player/data");
@@ -858,8 +969,28 @@ public class GameAPI : MonoBehaviour
             
             if (request.result == UnityWebRequest.Result.Success)
             {
-                DebugLog("Player data saved successfully (alternative endpoint)");
-                onComplete?.Invoke(true, "");
+                DebugLog("Player data saved successfully (alternative endpoint) with overwrite");
+                
+                // Verify the save was successful by checking response
+                try
+                {
+                    var responseData = JsonConvert.DeserializeObject<PlayerDataModel>(request.downloadHandler.text);
+                    if (responseData != null && responseData.id == PlayerData.id)
+                    {
+                        DebugLog("Alternative save verification successful - data properly overwritten on server");
+                        onComplete?.Invoke(true, "Data saved and verified via alternative endpoint");
+                    }
+                    else
+                    {
+                        DebugLog("Alternative save response doesn't match sent data - possible server issue");
+                        onComplete?.Invoke(true, "Data saved via alternative endpoint but verification failed");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    DebugLog($"Error parsing alternative save response: {ex.Message}");
+                    onComplete?.Invoke(true, "Data saved via alternative endpoint but response parsing failed");
+                }
             }
             else
             {
@@ -1107,12 +1238,51 @@ public class GameAPI : MonoBehaviour
                 onComplete?.Invoke(true, "Player data reloaded successfully");
             }
             else
-            {
-                DebugLog($"Player data force reload failed: {error}");
+            {                DebugLog($"Player data force reload failed: {error}");
                 onComplete?.Invoke(false, error ?? "Failed to reload player data");
             }
         }));
-    }    // Method to validate if the current token is working
+    }
+    
+    /// <summary>
+    /// Force refresh player data by clearing cache and loading fresh from server
+    /// This ensures we get 100% fresh data from server, not cached data
+    /// </summary>
+    public IEnumerator ForceRefreshPlayerData(Action<bool, string> onComplete = null)
+    {
+        DebugLog("Force refreshing player data - clearing cache and loading fresh from server...");
+        
+        if (!IsLoggedIn)
+        {
+            RestoreAuthTokenFromPrefs();
+            if (!IsLoggedIn)
+            {
+                DebugLog("Cannot refresh player data: Not logged in");
+                onComplete?.Invoke(false, "Not logged in");
+                yield break;
+            }
+        }
+        
+        // Clear any cached data first to ensure fresh load
+        PlayerData = null;
+        
+        // Force reload fresh data from server
+        yield return StartCoroutine(GetPlayerData((success, error) => {
+            if (success && PlayerData != null && !string.IsNullOrEmpty(PlayerData.id) && !string.IsNullOrEmpty(PlayerData.username))
+            {
+                DebugLog($"Player data force refresh successful: {PlayerData.username} (ID: {PlayerData.id})");
+                DebugLog("Fresh data confirmed loaded from server");
+                onComplete?.Invoke(true, "Player data refreshed successfully");
+            }
+            else
+            {
+                DebugLog($"Player data force refresh failed: {error}");
+                onComplete?.Invoke(false, error ?? "Failed to refresh player data");
+            }
+        }));
+    }
+
+    // Method to validate if the current token is working
     public IEnumerator ValidateCurrentToken(Action<bool, string> onComplete)
     {
         if (string.IsNullOrEmpty(AuthToken))

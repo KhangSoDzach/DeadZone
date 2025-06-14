@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 1718280509108951495}
   - component: {fileID: -7122980228032196695}
   - component: {fileID: -90271200289996460}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GoldCoins
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -106,6 +106,7 @@ MonoBehaviour:
     m_Bits: 64
   pickupSound: {fileID: 0}
   pickupEffect: {fileID: 0}
+  soundVolume: 1
 --- !u!135 &1718280509108951495
 SphereCollider:
   m_ObjectHideFlags: 0

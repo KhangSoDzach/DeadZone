@@ -49,9 +49,9 @@ public class ShopManagement : MonoBehaviour
 
     void Start()
     {
-        // Initialize the shop items        shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 300 });
-        shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 200 });
-        shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 300 });
+        shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 30 });
+        shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 20 });
+        shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 30 });
         shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 }); 
         shopItemsList.Add(new ShopItem { id = 5, name = "Weapon Upgrade", price = 0 });
         shopItemsList.Add(new ShopItem { id = 6, name = "M4A1", price = 50 }); // Đổi tên AK-47 thành M4A1

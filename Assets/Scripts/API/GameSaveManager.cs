@@ -73,9 +73,7 @@ public class GameSaveManager : MonoBehaviour
                 SaveGame();
             }
         }
-    }
-
-    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    }    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         Debug.Log($"Scene loaded: {scene.name}");
 
@@ -85,17 +83,56 @@ public class GameSaveManager : MonoBehaviour
             return;
         }
 
-        // Apply player data to the new scene
-        if (GameAPI.Instance.IsLoggedIn && GameDataSynchronizer.Instance.IsDataLoaded)
+        // Load fresh player data before applying to the new scene
+        if (GameAPI.Instance.IsLoggedIn)
         {
-            GameDataSynchronizer.Instance.ApplyDataToGame();
+            Debug.Log("Loading fresh player data after scene change...");
+            StartCoroutine(LoadFreshDataThenApply(scene.name));
         }
 
         // Save on level change if enabled
         if (saveOnLevelChange && GameAPI.Instance.IsLoggedIn)
         {
             // Wait a bit to make sure all objects are initialized
-            StartCoroutine(SaveAfterDelay(2f));
+            StartCoroutine(SaveAfterDelay(5f)); // Increased delay to allow data loading
+        }
+    }
+    
+    private IEnumerator LoadFreshDataThenApply(string sceneName)
+    {
+        // Force reload fresh data from server
+        bool dataLoaded = false;
+        yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+            dataLoaded = success;
+            if (!success)
+            {
+                Debug.LogWarning($"Failed to load fresh data after scene change: {error}");
+            }
+            else
+            {
+                Debug.Log("Fresh player data loaded after scene change");
+            }
+        }));
+        
+        // Apply data to the new scene whether we got fresh data or not
+        if (GameDataSynchronizer.Instance != null)
+        {
+            // Mark data as loaded so ApplyDataToGame works
+            if (dataLoaded)
+            {
+                GameDataSynchronizer.Instance.LoadGameData((loadSuccess, loadError) => {
+                    if (loadSuccess)
+                    {
+                        Debug.Log("Data loaded into synchronizer, applying to game");
+                        GameDataSynchronizer.Instance.ApplyDataToGame();
+                    }
+                });
+            }
+            else
+            {
+                // Try to apply existing data if available
+                GameDataSynchronizer.Instance.ApplyDataToGame();
+            }
         }
     }
 

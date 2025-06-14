@@ -99,11 +99,19 @@ public class Gun : MonoBehaviour
                     // Only as last resort, try standard component search
                     animator = GetComponent<Animator>();
                     if (animator == null)
-                        animator = GetComponentInChildren<Animator>();
-                    if (animator == null)
-                    {
                         animator = gameObject.AddComponent<Animator>();
-                        Debug.LogWarning($"Created new Animator for {gameObject.name} as last resort");
+
+                    // Gán lại controller nếu có
+                    if (pickup != null && pickup.animatorController != null)
+                    {
+                        animator.runtimeAnimatorController = pickup.animatorController;
+                    }
+                    else
+                    {
+                        // Nếu prefab đã có controller mặc định, gán lại
+                        RuntimeAnimatorController defaultController = Resources.Load<RuntimeAnimatorController>("TênControllerTrongResources");
+                        if (defaultController != null)
+                            animator.runtimeAnimatorController = defaultController;
                     }
                 }
             }
@@ -216,7 +224,26 @@ public class Gun : MonoBehaviour
         // Chỉ set animator nếu animator tồn tại
         if (animator != null)
         {
+            // Force refresh animator state machine
+            animator.enabled = false;
+            animator.enabled = true;
+            animator.Rebind();
+            animator.Update(0);
+            
             animator.SetBool("Reloading", false); // Stop reload animation
+            
+            // Reset về idle state nếu có
+            if (animator.runtimeAnimatorController != null)
+            {
+                foreach (AnimatorControllerParameter param in animator.parameters)
+                {
+                    if (param.name == "Idle" && param.type == AnimatorControllerParameterType.Trigger)
+                    {
+                        animator.SetTrigger("Idle");
+                        break;
+                    }
+                }
+            }
         }
     }    // Update is called once per frame
     void Update()
@@ -339,6 +366,15 @@ public class Gun : MonoBehaviour
         {
             Debug.Log("Out of ammo!");
             return;
+        }
+
+        // Trigger correct shooting animation based on weapon type
+        if (animator != null)
+        {
+            if (isPistol)
+                animator.SetTrigger("Pistol_Shoot"); // Súng lục
+            else
+                animator.SetTrigger("Rifle_Shoot"); // Súng trường
         }
 
         currentAmmo--; // Decrease ammo count

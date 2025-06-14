@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 4499942596165073798}
   - component: {fileID: 5016624503085216703}
   - component: {fileID: -6899537991243459861}
+  - component: {fileID: -4195169031809610628}
   m_Layer: 7
   m_Name: Uzi
   m_TagString: Weapon
@@ -241,6 +242,37 @@ MonoBehaviour:
   weaponName: Default Gun
   currentLevel: 1
   maxLevel: 5
+--- !u!114 &-4195169031809610628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4861596940092689024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46656faa09a736d45896092640592606, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponName: Default Weapon
+  remainingAmmo: 30
+  damage: 5
+  isAutomatic: 1
+  rotationSpeed: 30
+  floatSpeed: 0.5
+  floatHeight: 0.2
+  isPistol: 0
+  recoilAmount: 0
+  baseSpread: 0
+  impactEffect: {fileID: 0}
+  animatorController: {fileID: 0}
+  gunshotClip: {fileID: 0}
+  gunVolume: 0
+  ammoTextPath: 
+  originalWeaponPrefab: {fileID: 0}
+  originalWeaponIndex: -1
+  weaponIndex: -1
+  remainingTotalAmmo: 0
 --- !u!1 &5653706987544964234
 GameObject:
   m_ObjectHideFlags: 0

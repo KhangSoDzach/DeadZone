@@ -91,13 +91,30 @@ public class GameDataSynchronizer : MonoBehaviour
         
         StartCoroutine(SaveGameDataCoroutine(onComplete));
     }
-    
-    private IEnumerator SaveGameDataCoroutine(Action<bool, string> onComplete)
+      private IEnumerator SaveGameDataCoroutine(Action<bool, string> onComplete)
     {
         DebugLog("Saving game data...");
         
-        // Update player data from game before saving
+        // Force collect fresh data from game before saving to ensure we have latest state
+        DebugLog("Collecting latest game state for save...");
         CollectDataFromGame();
+        
+        // Add verification that we have valid data to save
+        if (GameAPI.Instance.PlayerData == null)
+        {
+            DebugLog("Error: No PlayerData after collection - cannot save");
+            onComplete?.Invoke(false, "No player data to save");
+            yield break;
+        }
+        
+        if (string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) || string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
+        {
+            DebugLog($"Error: Invalid PlayerData after collection - ID: '{GameAPI.Instance.PlayerData.id}', Username: '{GameAPI.Instance.PlayerData.username}'");
+            onComplete?.Invoke(false, "Invalid player data to save");
+            yield break;
+        }
+        
+        DebugLog($"Verified PlayerData ready for save - User: {GameAPI.Instance.PlayerData.username}, Health: {GameAPI.Instance.PlayerData.health}, Money: {GameAPI.Instance.PlayerData.money}, Level: {GameAPI.Instance.PlayerData.level}");
         
         yield return StartCoroutine(GameAPI.Instance.SavePlayerData((success, error) => {
             if (success)
@@ -112,19 +129,54 @@ public class GameDataSynchronizer : MonoBehaviour
             onComplete?.Invoke(success, error);
         }));
     }
-    
-    public void ApplyDataToGame()
+      public void ApplyDataToGame()
     {
         if (!IsDataLoaded || GameAPI.Instance.PlayerData == null)
         {
             DebugLog("Cannot apply data to game: No data loaded");
+            // Force reload fresh data when applying to game
+            LoadGameData((success, error) => {
+                if (success)
+                {
+                    DebugLog("Fresh data loaded, now applying to game");
+                    PerformApplyDataToGame();
+                }
+                else
+                {
+                    DebugLog($"Failed to load fresh data for game: {error}");
+                }
+            });
             return;
         }
         
-        DebugLog("Applying data to game...");
+        PerformApplyDataToGame();
+    }
+    
+    private void PerformApplyDataToGame()
+    {
+        DebugLog("Applying fresh data to game...");
         // TODO: Apply player data to game components
         // This is where you'd update health, money, weapons, etc. in your game
-    }      private void CollectDataFromGame()
+        
+        // Example: Apply checkpoint data to move player to saved position
+        if (GameAPI.Instance.PlayerData.checkpoint != null && 
+            !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.checkpoint.sceneId))
+        {
+            string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (currentScene == GameAPI.Instance.PlayerData.checkpoint.sceneId)
+            {
+                // Apply saved position
+                GameObject player = GameObject.FindWithTag("Player");
+                if (player != null && GameAPI.Instance.PlayerData.checkpoint.position != null)
+                {
+                    player.transform.position = GameAPI.Instance.PlayerData.checkpoint.position.ToVector3();
+                    DebugLog($"Applied checkpoint position: {GameAPI.Instance.PlayerData.checkpoint.position.ToVector3()}");
+                }
+            }
+        }
+        
+        DebugLog("Data applied to game successfully");
+    }private void CollectDataFromGame()
     {
         if (GameAPI.Instance.PlayerData == null)
         {
@@ -168,8 +220,15 @@ public class GameDataSynchronizer : MonoBehaviour
                 }
             }));
             return;
-        }
-          DebugLog($"Collecting data from game for user: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");        // Collect current game state and update PlayerData
+        }        DebugLog($"Collecting data from game for user: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");
+        
+        // Store current values for comparison
+        float oldHealth = GameAPI.Instance.PlayerData.health;
+        int oldMoney = GameAPI.Instance.PlayerData.money;
+        int oldLevel = GameAPI.Instance.PlayerData.level;
+        int oldKills = GameAPI.Instance.PlayerData.kills;
+        
+        // Collect current game state and update PlayerData
         try
         {
             // 1. Collect health from StatsHandler
@@ -186,9 +245,36 @@ public class GameDataSynchronizer : MonoBehaviour
             
             // 5. Collect zombie kills from ZombieKillTracker
             CollectZombieKillsFromGame();
-            
-            // 6. Collect player position for checkpoint
+              // 6. Collect player position for checkpoint
             CollectPlayerPositionFromGame();
+            
+            // Log what changed during collection
+            bool dataChanged = false;
+            if (GameAPI.Instance.PlayerData.health != oldHealth)
+            {
+                DebugLog($"Health changed: {oldHealth} -> {GameAPI.Instance.PlayerData.health}");
+                dataChanged = true;
+            }
+            if (GameAPI.Instance.PlayerData.money != oldMoney)
+            {
+                DebugLog($"Money changed: {oldMoney} -> {GameAPI.Instance.PlayerData.money}");
+                dataChanged = true;
+            }
+            if (GameAPI.Instance.PlayerData.level != oldLevel)
+            {
+                DebugLog($"Level changed: {oldLevel} -> {GameAPI.Instance.PlayerData.level}");
+                dataChanged = true;
+            }
+            if (GameAPI.Instance.PlayerData.kills != oldKills)
+            {
+                DebugLog($"Kills changed: {oldKills} -> {GameAPI.Instance.PlayerData.kills}");
+                dataChanged = true;
+            }
+            
+            if (!dataChanged)
+            {
+                DebugLog("No game data changes detected during collection");
+            }
             
             DebugLog("Successfully collected all game data");
         }
@@ -196,9 +282,11 @@ public class GameDataSynchronizer : MonoBehaviour
         {
             DebugLog($"Error collecting game data: {ex.Message}");
         }
-        
-        // Update last login timestamp
+          // Always update last login timestamp to mark this as the latest save
         GameAPI.Instance.PlayerData.lastLoginDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        
+        // Final validation before save
+        DebugLog($"Final data state - Health: {GameAPI.Instance.PlayerData.health}, Money: {GameAPI.Instance.PlayerData.money}, Level: {GameAPI.Instance.PlayerData.level}, Kills: {GameAPI.Instance.PlayerData.kills}");
     }
     
     public void ClearData()

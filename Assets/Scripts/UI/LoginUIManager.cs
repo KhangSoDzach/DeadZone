@@ -136,8 +136,7 @@ public class LoginUIManager : MonoBehaviour
         if (settingsPanel) settingsPanel.SetActive(false);
         // Ensure option panel is hidden
         if (optionPanel) optionPanel.SetActive(false);
-    }
-      private void CheckAutoLogin()
+    }      private void CheckAutoLogin()
     {
         string savedToken = PlayerPrefs.GetString("AuthToken", "");
         if (!string.IsNullOrEmpty(savedToken))
@@ -149,35 +148,35 @@ public class LoginUIManager : MonoBehaviour
             StartCoroutine(GameAPI.Instance.LoginWithToken(savedToken, (success, error) => {
                 if (success)
                 {
-                    DebugLog("Auto-login successful, checking player data...");
+                    DebugLog("Auto-login successful, force loading fresh player data...");
                     
-                    // Ensure we have complete player data
-                    if (GameAPI.Instance.PlayerData == null || 
-                        string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) || 
-                        string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
-                    {
-                        DebugLog("Player data incomplete after token verification, fetching...");
-                        StartCoroutine(GameAPI.Instance.GetPlayerData((dataSuccess, dataError) => {
-                            if (dataSuccess && GameAPI.Instance.PlayerData != null && 
+                    // Always force load fresh data after auto-login to ensure we have latest save
+                    StartCoroutine(GameAPI.Instance.GetPlayerData((dataSuccess, dataError) => {
+                        if (dataSuccess && GameAPI.Instance.PlayerData != null && 
+                            !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
+                        {
+                            DebugLog("Fresh player data loaded after auto-login");
+                            UpdateWelcomeUI();
+                            ShowWelcomePanel();
+                        }
+                        else
+                        {
+                            DebugLog($"Failed to load fresh player data after auto-login: {dataError}");
+                            // Check if we have any existing player data to use
+                            if (GameAPI.Instance.PlayerData != null && 
                                 !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
                             {
-                                DebugLog("Player data loaded successfully");
+                                DebugLog("Using existing player data from auto-login");
                                 UpdateWelcomeUI();
                                 ShowWelcomePanel();
                             }
                             else
                             {
-                                DebugLog($"Failed to load complete player data: {dataError}");
+                                DebugLog("No valid player data available after auto-login");
                                 HandleAutoLoginFailure();
                             }
-                        }));
-                    }
-                    else
-                    {
-                        DebugLog("Complete player data available");
-                        UpdateWelcomeUI();
-                        ShowWelcomePanel();
-                    }
+                        }
+                    }));
                 }
                 else
                 {
@@ -378,8 +377,7 @@ public class LoginUIManager : MonoBehaviour
             ShowRegisterError("Registration failed: " + errorMessage);
         }
     }
-    
-    private void ContinueGame()
+      private void ContinueGame()
     {
         if (!GameAPI.Instance.IsLoggedIn)
         {
@@ -391,13 +389,33 @@ public class LoginUIManager : MonoBehaviour
         ShowLoadingPanel("Loading saved game...");
         StartCoroutine(ContinueGameCoroutine());
     }
-    
-    private IEnumerator ContinueGameCoroutine()
+      private IEnumerator ContinueGameCoroutine()
     {
-        // User is already logged in, just load the game scene
+        UpdateLoadingStatus("Loading latest save data...");        // Force refresh fresh player data from server before continuing
+        bool dataLoaded = false;
+        string errorMessage = "";
+        
+        yield return StartCoroutine(GameAPI.Instance.ForceRefreshPlayerData((success, error) => {
+            dataLoaded = success;
+            errorMessage = error;
+        }));
+        
+        if (!dataLoaded)
+        {
+            DebugLog($"Failed to load fresh save data: {errorMessage}");
+            UpdateLoadingStatus("Failed to load latest save. Loading with cached data...");
+            yield return new WaitForSeconds(1f);
+        }
+        else
+        {
+            DebugLog("Fresh save data loaded successfully for continue game");
+            UpdateLoadingStatus("Latest save data loaded! Starting game...");
+            yield return new WaitForSeconds(0.5f);
+        }
+        
         UpdateLoadingStatus("Loading your saved adventure...");
-        yield return new WaitForSeconds(1f);
-        LoadGameScene(); // Uncomment this line
+        yield return new WaitForSeconds(0.5f);
+        LoadGameScene();
     }
     
     private void StartOfflineMode()
