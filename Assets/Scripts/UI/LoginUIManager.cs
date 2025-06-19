@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -53,6 +54,7 @@ public class LoginUIManager : MonoBehaviour
     
     [Header("Settings")]
     [SerializeField] private string gameSceneName = "Scene_A";
+    [SerializeField] private string menuSceneName = "Menu"; // Thêm cài đặt cho scene menu
     [SerializeField] private string offlineSceneName = "Scene_A";
     [SerializeField] private float autoLoginCheckDelay = 1f;
     [SerializeField] private bool debugMode = true;
@@ -204,12 +206,25 @@ public class LoginUIManager : MonoBehaviour
     
     private void OnLoginButtonClicked()
     {
-        string username = loginUsernameInput ? loginUsernameInput.text : "";
-        string password = loginPasswordInput ? loginPasswordInput.text : "";
+        string username = loginUsernameInput ? loginUsernameInput.text.Trim() : "";
+        string password = loginPasswordInput ? loginPasswordInput.text.Trim() : "";
         
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        // Enhanced validation for login
+        if (string.IsNullOrEmpty(username) && string.IsNullOrEmpty(password))
         {
-            ShowLoginError("Please enter both username and password");
+            ShowLoginError("Vui lòng nhập tên đăng nhập và mật khẩu");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(username))
+        {
+            ShowLoginError("Vui lòng nhập tên đăng nhập");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(password))
+        {
+            ShowLoginError("Vui lòng nhập mật khẩu");
             return;
         }
         
@@ -306,27 +321,84 @@ public class LoginUIManager : MonoBehaviour
     
     private void OnRegisterButtonClicked()
     {
-        string username = registerUsernameInput ? registerUsernameInput.text : "";
-        string email = registerEmailInput ? registerEmailInput.text : "";
-        string password = registerPasswordInput ? registerPasswordInput.text : "";
-        string confirmPassword = registerConfirmPasswordInput ? registerConfirmPasswordInput.text : "";
+        string username = registerUsernameInput ? registerUsernameInput.text.Trim() : "";
+        string email = registerEmailInput ? registerEmailInput.text.Trim() : "";
+        string password = registerPasswordInput ? registerPasswordInput.text.Trim() : "";
+        string confirmPassword = registerConfirmPasswordInput ? registerConfirmPasswordInput.text.Trim() : "";
         
-        // Basic validation
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || 
-            string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
+        // Check for empty fields individually with specific messages
+        if (string.IsNullOrEmpty(username) && string.IsNullOrEmpty(email) && 
+            string.IsNullOrEmpty(password) && string.IsNullOrEmpty(confirmPassword))
         {
-            ShowRegisterError("Please fill in all fields");
+            ShowRegisterError("Vui lòng điền đầy đủ tất cả các trường thông tin");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(username))
+        {
+            ShowRegisterError("Vui lòng nhập tên đăng nhập");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(email))
+        {
+            ShowRegisterError("Vui lòng nhập email");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(password))
+        {
+            ShowRegisterError("Vui lòng nhập mật khẩu");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(confirmPassword))
+        {
+            ShowRegisterError("Vui lòng xác nhận mật khẩu");
+            return;
+        }
+        
+        // Additional validation
+        if (username.Length < 3)
+        {
+            ShowRegisterError("Tên đăng nhập phải có ít nhất 3 ký tự");
+            return;
+        }
+        
+        if (password.Length < 6)
+        {
+            ShowRegisterError("Mật khẩu phải có ít nhất 6 ký tự");
             return;
         }
         
         if (password != confirmPassword)
         {
-            ShowRegisterError("Passwords do not match");
+            ShowRegisterError("Mật khẩu xác nhận không khớp");
             return;
         }
         
-        ShowLoadingPanel("Creating account...");
+        // Simple email validation
+        if (!IsValidEmail(email))
+        {
+            ShowRegisterError("Định dạng email không hợp lệ");
+            return;
+        }
+        
+        ShowLoadingPanel("Đang tạo tài khoản...");
         StartCoroutine(RegisterCoroutine(username, email, password));
+    }
+    
+    // Simple email validation helper
+    private bool IsValidEmail(string email)
+    {
+        // Basic email validation: contains @ and at least one dot after @
+        int atIndex = email.IndexOf('@');
+        if (atIndex < 1) return false; // @ not found or at start
+        
+        int dotIndex = email.IndexOf('.', atIndex);
+        if (dotIndex < atIndex + 2 || dotIndex == email.Length - 1) return false; // No dot after @ or dot at end
+        
+        return true;
     }
     
     private IEnumerator RegisterCoroutine(string username, string email, string password)
@@ -341,7 +413,7 @@ public class LoginUIManager : MonoBehaviour
         
         if (registerSuccess)
         {
-            UpdateLoadingStatus("Account created! Loading user data...");
+            UpdateLoadingStatus("Tài khoản đã được tạo! Đang tải dữ liệu người dùng...");
             
             // Explicitly fetch player data after successful registration
             bool dataLoaded = false;
@@ -354,27 +426,27 @@ public class LoginUIManager : MonoBehaviour
             
             if (dataLoaded)
             {
-                DebugLog($"Registration successful - User data loaded: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
+                DebugLog($"Đăng ký thành công - Dữ liệu người dùng đã tải: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
                 
                 yield return new WaitForSeconds(0.5f);
                 
-                // Update welcome UI after successful registration
-                UpdateWelcomeUI();
-                
-                DebugLog("Registration successful, showing welcome panel");
-                ShowWelcomePanel();
+                // Quay về scene hiện tại (menu)
+                UpdateLoadingStatus("Đăng ký thành công! Đang quay về menu...");
+                yield return new WaitForSeconds(1.0f);
+                DebugLog($"Reloading current scene: {SceneManager.GetActiveScene().name}");
+                SceneManager.LoadScene("Menu");
             }
             else
             {
-                DebugLog("Registration successful but failed to load user data: " + dataError);
+                DebugLog("Đăng ký thành công nhưng không tải được dữ liệu người dùng: " + dataError);
                 ShowRegisterPanel();
-                ShowRegisterError("Account created but failed to load user data. Please try logging in.");
+                ShowRegisterError("Tài khoản đã được tạo nhưng không thể tải dữ liệu người dùng. Vui lòng đăng nhập.");
             }
         }
         else
         {
             ShowRegisterPanel();
-            ShowRegisterError("Registration failed: " + errorMessage);
+            ShowRegisterError("Đăng ký thất bại: " + errorMessage);
         }
     }
       private void ContinueGame()
@@ -444,17 +516,18 @@ public class LoginUIManager : MonoBehaviour
     private void LoadGameScene()
     {
         DebugLog($"Loading game scene: {gameSceneName}");
-        
-        // Make sure the scene name is valid
         if (string.IsNullOrEmpty(gameSceneName))
         {
             DebugLog("Error: Game scene name is not set!");
             ShowWelcomePanel();
             return;
         }
-        
-        // Check if scene exists in build settings
-        if (Application.CanStreamedLevelBeLoaded(gameSceneName))
+        // Sử dụng SceneTransitionManager nếu có
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadGameplayScene(gameSceneName);
+        }
+        else if (Application.CanStreamedLevelBeLoaded(gameSceneName))
         {
             SceneManager.LoadScene(gameSceneName);
         }
@@ -695,10 +768,18 @@ public class LoginUIManager : MonoBehaviour
             DebugLog("Cannot start new game: User not logged in");
             return;
         }
-        
+
         DebugLog("Starting new game for logged in user");
         // ShowLoadingPanel("Starting new game...");
-        
+
+        // Reset dữ liệu local (PlayerPrefs)
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.DeleteKey("LastUserData"); // Xóa luôn dữ liệu save cũ trước khi reset PlayerData
+        PlayerPrefs.Save();
+
+        // Reset PlayerData trong RAM/cache
+        GameAPI.Instance.GetType().GetProperty("PlayerData").SetValue(GameAPI.Instance, null, null);
+
         // Reset player data for new game
         StartCoroutine(ResetPlayerDataAndStartGame());
     }
@@ -710,8 +791,8 @@ public class LoginUIManager : MonoBehaviour
     {
         DebugLog("Starting new game reset process...");
         
-        ShowLoadingPanel("Creating new game...");
-        UpdateLoadingStatus("Verifying login status...");
+        ShowLoadingPanel("Đang tạo game mới...");
+        UpdateLoadingStatus("Đang xác minh trạng thái đăng nhập...");
         
         // Verify user is still logged in
         if (!GameAPI.Instance.IsLoggedIn)
@@ -722,7 +803,7 @@ public class LoginUIManager : MonoBehaviour
         }
         
         // Double-check by fetching fresh player data
-        UpdateLoadingStatus("Loading current user data...");
+        UpdateLoadingStatus("Đang tải dữ liệu người dùng hiện tại...");
         bool dataLoaded = false;
         string errorMsg = "";
         
@@ -734,7 +815,7 @@ public class LoginUIManager : MonoBehaviour
         if (!dataLoaded)
         {
             DebugLog("Failed to load player data for new game: " + errorMsg);
-            UpdateLoadingStatus("Failed to load user data");
+            UpdateLoadingStatus("Không thể tải dữ liệu người dùng");
             yield return new WaitForSeconds(1f);
             ShowWelcomePanel();
             yield break;
@@ -745,36 +826,52 @@ public class LoginUIManager : MonoBehaviour
         if (playerData == null || string.IsNullOrEmpty(playerData.id) || string.IsNullOrEmpty(playerData.username))
         {
             DebugLog($"Invalid player data - ID: '{playerData?.id}', Username: '{playerData?.username}'");
-            UpdateLoadingStatus("Invalid user data");
+            UpdateLoadingStatus("Dữ liệu người dùng không hợp lệ");
             yield return new WaitForSeconds(1f);
             ShowWelcomePanel();
             yield break;
         }
         
-        UpdateLoadingStatus("Resetting game progress...");
+        UpdateLoadingStatus("Đang xoá tất cả tiến trình game cũ...");
         
-        // Reset player progress but preserve identity
+        // Lưu lại thông tin người dùng cần giữ
         string originalId = playerData.id;
         string originalUsername = playerData.username;
         string originalEmail = playerData.email;
         
-        // Reset game progress
+        // Reset triệt để tất cả dữ liệu game - cách tiếp cận mới
+        // Chúng ta sẽ cập nhật trực tiếp vào đối tượng PlayerData hiện có
+        
+        // Reset các thuộc tính game
         playerData.level = 1;
         playerData.experience = 0;
         playerData.money = 0;
         playerData.health = 100f;
+        playerData.kills = 0;
+        playerData.hasKey = false;
+        
+        // Reset checkpoint - quan trọng để bảo đảm không có điểm lưu trước đó
         playerData.checkpoint = null;
-        if (playerData.weapons != null)
+        
+        // Reset danh sách vũ khí
+        if (playerData.weapons == null)
+        {
+            playerData.weapons = new List<WeaponData>();
+        }
+        else
         {
             playerData.weapons.Clear();
         }
         
-        // Ensure user identity is preserved
+        // Bảo đảm thông tin định danh vẫn được giữ nguyên
         playerData.id = originalId;
         playerData.username = originalUsername;
         playerData.email = originalEmail;
         
-        DebugLog($"Reset data for user: {playerData.username} (ID: {playerData.id})");
+        // Cập nhật ngày đăng nhập cuối
+        playerData.lastLoginDate = System.DateTime.Now.ToString("o");
+        
+        DebugLog($"Đã reset hoàn toàn dữ liệu game cho người chơi: {playerData.username}");
         
         // Verify login state one more time before saving
         if (!GameAPI.Instance.IsLoggedIn)
@@ -784,9 +881,9 @@ public class LoginUIManager : MonoBehaviour
             yield break;
         }
         
-        UpdateLoadingStatus("Saving new game data...");
+        UpdateLoadingStatus("Đang lưu dữ liệu game mới...");
         
-        // Save reset data to server (GameAPI now handles endpoint fallback)
+        // Sử dụng GameAPI có sẵn để lưu dữ liệu đã reset
         bool saveSuccess = false;
         string errorMessage = "";
         
@@ -797,18 +894,34 @@ public class LoginUIManager : MonoBehaviour
         
         if (saveSuccess)
         {
-            UpdateLoadingStatus("New game created! Loading...");
+            UpdateLoadingStatus("Đã tạo game mới! Đang tải...");
             yield return new WaitForSeconds(1f);
+
+            // Force một lần refresh cuối cùng để đảm bảo dữ liệu được cập nhật đúng
+            yield return StartCoroutine(GameAPI.Instance.ForceRefreshPlayerData((refreshSuccess, refreshError) => {
+                if (!refreshSuccess) {
+                    DebugLog("Cảnh báo: Không thể refresh dữ liệu sau khi tạo game mới: " + refreshError);
+                }
+                else {
+                    DebugLog("Dữ liệu game mới đã được tải thành công từ server");
+                }
+            }));
+
+            // Sau khi refresh, update lại UI để đảm bảo trạng thái đúng
+            UpdateWelcomeUI();
+            // Load lại scene game
             LoadGameScene();
         }
         else
         {
             DebugLog("Failed to save new game data: " + errorMessage);
-            UpdateLoadingStatus("Save failed, loading game anyway...");
+            UpdateLoadingStatus("Không thể lưu game mới, vẫn tiếp tục tải game...");
             yield return new WaitForSeconds(1f);
             LoadGameScene();
         }
-    }      /// <summary>
+    }
+    
+    /// <summary>
     /// Logout current user
     /// </summary>
     private void LogoutUser()

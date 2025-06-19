@@ -146,22 +146,34 @@ public class GameAPI : MonoBehaviour
     
     public IEnumerator Login(string username, string password, Action<bool, string> onComplete)
     {
-        // Basic client-side validation
-        if (string.IsNullOrEmpty(username.Trim()) || string.IsNullOrEmpty(password.Trim()))
+        // Enhanced client-side validation with specific error messages
+        if (string.IsNullOrEmpty(username.Trim()) && string.IsNullOrEmpty(password.Trim()))
         {
-            onComplete?.Invoke(false, "Username and password cannot be empty");
+            onComplete?.Invoke(false, "Vui lòng nhập tên đăng nhập và mật khẩu");
+            yield break;
+        }
+        
+        if (string.IsNullOrEmpty(username.Trim()))
+        {
+            onComplete?.Invoke(false, "Vui lòng nhập tên đăng nhập");
+            yield break;
+        }
+        
+        if (string.IsNullOrEmpty(password.Trim()))
+        {
+            onComplete?.Invoke(false, "Vui lòng nhập mật khẩu");
             yield break;
         }
         
         if (username.Length < 3)
         {
-            onComplete?.Invoke(false, "Username must be at least 3 characters long");
+            onComplete?.Invoke(false, "Tên đăng nhập phải có ít nhất 3 ký tự");
             yield break;
         }
         
         if (password.Length < 6)
         {
-            onComplete?.Invoke(false, "Password must be at least 6 characters long");
+            onComplete?.Invoke(false, "Mật khẩu phải có ít nhất 6 ký tự");
             yield break;
         }
         
@@ -592,28 +604,46 @@ public class GameAPI : MonoBehaviour
     
     public IEnumerator Register(string username, string email, string password, Action<bool, string> onComplete)
     {
-        // Basic client-side validation
-        if (string.IsNullOrEmpty(username.Trim()) || string.IsNullOrEmpty(email.Trim()) || string.IsNullOrEmpty(password.Trim()))
+        // Enhanced client-side validation with specific Vietnamese messages
+        if (string.IsNullOrEmpty(username.Trim()) && string.IsNullOrEmpty(email.Trim()) && string.IsNullOrEmpty(password.Trim()))
         {
-            onComplete?.Invoke(false, "All fields are required");
+            onComplete?.Invoke(false, "Vui lòng điền đầy đủ tất cả các trường thông tin");
+            yield break;
+        }
+        
+        if (string.IsNullOrEmpty(username.Trim()))
+        {
+            onComplete?.Invoke(false, "Vui lòng nhập tên đăng nhập");
+            yield break;
+        }
+        
+        if (string.IsNullOrEmpty(email.Trim()))
+        {
+            onComplete?.Invoke(false, "Vui lòng nhập email");
+            yield break;
+        }
+        
+        if (string.IsNullOrEmpty(password.Trim()))
+        {
+            onComplete?.Invoke(false, "Vui lòng nhập mật khẩu");
             yield break;
         }
         
         if (username.Length < 3)
         {
-            onComplete?.Invoke(false, "Username must be at least 3 characters long");
+            onComplete?.Invoke(false, "Tên đăng nhập phải có ít nhất 3 ký tự");
             yield break;
         }
         
         if (password.Length < 6)
         {
-            onComplete?.Invoke(false, "Password must be at least 6 characters long");
+            onComplete?.Invoke(false, "Mật khẩu phải có ít nhất 6 ký tự");
             yield break;
         }
         
         if (!IsValidEmail(email))
         {
-            onComplete?.Invoke(false, "Please enter a valid email address");
+            onComplete?.Invoke(false, "Vui lòng nhập một địa chỉ email hợp lệ");
             yield break;
         }
         
@@ -1169,27 +1199,22 @@ public class GameAPI : MonoBehaviour
       public void Logout()
     {
         DebugLog("Starting logout process...");
-        
-        // Save current PlayerData state before clearing
-        if (PlayerData != null && !string.IsNullOrEmpty(PlayerData.id))
-        {
-            DebugLog($"Saving logout state for user: {PlayerData.username} (ID: {PlayerData.id})");
-            PlayerPrefs.SetString("LastUserData", JsonConvert.SerializeObject(PlayerData));
-        }
-        
+        // Đã xóa: Không lưu PlayerData vào PlayerPrefs khi logout để tránh restore lại khi new game
+        // if (PlayerData != null && !string.IsNullOrEmpty(PlayerData.id))
+        // {
+        //     DebugLog($"Saving logout state for user: {PlayerData.username} (ID: {PlayerData.id})");
+        //     PlayerPrefs.SetString("LastUserData", JsonConvert.SerializeObject(PlayerData));
+        // }
         AuthToken = null;
         PlayerData = null;
         PlayerPrefs.DeleteKey("AuthToken");
         PlayerPrefs.DeleteKey("LastCheckpoint");
         PlayerPrefs.Save();
-        
         // Clear data synchronizer
         if (GameDataSynchronizer.Instance != null)
         {
             GameDataSynchronizer.Instance.ClearData();
         }
-        
-        DebugLog("User logged out");
     }
     
     // Method to restore AuthToken from PlayerPrefs if it gets lost

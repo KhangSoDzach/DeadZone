@@ -11,8 +11,36 @@ public class ASyncLoader : MonoBehaviour
     [SerializeField] private GameObject mainMenu; // Main menu panel
     [SerializeField] private Slider slider; // Progress slider
     
+    // Hàm này sẽ xóa tất cả các object DontDestroyOnLoad trừ GameAPI
+    private void ClearDontDestroyObjectsExceptGameAPI()
+    {
+        // Tạo một scene tạm để lấy các object thuộc DontDestroyOnLoad
+        var temp = new GameObject("TempDontDestroyCollector");
+        DontDestroyOnLoad(temp);
+        Scene dontDestroyScene = temp.scene;
+
+        List<GameObject> toDestroy = new List<GameObject>();
+        foreach (GameObject go in dontDestroyScene.GetRootGameObjects())
+        {
+            if (go.name != "GameAPI" && go.name != "TempDontDestroyCollector")
+            {
+                toDestroy.Add(go);
+            }
+        }
+        // Xóa các object không phải GameAPI
+        foreach (var go in toDestroy)
+        {
+            GameObject.Destroy(go);
+        }
+        // Xóa object tạm
+        GameObject.Destroy(temp);
+    }
+
     public void LoadLevelBtn(string levelToLoad)
     {
+        // Xóa các object DontDestroyOnLoad trừ GameAPI trước khi load scene mới
+        ClearDontDestroyObjectsExceptGameAPI();
+
         // Validate input
         if (string.IsNullOrEmpty(levelToLoad))
         {

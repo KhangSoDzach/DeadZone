@@ -13,8 +13,8 @@ public class DeathScreenManager : MonoBehaviour
     public Button returnToMainMenuButton;
 
     [Header("Scene Names")]
-    public string mainMenuSceneName = "MainMenu"; // Tên scene menu chính
-    public string newGameSceneName = "Level1"; // Tên scene khi bắt đầu game mới
+    public string mainMenuSceneName = "Menu"; // Tên scene menu chính
+    public string newGameSceneName = "Scene_A"; // Tên scene khi bắt đầu game mới
 
     private static DeathScreenManager _instance;
     public static DeathScreenManager Instance { get { return _instance; } }
@@ -93,19 +93,37 @@ public class DeathScreenManager : MonoBehaviour
     {
         // Reset thời gian và ẩn màn hình chết
         Time.timeScale = 1f;
-        deathScreenPanel.SetActive(false);
-        
-        // Check if user is logged in for online play
-        if (GameAPI.Instance != null && GameAPI.Instance.IsLoggedIn)
+        if (deathScreenPanel != null)
+            deathScreenPanel.SetActive(false);
+
+        // Xoá dữ liệu game cũ nếu có (PlayerPrefs và PlayerData)
+        // Xoá PlayerPrefs nếu bạn lưu dữ liệu local
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        // Nếu có GameAPI và PlayerData, reset dữ liệu về mặc định
+        if (GameAPI.Instance != null && GameAPI.Instance.PlayerData != null)
         {
-            // For logged in users, reset their data and reload
-            Debug.Log("Starting new game for logged in user");
-            StartCoroutine(ResetOnlinePlayerData());
+            var playerData = GameAPI.Instance.PlayerData;
+            playerData.level = 1;
+            playerData.experience = 0;
+            playerData.money = 0;
+            playerData.health = 100f;
+            playerData.kills = 0;
+            playerData.hasKey = false;
+            playerData.checkpoint = null;
+            if (playerData.weapons != null)
+                playerData.weapons.Clear();
+        }
+
+        // Sử dụng SceneTransitionManager để load lại scene gameplay
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadGameplayScene(newGameSceneName);
         }
         else
         {
-            // For offline play, just reload the scene
-            Debug.Log("Starting new offline game");
+            // Nếu không có manager, fallback về SceneManager
             SceneManager.LoadScene(newGameSceneName);
         }
     }
