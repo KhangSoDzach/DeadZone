@@ -133,7 +133,6 @@ public class ShopManagement : MonoBehaviour
         else
         {
             ShowNotification("Not enough money. Required: " + price + " Cash");
-            Debug.Log("Not enough money. Required: " + price + ", Current: " + playerMoney);
             return false;
         }
     }
@@ -213,7 +212,6 @@ public class ShopManagement : MonoBehaviour
                         BuyUZI();
                         break;
                     default:
-                        Debug.Log("Bought: " + item.name);
                         break;
                 }
             }
@@ -285,7 +283,6 @@ public class ShopManagement : MonoBehaviour
                 if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
                 {
                     ShowNotification("Medkit added to inventory!");
-                    Debug.Log("Added medkit to inventory");
                     addedToInventory = true;
                 }
             }
@@ -300,7 +297,6 @@ public class ShopManagement : MonoBehaviour
             {
                 playerHealth.Heal(50); // Add 50 health or whatever amount is appropriate
                 ShowNotification("Health restored!");
-                Debug.Log("Added health to player: 50");
             }
             else if (medkitPrefab != null)
             {
@@ -312,12 +308,10 @@ public class ShopManagement : MonoBehaviour
                     Vector3 spawnPosition = player.transform.position + player.transform.forward * .2f;
                     Instantiate(medkitPrefab, spawnPosition, Quaternion.identity);
                     ShowNotification("Medkit purchased!");
-                    Debug.Log("Spawned medkit at: " + spawnPosition);
                 }
             }
             else
             {
-                Debug.LogWarning("No medkit prefab assigned and no PlayerHealth found!");
                 // Return the money since purchase failed
                 playerMoney += shopItemsList.Find(i => i.id == 1).price;
                 
@@ -345,7 +339,6 @@ public class ShopManagement : MonoBehaviour
             if (gun.isPistol)
             {
                 pistol = gun;
-                Debug.Log("Found pistol: " + gun.name + " with isPistol=true");
                 break;
             }
         }
@@ -353,7 +346,6 @@ public class ShopManagement : MonoBehaviour
         // If no gun with isPistol flag is found, try by name
         if (pistol == null)
         {
-            Debug.Log("No gun with isPistol=true found, trying to find by name...");
             foreach (Gun gun in allGuns)
             {
                 string lowercaseName = gun.name.ToLower();
@@ -363,7 +355,6 @@ public class ShopManagement : MonoBehaviour
                     lowercaseName.Contains("revolver"))
                 {
                     pistol = gun;
-                    Debug.Log("Found pistol by name: " + gun.name);
                     break;
                 }
             }
@@ -375,7 +366,6 @@ public class ShopManagement : MonoBehaviour
             // Add ammo to the pistol
             pistol.AddAmmo(pistolAmmoAmount);
             ShowNotification("Ammo pistol purchased: +" + pistolAmmoAmount);
-            Debug.Log("Added " + pistolAmmoAmount + " ammo to pistol: " + pistol.name);
         }
         else
         {
@@ -386,7 +376,6 @@ public class ShopManagement : MonoBehaviour
                 if (!gun.gameObject.activeInHierarchy && gun.isPistol)
                 {
                     pistol = gun;
-                    Debug.Log("Found inactive pistol: " + gun.name);
                     break;
                 }
             }
@@ -396,12 +385,10 @@ public class ShopManagement : MonoBehaviour
                 // Add ammo to the inactive pistol
                 pistol.AddAmmo(pistolAmmoAmount);
                 ShowNotification("Ammo pistol purchased: +" + pistolAmmoAmount);
-                Debug.Log("Added " + pistolAmmoAmount + " ammo to inactive pistol: " + pistol.name);
             }
             else
             {
                 // No pistol found anywhere - return money
-                Debug.LogWarning("No pistol found in the scene (active or inactive)! Returning money.");
                 playerMoney += shopItemsList.Find(i => i.id == 2).price;
                 
                 // Cập nhật tiền trong ScoreManager
@@ -421,7 +408,6 @@ public class ShopManagement : MonoBehaviour
         if (!PlayerHasRifle())
         {
             // If no rifle is found, show notification and refund money
-            Debug.LogWarning("No rifle found in player's weapon holder! Returning money.");
             playerMoney += shopItemsList.Find(i => i.id == 3).price;
             
             // Cập nhật tiền trong ScoreManager
@@ -445,7 +431,6 @@ public class ShopManagement : MonoBehaviour
             if (!gun.isPistol && gun.isAutomatic)
             {
                 rifle = gun;
-                Debug.Log("Found active rifle: " + gun.name);
                 break;
             }
         }
@@ -453,7 +438,6 @@ public class ShopManagement : MonoBehaviour
         // If no active rifle is found, try by name for more active guns
         if (rifle == null)
         {
-            Debug.Log("No rifle with isAutomatic=true found, trying to find by name...");
             foreach (Gun gun in allGuns)
             {
                 string lowercaseName = gun.name.ToLower();
@@ -463,7 +447,6 @@ public class ShopManagement : MonoBehaviour
                     lowercaseName.Contains("assault")))
                 {
                     rifle = gun;
-                    Debug.Log("Found rifle by name: " + gun.name);
                     break;
                 }
             }
@@ -475,7 +458,6 @@ public class ShopManagement : MonoBehaviour
             // Add ammo to the rifle
             rifle.AddAmmo(rifleAmmoAmount);
             ShowNotification("Rifle ammo purchased: +" + rifleAmmoAmount);
-            Debug.Log("Added " + rifleAmmoAmount + " ammo to rifle: " + rifle.name);
         }
         else
         {
@@ -486,7 +468,6 @@ public class ShopManagement : MonoBehaviour
                 if (!gun.gameObject.activeInHierarchy && !gun.isPistol && gun.isAutomatic)
                 {
                     rifle = gun;
-                    Debug.Log("Found inactive rifle: " + gun.name);
                     break;
                 }
             }
@@ -505,7 +486,6 @@ public class ShopManagement : MonoBehaviour
                             lowercaseName.Contains("assault"))
                         {
                             rifle = gun;
-                            Debug.Log("Found inactive rifle by name: " + gun.name);
                             break;
                         }
                     }
@@ -517,12 +497,10 @@ public class ShopManagement : MonoBehaviour
                 // Add ammo to the inactive rifle
                 rifle.AddAmmo(rifleAmmoAmount);
                 ShowNotification("Rifle ammo purchased: +" + rifleAmmoAmount);
-                Debug.Log("Added " + rifleAmmoAmount + " ammo to inactive rifle: " + rifle.name);
             }
             else
             {
                 // No rifle found anywhere - return money
-                Debug.LogWarning("No rifle found in the scene (active or inactive)! Returning money.");
                 playerMoney += shopItemsList.Find(i => i.id == 3).price;
                 
                 // Cập nhật tiền trong ScoreManager
@@ -540,7 +518,6 @@ public class ShopManagement : MonoBehaviour
     {
         if (m4a1Prefab == null)
         {
-            Debug.LogError("M4A1 prefab is not assigned in ShopManagement!");
             playerMoney += shopItemsList.Find(i => i.id == 6).price;
             if (ScoreManager.Instance != null)
                 ScoreManager.Score = playerMoney;
@@ -555,7 +532,6 @@ public class ShopManagement : MonoBehaviour
             if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
             {
                 ShowNotification("M4A1 added to inventory!");
-                Debug.Log("Added M4A1 to inventory");
                 return;
             }
         }
@@ -566,12 +542,10 @@ public class ShopManagement : MonoBehaviour
             GameObject newM4A1 = Instantiate(m4a1Prefab, spawnPosition, Quaternion.identity);
             newM4A1.layer = LayerMask.NameToLayer("Pickups");
             ShowNotification("M4A1 purchased! Pick up the weapon to use it.");
-            Debug.Log("Spawned M4A1 at: " + spawnPosition);
         }
         else
         {
             ShowNotification("Lỗi: Không tìm thấy người chơi!");
-            Debug.LogWarning("Player object not found when trying to spawn M4A1");
             playerMoney += shopItemsList.Find(i => i.id == 6).price;
             if (ScoreManager.Instance != null)
                 ScoreManager.Score = playerMoney;
@@ -583,7 +557,6 @@ public class ShopManagement : MonoBehaviour
     {
         if (mp5Prefab == null)
         {
-            Debug.LogError("MP5 prefab is not assigned in ShopManagement!");
             playerMoney += shopItemsList.Find(i => i.id == 8).price;
             if (ScoreManager.Instance != null)
                 ScoreManager.Score = playerMoney;
@@ -598,7 +571,6 @@ public class ShopManagement : MonoBehaviour
             if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
             {
                 ShowNotification("MP5 added to inventory!");
-                Debug.Log("Added MP5 to inventory");
                 return;
             }
         }
@@ -609,12 +581,10 @@ public class ShopManagement : MonoBehaviour
             GameObject newMP5 = Instantiate(mp5Prefab, spawnPosition, Quaternion.identity);
             newMP5.layer = LayerMask.NameToLayer("Pickups");
             ShowNotification("MP5 purchased! Pick up the weapon to use it.");
-            Debug.Log("Spawned MP5 at: " + spawnPosition);
         }
         else
         {
             ShowNotification("Erro: Player not found!");
-            Debug.LogWarning("Player object not found when trying to spawn MP5");
             playerMoney += shopItemsList.Find(i => i.id == 8).price;
             if (ScoreManager.Instance != null)
                 ScoreManager.Score = playerMoney;
@@ -626,7 +596,6 @@ public class ShopManagement : MonoBehaviour
     {
         if (uziPrefab == null)
         {
-            Debug.LogError("UZI prefab is not assigned in ShopManagement!");
             playerMoney += shopItemsList.Find(i => i.id == 9).price;
             if (ScoreManager.Instance != null)
                 ScoreManager.Score = playerMoney;
@@ -641,7 +610,6 @@ public class ShopManagement : MonoBehaviour
             if (DevionGames.InventorySystem.ItemContainer.AddItem("Inventory", instance))
             {
                 ShowNotification("UZI added to inventory!");
-                Debug.Log("Added UZI to inventory");
                 return;
             }
         }
@@ -652,12 +620,10 @@ public class ShopManagement : MonoBehaviour
             GameObject newUZI = Instantiate(uziPrefab, spawnPosition, Quaternion.identity);
             newUZI.layer = LayerMask.NameToLayer("Pickups");
             ShowNotification("UZI purchased! Pick up the weapon to use it.");
-            Debug.Log("Spawned UZI at: " + spawnPosition);
         }
         else
         {
             ShowNotification("Lỗi: Không tìm thấy người chơi!");
-            Debug.LogWarning("Player object not found when trying to spawn UZI");
             playerMoney += shopItemsList.Find(i => i.id == 9).price;
             if (ScoreManager.Instance != null)
                 ScoreManager.Score = playerMoney;
@@ -672,7 +638,6 @@ public class ShopManagement : MonoBehaviour
         {
             mainShopPanel.SetActive(false);
             gunShopPanel.SetActive(true);
-            Debug.Log("Showing Gun Shop Panel");
             
             // Set shop as open to disable weapon firing
             isShopOpen = true;
@@ -683,7 +648,6 @@ public class ShopManagement : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Shop panels not assigned in inspector");
             ShowNotification("Gun Shop not available");
         }
     }
@@ -695,7 +659,6 @@ public class ShopManagement : MonoBehaviour
         {
             mainShopPanel.SetActive(true);
             gunShopPanel.SetActive(false);
-            Debug.Log("Returning to Main Shop Panel");
             
             // Shop is still open, just changed panels
             isShopOpen = true;
@@ -730,7 +693,6 @@ public class ShopManagement : MonoBehaviour
         else
         {
             ShowNotification("Weapon Upgrade system not available!");   
-            Debug.Log("WeaponUpgradeManager not found in scene!");
         }
     }    // Method to show character upgrade panel
     public void ShowCharacterUpgradePanel()
@@ -740,19 +702,15 @@ public class ShopManagement : MonoBehaviour
         
         if (upgradeManager != null)
         {
-            Debug.Log("ShopManagement: Found CharacterUpgradeManager - showing upgrade panel");
-            
             // Try to hide shop panels first (though the character manager will also do this)
             if (mainShopPanel != null)
             {
                 mainShopPanel.SetActive(false);
-                Debug.Log("ShopManagement: Main shop panel hidden");
             }
                 
             if (gunShopPanel != null)
             {
                 gunShopPanel.SetActive(false);
-                Debug.Log("ShopManagement: Gun shop panel hidden");
             }
             
             // Also hide any weapon upgrade panels that might be open
@@ -762,13 +720,11 @@ public class ShopManagement : MonoBehaviour
                 if (weaponManager.weaponTypeSelectionPanel != null)
                 {
                     weaponManager.weaponTypeSelectionPanel.SetActive(false);
-                    Debug.Log("ShopManagement: Weapon type selection panel hidden");
                 }
                 
                 if (weaponManager.weaponUpgradePanel != null)
                 {
                     weaponManager.weaponUpgradePanel.SetActive(false);
-                    Debug.Log("ShopManagement: Weapon upgrade panel hidden");
                 }
             }
             
@@ -785,13 +741,10 @@ public class ShopManagement : MonoBehaviour
         else
         {
             ShowNotification("Character Upgrade system not available!");   
-            Debug.LogError("CharacterUpgradeManager not found in scene!");
         }
     }    // Method to be called from WeaponUpgradeManager or CharacterUpgradeManager to return to main shop
     public void ReturnFromUpgradePanel()
     {
-        Debug.Log("ShopManagement: ReturnFromUpgradePanel called");
-        
         // First deactivate ALL panels to ensure clean state
         
         // Ensure any character upgrade panel is closed
@@ -799,7 +752,6 @@ public class ShopManagement : MonoBehaviour
         if (characterManager != null && characterManager.characterUpgradePanel != null)
         {
             characterManager.characterUpgradePanel.SetActive(false);
-            Debug.Log("ShopManagement: Character upgrade panel hidden");
         }
         
         // Ensure any weapon upgrade panels are closed
@@ -809,13 +761,11 @@ public class ShopManagement : MonoBehaviour
             if (weaponManager.weaponTypeSelectionPanel != null)
             {
                 weaponManager.weaponTypeSelectionPanel.SetActive(false);
-                Debug.Log("ShopManagement: Weapon type selection panel hidden");
             }
                 
             if (weaponManager.weaponUpgradePanel != null)
             {
                 weaponManager.weaponUpgradePanel.SetActive(false);
-                Debug.Log("ShopManagement: Weapon upgrade panel hidden");
             }
         }
         else
@@ -825,14 +775,12 @@ public class ShopManagement : MonoBehaviour
             if (weaponTypePanel != null)
             {
                 weaponTypePanel.SetActive(false);
-                Debug.Log("ShopManagement: Found and hid weapon type panel by name");
             }
             
             GameObject weaponUpgradePanel = GameObject.Find("WeaponUpgradePanel");
             if (weaponUpgradePanel != null)
             {
                 weaponUpgradePanel.SetActive(false);
-                Debug.Log("ShopManagement: Found and hid weapon upgrade panel by name");
             }
         }
         
@@ -844,14 +792,9 @@ public class ShopManagement : MonoBehaviour
         if (mainShopPanel != null)
         {
             mainShopPanel.SetActive(true);
-            Debug.Log("ShopManagement: Main shop panel activated");
             
             // Set shop as open to disable weapon firing
             isShopOpen = true;
-        }
-        else
-        {
-            Debug.LogError("ShopManagement: mainShopPanel is null!");
         }
     }
     

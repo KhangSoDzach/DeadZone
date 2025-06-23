@@ -164,19 +164,7 @@ public class LoginUIManager : MonoBehaviour
                         else
                         {
                             DebugLog($"Failed to load fresh player data after auto-login: {dataError}");
-                            // Check if we have any existing player data to use
-                            if (GameAPI.Instance.PlayerData != null && 
-                                !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
-                            {
-                                DebugLog("Using existing player data from auto-login");
-                                UpdateWelcomeUI();
-                                ShowWelcomePanel();
-                            }
-                            else
-                            {
-                                DebugLog("No valid player data available after auto-login");
-                                HandleAutoLoginFailure();
-                            }
+                            HandleAutoLoginFailure();
                         }
                     }));
                 }
@@ -232,84 +220,39 @@ public class LoginUIManager : MonoBehaviour
         StartCoroutine(LoginCoroutine(username, password));
     }
     
+    // Khi đăng nhập thành công, luôn lấy PlayerData từ server
     private IEnumerator LoginCoroutine(string username, string password)
     {
         bool loginSuccess = false;
         string errorMessage = "";
-        
         ShowLoadingPanel("Logging in...");
         UpdateLoadingStatus("Authenticating...");
-        
         yield return StartCoroutine(GameAPI.Instance.Login(username, password, (success, error) => {
             loginSuccess = success;
             errorMessage = error;
         }));
-          if (loginSuccess)
+        if (loginSuccess)
         {
             UpdateLoadingStatus("Login successful! Checking user data...");
-            
-            // Check if player data was already loaded during login
-            if (GameAPI.Instance.PlayerData != null && 
-                !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id) && 
-                !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.username))
-            {                DebugLog($"Player data already available from login: {GameAPI.Instance.PlayerData.username} (ID: {GameAPI.Instance.PlayerData.id})");
-                
-                // Save login info if remember me is checked
-                if (rememberMeToggle && rememberMeToggle.isOn)
-                {
-                    PlayerPrefs.SetString("LastUsername", username);
-                    PlayerPrefs.SetString("AuthToken", GameAPI.Instance.AuthToken);
-                    PlayerPrefs.Save();
-                }
-                
+            bool dataLoaded = false;
+            string dataError = "";
+            yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+                dataLoaded = success;
+                dataError = error;
+            }));
+            if (dataLoaded)
+            {
+                DebugLog($"User data loaded: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
                 UpdateLoadingStatus("Login complete!");
                 yield return new WaitForSeconds(0.5f);
-                
-                // Update welcome UI after successful login with forced refresh
-                DebugLog("Login successful - forcing UI refresh to check saved game status");
                 ShowWelcomePanel();
                 StartCoroutine(RefreshPlayerDataAndUpdateUI());
             }
             else
             {
-                DebugLog("Player data not available from login response, fetching separately...");
-                
-                // Explicitly fetch player data after successful login
-                bool dataLoaded = false;
-                string dataError = "";
-                
-                UpdateLoadingStatus("Loading user data...");
-                
-                yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
-                    dataLoaded = success;
-                    dataError = error;
-                }));
-                
-                if (dataLoaded)
-                {                    DebugLog($"User data loaded: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
-                    
-                    // Save login info if remember me is checked
-                    if (rememberMeToggle && rememberMeToggle.isOn)
-                    {
-                        PlayerPrefs.SetString("LastUsername", username);
-                        PlayerPrefs.SetString("AuthToken", GameAPI.Instance.AuthToken);
-                        PlayerPrefs.Save();
-                    }
-                    
-                    UpdateLoadingStatus("Login complete!");
-                    yield return new WaitForSeconds(0.5f);
-                    
-                    // Update welcome UI after successful login with forced refresh
-                    DebugLog("Login successful - forcing UI refresh to check saved game status");
-                    ShowWelcomePanel();
-                    StartCoroutine(RefreshPlayerDataAndUpdateUI());
-                }
-                else
-                {
-                    DebugLog("Login successful but failed to load user data: " + dataError);
-                    ShowLoginPanel();
-                    ShowLoginError("Login successful but failed to load user data. Please try again.");
-                }
+                DebugLog("Login successful but failed to load user data: " + dataError);
+                ShowLoginPanel();
+                ShowLoginError("Login successful but failed to load user data. Please try again.");
             }
         }
         else
@@ -405,36 +348,27 @@ public class LoginUIManager : MonoBehaviour
     {
         bool registerSuccess = false;
         string errorMessage = "";
-        
         yield return StartCoroutine(GameAPI.Instance.Register(username, email, password, (success, error) => {
             registerSuccess = success;
             errorMessage = error;
         }));
-        
         if (registerSuccess)
         {
             UpdateLoadingStatus("Tài khoản đã được tạo! Đang tải dữ liệu người dùng...");
-            
-            // Explicitly fetch player data after successful registration
             bool dataLoaded = false;
             string dataError = "";
-            
             yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
                 dataLoaded = success;
                 dataError = error;
             }));
-            
             if (dataLoaded)
             {
                 DebugLog($"Đăng ký thành công - Dữ liệu người dùng đã tải: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
-                
                 yield return new WaitForSeconds(0.5f);
-                
-                // Quay về scene hiện tại (menu)
                 UpdateLoadingStatus("Đăng ký thành công! Đang quay về menu...");
                 yield return new WaitForSeconds(1.0f);
-                DebugLog($"Reloading current scene: {SceneManager.GetActiveScene().name}");
-                SceneManager.LoadScene("Menu");
+                DebugLog($"Reloading current scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
             }
             else
             {
@@ -461,178 +395,41 @@ public class LoginUIManager : MonoBehaviour
         ShowLoadingPanel("Loading saved game...");
         StartCoroutine(ContinueGameCoroutine());
     }
-      private IEnumerator ContinueGameCoroutine()
-    {
-        UpdateLoadingStatus("Loading latest save data...");        // Force refresh fresh player data from server before continuing
-        bool dataLoaded = false;
-        string errorMessage = "";
-        
-        yield return StartCoroutine(GameAPI.Instance.ForceRefreshPlayerData((success, error) => {
-            dataLoaded = success;
-            errorMessage = error;
-        }));
-        
-        if (!dataLoaded)
-        {
-            DebugLog($"Failed to load fresh save data: {errorMessage}");
-            UpdateLoadingStatus("Failed to load latest save. Loading with cached data...");
-            yield return new WaitForSeconds(1f);
-        }
-        else
-        {
-            DebugLog("Fresh save data loaded successfully for continue game");
-            UpdateLoadingStatus("Latest save data loaded! Starting game...");
-            yield return new WaitForSeconds(0.5f);
-        }
-        
-        UpdateLoadingStatus("Loading your saved adventure...");
-        yield return new WaitForSeconds(0.5f);
-        LoadGameScene();
-    }
-    
-    private void StartOfflineMode()
-    {
-        ShowLoadingPanel("Starting offline mode...");
-        UpdateLoadingStatus("Loading offline game...");
-        
-        // Remove the SetOfflineMode call since it doesn't exist in GameAPI
-        // Just proceed to load the offline game
-        
-        StartCoroutine(LoadOfflineGame());
-    }
-    
-    private IEnumerator LoadOfflineGame()
-    {
-        yield return new WaitForSeconds(1f);
-        SceneManager.LoadScene(offlineSceneName);
-    }
-    
-    private void CheckForContinueGame()
-    {
-        // This method is now called within UpdateWelcomeUI()
-        DebugLog("Continue game option updated");
-    }
-    
-    private void LoadGameScene()
-    {
-        DebugLog($"Loading game scene: {gameSceneName}");
-        if (string.IsNullOrEmpty(gameSceneName))
-        {
-            DebugLog("Error: Game scene name is not set!");
-            ShowWelcomePanel();
-            return;
-        }
-        // Sử dụng SceneTransitionManager nếu có
-        if (SceneTransitionManager.Instance != null)
-        {
-            SceneTransitionManager.Instance.LoadGameplayScene(gameSceneName);
-        }
-        else if (Application.CanStreamedLevelBeLoaded(gameSceneName))
-        {
-            SceneManager.LoadScene(gameSceneName);
-        }
-        else
-        {
-            DebugLog($"Error: Scene '{gameSceneName}' not found in build settings!");
-            ShowWelcomePanel();
-        }
-    }
-    
-    private void ShowLoginError(string message)
-    {
-        if (loginErrorText)
-        {
-            loginErrorText.gameObject.SetActive(true);
-            loginErrorText.text = message;
-        }
-        DebugLog("Login Error: " + message);
-    }
-    
-    private void ShowRegisterError(string message)
-    {
-        if (registerErrorText)
-        {
-            registerErrorText.gameObject.SetActive(true);
-            registerErrorText.text = message;
-        }
-        DebugLog("Register Error: " + message);
-    }
-    
-    private void DebugLog(string message)
-    {
-        if (debugMode)
-        {
-            Debug.Log($"[LoginUIManager] {message}");
-        }
-    }
-    
-    private void UpdateLoadingStatus(string status)
-    {
-        if (loadingStatusText) loadingStatusText.text = status;
-        DebugLog("Loading: " + status);
-    }
-    
-    private void ShowLoginPanel()
-    {
-        SetActivePanel(loginPanel);
-        if (loginErrorText) loginErrorText.gameObject.SetActive(false);
-        
-        // Load saved username if remember me was checked
-        if (rememberMeToggle && rememberMeToggle.isOn && loginUsernameInput)
-        {
-            loginUsernameInput.text = PlayerPrefs.GetString("LastUsername", "");
-        }
-    }
-    
-    private void ShowRegisterPanel()
-    {
-        SetActivePanel(registerPanel);
-        if (registerErrorText) registerErrorText.gameObject.SetActive(false);
-    }
-    
-    private void ShowWelcomePanel()
-    {
-        SetActivePanel(welcomePanel);
-        UpdateWelcomeUI(); // Update UI when showing welcome panel
-    }
-    
-    private void ShowLoadingPanel(string status = "Loading...")
-    {
-        SetActivePanel(loadingPanel);
-        UpdateLoadingStatus(status);
-        if (loadingProgressBar) loadingProgressBar.value = 0;
-    }
-    
-    private void SetActivePanel(GameObject activePanel)
-    {
-        if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
-        if (loginPanel) loginPanel.SetActive(activePanel == loginPanel);
-        if (registerPanel) registerPanel.SetActive(activePanel == registerPanel);
-        if (loadingPanel) loadingPanel.SetActive(activePanel == loadingPanel);
-        if (settingsPanel) settingsPanel.SetActive(activePanel == settingsPanel);
-        if (optionPanel) optionPanel.SetActive(activePanel == optionPanel);
-    }
-    
-    // Add new methods for UI management
-      /// <summary>
-    /// Update welcome panel UI based on login status
-    /// </summary>
+      // Đảm bảo chỉ cho phép continue khi đã có PlayerData hợp lệ từ server
     private void UpdateWelcomeUI()
     {
         bool isLoggedIn = GameAPI.Instance.IsLoggedIn;
+        bool hasValidPlayerData = isLoggedIn && GameAPI.Instance.PlayerData != null && !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id);
+        bool hasSavedGame = false;
+        if (hasValidPlayerData)
+        {
+            hasSavedGame = HasSavedGame();
+        }
         
-        // Force refresh player data before checking saved game
-        if (isLoggedIn && GameAPI.Instance.PlayerData != null)
+        if (welcomeLoginButton) welcomeLoginButton.gameObject.SetActive(!isLoggedIn);
+        if (welcomeRegisterButton) welcomeRegisterButton.gameObject.SetActive(!isLoggedIn);
+        if (welcomePlayOfflineButton) welcomePlayOfflineButton.gameObject.SetActive(!isLoggedIn);
+        
+        if (welcomeNewGameButton) welcomeNewGameButton.gameObject.SetActive(isLoggedIn);
+        if (welcomeContinueButton) welcomeContinueButton.gameObject.SetActive(hasValidPlayerData && hasSavedGame);
+        if (welcomeLogoutButton) welcomeLogoutButton.gameObject.SetActive(isLoggedIn);
+        
+
+        if (welcomeUserText)
         {
-            StartCoroutine(RefreshPlayerDataAndUpdateUI());
+            if (isLoggedIn && GameAPI.Instance.PlayerData != null)
+            {
+                welcomeUserText.gameObject.SetActive(true);
+                welcomeUserText.text = $"Welcome back, {GameAPI.Instance.PlayerData.username}!";
+            }
+            else
+            {
+                welcomeUserText.gameObject.SetActive(false);
+            }
         }
-        else
-        {
-            UpdateUIBasedOnLoginStatus(isLoggedIn, false);
-        }
-    }
-    
-    /// <summary>
+        
+        DebugLog($"Welcome UI updated - Logged in: {isLoggedIn}, Has saved game: {hasSavedGame}");
+    }    /// <summary>
     /// Refresh player data from server and update UI
     /// </summary>
     private IEnumerator RefreshPlayerDataAndUpdateUI()
@@ -1162,5 +959,179 @@ public class LoginUIManager : MonoBehaviour
     private void ShowOptionPanel()
     {
         SetActivePanel(optionPanel);
+    }
+    
+    // Bổ sung các hàm UI helper nếu bị thiếu để tránh lỗi "does not exist in the current context"
+    private void ShowWelcomePanel()
+    {
+        SetActivePanel(welcomePanel);
+        UpdateWelcomeUI();
+    }
+
+    private void ShowLoginPanel()
+    {
+        SetActivePanel(loginPanel);
+        if (loginErrorText) loginErrorText.gameObject.SetActive(false);
+        if (rememberMeToggle && rememberMeToggle.isOn && loginUsernameInput)
+        {
+            loginUsernameInput.text = PlayerPrefs.GetString("LastUsername", "");
+        }
+    }
+
+    private void ShowRegisterPanel()
+    {
+        SetActivePanel(registerPanel);
+        if (registerErrorText) registerErrorText.gameObject.SetActive(false);
+    }
+
+    private void DebugLog(string message)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"[LoginUIManager] {message}");
+        }
+    }
+
+    private void StartOfflineMode()
+    {
+        ShowLoadingPanel("Starting offline mode...");
+        UpdateLoadingStatus("Loading offline game...");
+        StartCoroutine(LoadOfflineGame());
+    }
+
+    private void SetActivePanel(GameObject activePanel)
+    {
+        if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
+        if (loginPanel) loginPanel.SetActive(activePanel == loginPanel);
+        if (registerPanel) registerPanel.SetActive(activePanel == registerPanel);
+        if (loadingPanel) loadingPanel.SetActive(activePanel == loadingPanel);
+        if (settingsPanel) settingsPanel.SetActive(activePanel == settingsPanel);
+        if (optionPanel) optionPanel.SetActive(activePanel == optionPanel);
+    }
+
+    // Bổ sung các hàm còn thiếu để tránh lỗi biên dịch
+    private void ShowLoginError(string message)
+    {
+        if (loginErrorText)
+        {
+            loginErrorText.gameObject.SetActive(true);
+            loginErrorText.text = message;
+        }
+        DebugLog("Login Error: " + message);
+    }
+
+    private void ShowRegisterError(string message)
+    {
+        if (registerErrorText)
+        {
+            registerErrorText.gameObject.SetActive(true);
+            registerErrorText.text = message;
+        }
+        DebugLog("Register Error: " + message);
+    }
+
+    private void LoadGameScene()
+    {
+        DebugLog($"Loading game scene: {gameSceneName}");
+        if (string.IsNullOrEmpty(gameSceneName))
+        {
+            DebugLog("Error: Game scene name is not set!");
+            ShowWelcomePanel();
+            return;
+        }
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadGameplayScene(gameSceneName);
+        }
+        else if (Application.CanStreamedLevelBeLoaded(gameSceneName))
+        {
+            SceneManager.LoadScene(gameSceneName);
+        }
+        else
+        {
+            DebugLog($"Error: Scene '{gameSceneName}' not found in build settings!");
+            ShowWelcomePanel();
+        }
+    }
+
+    // Ví dụ: Save game lên server cho user hiện tại
+    private IEnumerator SaveGameToServer()
+    {
+        if (!GameAPI.Instance.IsLoggedIn || GameAPI.Instance.PlayerData == null)
+        {
+            DebugLog("Cannot save: Not logged in or no player data");
+            yield break;
+        }
+        bool saveSuccess = false;
+        string errorMessage = "";
+        yield return StartCoroutine(GameAPI.Instance.SavePlayerData((success, error) => {
+            saveSuccess = success;
+            errorMessage = error;
+        }));
+        if (saveSuccess)
+        {
+            DebugLog("Game progress saved to server for user: " + GameAPI.Instance.PlayerData.username);
+        }
+        else
+        {
+            DebugLog("Failed to save game to server: " + errorMessage);
+        }
+    }
+
+    // Khi nhấn Continue Game, chỉ dùng PlayerData vừa lấy từ server (không lấy local)
+    private IEnumerator ContinueGameCoroutine()
+    {
+        var playerData = GameAPI.Instance.PlayerData;
+        if (!GameAPI.Instance.IsLoggedIn || playerData == null || string.IsNullOrEmpty(playerData.id))
+        {
+            DebugLog("Cannot continue game: User not logged in or no valid player data");
+            UpdateLoadingStatus("Bạn chưa đăng nhập hoặc chưa có dữ liệu game! Vui lòng đăng nhập lại hoặc thử lại sau.");
+            yield return new WaitForSeconds(1.5f);
+            ShowWelcomePanel();
+            yield break;
+        }
+        // Kiểm tra các field khác với default
+        bool hasProgress = false;
+        // Ví dụ: kiểm tra tiền, vị trí, checkpoint, vũ khí, level, ...
+        if ((playerData.money != 0) ||
+            (playerData.level > 1) ||
+            (playerData.experience > 0) ||
+            (playerData.checkpoint != null && !string.IsNullOrEmpty(playerData.checkpoint.sceneId)) ||
+            (playerData.weapons != null && playerData.weapons.Count > 0))
+        {
+            hasProgress = true;
+        }
+        if (!hasProgress)
+        {
+            UpdateLoadingStatus("Bạn chưa có tiến trình nào để tiếp tục! Hãy bắt đầu game mới.");
+            yield return new WaitForSeconds(1.5f);
+            ShowWelcomePanel();
+            yield break;
+        }
+        // Nếu có tiến trình, load đúng dữ liệu đã lưu
+        UpdateLoadingStatus("Loading your saved adventure...");
+        yield return new WaitForSeconds(0.5f);
+        LoadGameScene();
+    }
+    
+    // Đảm bảo chỉ có một bản định nghĩa duy nhất cho các hàm này ở cuối class
+    private void ShowLoadingPanel(string status = "Loading...")
+    {
+        SetActivePanel(loadingPanel);
+        UpdateLoadingStatus(status);
+        if (loadingProgressBar) loadingProgressBar.value = 0;
+    }
+
+    private void UpdateLoadingStatus(string status)
+    {
+        if (loadingStatusText) loadingStatusText.text = status;
+        DebugLog("Loading: " + status);
+    }
+
+    // Bổ sung lại hàm LoadOfflineGame để tránh lỗi biên dịch
+    private IEnumerator LoadOfflineGame()
+    {
+        yield return new WaitForSeconds(1f);
+        SceneManager.LoadScene(offlineSceneName);
     }
 }
