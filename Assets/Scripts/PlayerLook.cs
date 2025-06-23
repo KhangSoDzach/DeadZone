@@ -45,20 +45,16 @@ public class PlayerLook : MonoBehaviour
 
       public void TakeDamageEffect()
     {
-        Debug.Log("TakeDamageEffect đã được gọi!");
         
-        // Luôn lưu vị trí ban đầu của camera khi bị đánh
         if (cam != null)
             originalPosition = cam.transform.localPosition;
-          // Luôn đặt lại các tham số shake khi bị đánh, bất kể trạng thái shake hiện tại
         isShaking = true;
         shakeTimer = shakeDuration;
-        shakeIntensity = 0.2f; // Đảm bảo đặt lại cường độ shake mạnh khi bị đánh
-        
+        shakeIntensity = 0.2f;
+
         // Kiểm tra nếu hiệu ứng viền đỏ chưa được tạo hoặc không tồn tại
         if (damageVignette == null || damageCanvas == null)
         {
-            Debug.LogWarning("DamageVignette hoặc damageCanvas chưa được khởi tạo đúng cách! Đang tạo mới...");
             CreateDamageVignetteEffect();
         }
 
@@ -83,7 +79,7 @@ public class PlayerLook : MonoBehaviour
                 return; // Don't create damage effects in menu scenes
             }
         }
-        
+
         // Phát âm thanh khi bị thương
         PlayDamageSound();
     }
@@ -344,66 +340,57 @@ public class PlayerLook : MonoBehaviour
     // Tạo hiệu ứng viền đỏ nếu chưa có
     private void CreateDamageVignetteEffect()
     {
-        Debug.Log("Bắt đầu tạo hiệu ứng viền đỏ...");
-        
-        // Xóa canvas cũ nếu có
         if (damageCanvas != null)
         {
-            Debug.Log("Xóa canvas cũ");
-            Destroy(damageCanvas);
+            damageCanvas.SetActive(false);  
+            return;
         }
-        
-        try {
-            // Tạo canvas để hiển thị hiệu ứng viền đỏ
+
+        try
+        {
             damageCanvas = new GameObject("DamageEffectCanvas");
-            damageCanvas.transform.SetParent(null); // Để đảm bảo nó không bị ảnh hưởng bởi vị trí camera
+            damageCanvas.transform.SetParent(null);
             Canvas canvasComponent = damageCanvas.AddComponent<Canvas>();
             canvasComponent.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasComponent.sortingOrder = 9999; // Tăng sorting order lên cao hơn nữa
-            
-            // Thêm GraphicRaycaster để đảm bảo canvas hoạt động đúng
+            canvasComponent.sortingOrder = 500; // Đảm bảo nhỏ hơn DeathScreen
+
+            // Thêm GraphicRaycaster để UI hoạt động
             damageCanvas.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-            
-            // Thêm CanvasScaler để hiệu ứng hiển thị đúng trên mọi độ phân giải
+
+            // CanvasScaler để hiển thị đúng trên mọi độ phân giải
             CanvasScaler scaler = damageCanvas.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
-            
-            // Tạo image để làm viền đỏ
+
+            // Tạo image cho viền đỏ
             GameObject vignetteObject = new GameObject("DamageVignette");
             vignetteObject.transform.SetParent(damageCanvas.transform, false);
-            
-            // Thêm Image component
+
             damageVignette = vignetteObject.AddComponent<Image>();
-            
-            // Đảm bảo vị trí viền đỏ bao phủ toàn bộ màn hình
+
             RectTransform rectTransform = vignetteObject.GetComponent<RectTransform>();
             rectTransform.anchorMin = Vector2.zero;
             rectTransform.anchorMax = Vector2.one;
-            rectTransform.sizeDelta = Vector2.zero; // Sử dụng Vector2.zero thay vì Screen.width/height
+            rectTransform.sizeDelta = Vector2.zero;
             rectTransform.anchoredPosition = Vector2.zero;
-            
-            // Tạo một texture đơn giản với viền đỏ
+
             Texture2D tex = CreateDamageTexture();
             damageSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-            
-            // Gán sprite và đặt màu ban đầu (trong suốt)
+
             damageVignette.sprite = damageSprite;
             damageVignette.color = new Color(1, 0, 0, 0);
-            
-            // Đảm bảo Image hiển thị đúng
             damageVignette.type = Image.Type.Sliced;
-            
-            // Ban đầu ẩn đi
-            damageCanvas.SetActive(false);
-            
-            Debug.Log("Đã tạo hiệu ứng viền đỏ thành công. Canvas: " + damageCanvas.name + ", Active: " + damageCanvas.activeInHierarchy);
+
+            damageVignette.raycastTarget = false;
+
+            damageCanvas.SetActive(false); 
         }
-        catch (System.Exception e) {
-            Debug.LogError("Lỗi khi tạo hiệu ứng viền đỏ: " + e.Message + "\n" + e.StackTrace);
+        catch (System.Exception e)
+        {
+            Debug.LogError("Error creating damage vignette: " + e.Message);
         }
     }
-    
+
     // Tạo một texture tốt hơn cho viền đỏ
     private Texture2D CreateDamageTexture()
     {

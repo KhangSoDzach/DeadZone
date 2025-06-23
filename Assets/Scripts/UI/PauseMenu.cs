@@ -445,6 +445,10 @@ namespace Scripts.API
                     GameSaveManager.Instance.SaveGame();
                 }
             }
+            if (DataPersistenceManager.instance != null)
+            {
+                DataPersistenceManager.instance.SaveGame();
+            }
 
             // Restore time scale
             Time.timeScale = 1f;

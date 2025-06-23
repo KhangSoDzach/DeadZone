@@ -14,10 +14,18 @@ public class DeathScreenManager : MonoBehaviour
 
     [Header("Scene Names")]
     public string mainMenuSceneName = "Menu"; // Tên scene menu chính
-    public string newGameSceneName = "Scene_A"; // Tên scene khi bắt đầu game mới
+    public string newGameSceneName = "Cutscene"; // Tên scene khi bắt đầu game mới
 
     private static DeathScreenManager _instance;
     public static DeathScreenManager Instance { get { return _instance; } }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            ShowDeathScreen();
+        }
+    }
 
     private void Awake()
     {
@@ -36,6 +44,7 @@ public class DeathScreenManager : MonoBehaviour
         {
             deathScreenPanel.SetActive(false);
         }
+
     }
 
     private void Start()
@@ -60,30 +69,36 @@ public class DeathScreenManager : MonoBehaviour
     // Phương thức để hiển thị màn hình chết
     public void ShowDeathScreen()
     {
+
         if (deathScreenPanel != null)
-        {
-            deathScreenPanel.SetActive(true);
-            
+        {            
             // Dừng thời gian trong game khi hiển thị màn hình chết
             Time.timeScale = 0f;
+
             
             // Bật chuột để người chơi có thể tương tác với UI
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+            deathScreenPanel.SetActive(true);
+
         }
     }
 
     // Phương thức để quay lại checkpoint gần nhất
     public void ReturnToLastCheckpoint()
     {
-        // Reset thời gian và ẩn màn hình chết
-        Time.timeScale = 1f;
         deathScreenPanel.SetActive(false);
-        
-        // Tìm và gọi phương thức hồi sinh người chơi
-        // Nếu có checkpoint system, có thể load checkpoint ở đây
-        
-        // Ví dụ: Reload scene hiện tại
+
+        if (DataPersistenceManager.instance != null)
+        {
+            DataPersistenceManager.instance.LoadGame();
+            Debug.Log("[Death] Đã load lại dữ liệu game từ save file.");
+        }
+        else
+        {
+            Debug.LogWarning("Không tìm thấy DataPersistenceManager.");
+        }
+
         Scene currentScene = SceneManager.GetActiveScene();
         SceneManager.LoadScene(currentScene.name);
     }

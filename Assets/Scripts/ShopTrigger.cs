@@ -21,22 +21,39 @@ public class ShopTrigger : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        Canvas[] canvases = FindObjectsOfType<Canvas>(true); 
+        foreach (Canvas canvas in canvases)
+        {
+            Transform shopUITransform = canvas.transform.Find("ShopPanel"); 
+            if (shopUITransform != null)
+            {
+                shopUI = shopUITransform.gameObject;
+                shopUI.SetActive(false);
+                return;
+            }
+        }
     }
 
     void Update()
     {
-        if (playerInZone && Vector3.Distance(transform.position, player.position) < interactDistance)
+        if (player == null)
+            player = GameObject.FindWithTag("Player")?.transform;
+
+        
+
+        if (playerInZone && player != null && Vector3.Distance(transform.position, player.position) < interactDistance)
         {
-            if (Input.GetKeyDown(interactKey)) // Using the variable instead of hardcoded KeyCode.F
+            if (Input.GetKeyDown(interactKey))
             {
                 ToggleShop();
             }
         }
-    }    void ToggleShop()
+    }    
+    void ToggleShop()
     {
         shopOpen = !shopOpen;
         
-        // Get reference to ShopManagement
         ShopManagement shopManager = FindObjectOfType<ShopManagement>();
         
         if (shopOpen)

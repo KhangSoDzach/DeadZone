@@ -55,6 +55,7 @@ public class Gun : MonoBehaviour
 
     void Start()
     {
+        
         currentAmmo = maxAmmo; // Initialize ammo
         
         // Make sure all required components are available
@@ -246,6 +247,7 @@ public class Gun : MonoBehaviour
             }
         }
     }    // Update is called once per frame
+
     void Update()
     {
         // Check if game is paused before processing any input

@@ -29,11 +29,9 @@ public class OpenDoor : MonoBehaviour
         doorAni = GetComponent<Animator>();
         if (doorAni == null)
         {
-            Debug.LogError("Không tìm th?y Animator trên GameObject c?a!");
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         

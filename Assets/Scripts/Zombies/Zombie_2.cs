@@ -3,11 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Zombie_4 : MonoBehaviour
+public class Zombie_2 : MonoBehaviour
 {
-    // Start is called before the first frame update
     void Start()
     {
+        ApplyDifficultyScaling();
+    }
+    private void ApplyDifficultyScaling()
+    {
+        float multiplier = 1f;
+
+        if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData() != null)
+        {
+            multiplier = DataPersistenceManager.instance.GetData().difficultyMode;
+        }
+
+        attackDamage *= multiplier;
+        zombieHealth *= multiplier;
+        remainHeath = zombieHealth;
+
 
     }
 
@@ -35,21 +49,21 @@ public class Zombie_4 : MonoBehaviour
     public bool playerInAttackingRadius;
 
     [Header("Zombie Health and Damage")]
-    public float attackDamage = 3f;
-    private float zombieHealth = 50f;
+    public float attackDamage = 5f;
+    private float zombieHealth = 55f;
     private float remainHeath;
-
     [Header("Zombie Sounds")]
     public AudioSource audioSource;
     public AudioClip idleGroanSound;
 
     private float nextSoundTime = 0f;
 
+    // Thêm phần này vào sau khu vực khai báo header
     [Header("Money Drop Settings")]
     public GameObject moneyPrefab;          // Prefab đồng tiền
-    public float dropChance = 0.8f;         // Tỷ lệ rơi tiền (0-1)
-    public int minCoinsDropped = 3;         // Số lượng đồng tiền tối thiểu
-    public int maxCoinsDropped = 5;         // Số lượng đồng tiền tối đa
+    public float dropChance = 0.6f;         // Tỷ lệ rơi tiền (0-1)
+    public int minCoinsDropped = 1;         // Số lượng đồng tiền tối thiểu
+    public int maxCoinsDropped = 2;         // Số lượng đồng tiền tối đa
 
     // Update is called once per frame
     void Update()
@@ -73,12 +87,8 @@ public class Zombie_4 : MonoBehaviour
                     audioSource.PlayOneShot(idleGroanSound);
                 }
 
-                nextSoundTime = Time.time + 25f;
+                nextSoundTime = Time.time + 30f;
             }
-        }
-        if (!playerExistenceRadius && !playerInAttackingRadius)
-        {
-            Idle();
         }
     }
     private void Awake()
@@ -97,10 +107,45 @@ public class Zombie_4 : MonoBehaviour
     {
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 6.0f;
+            if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData() != null)
+            {
+                float multiplier = DataPersistenceManager.instance.GetData().difficultyMode;
+                zombieAgent.speed = multiplier * 5;
+
+            }
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);
+        }
+      
+    }
+    private void AttackPlayer()
+    {
+        zombieAgent.SetDestination(transform.position);
+        transform.LookAt(LookPoint);
+        if (!prevAttack)
+        {
+            aniZombie.SetBool("isRunning", false);
+            aniZombie.SetBool("isAttacking", true);
+
+
+            Invoke(nameof(ApplyZombieDamage), 0.5f);
+            prevAttack = true;
+            Invoke(nameof(ActiveAttacking), attackSpeed);
+        }
+    }
+    public void ApplyZombieDamage()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
+        {
+            HealthManager playerHealth = hit.transform.GetComponent<HealthManager>();
+            if (playerHealth != null)
+            {
+                // Apply damage to the player
+                playerHealth.TakeDamage(attackDamage);
+                Debug.Log("Player hit for " + attackDamage + " damage");
+            }
         }
 
     }
@@ -128,37 +173,6 @@ public class Zombie_4 : MonoBehaviour
             }
         }
     }
-    private void AttackPlayer()
-    {
-        zombieAgent.SetDestination(transform.position);
-        transform.LookAt(LookPoint);
-        if (!prevAttack)
-        {
-            ApplyZombieDamage();
-            aniZombie.SetBool("isRunning", false);
-            aniZombie.SetBool("isAttacking", true);
-
-
-            Invoke(nameof(ApplyZombieDamage), 0.3f);
-            prevAttack = true;
-            Invoke(nameof(ActiveAttacking), attackSpeed);
-        }
-    }
-    private void ApplyZombieDamage()
-    {
-        RaycastHit hit;
-        if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
-        {
-            // Check if we hit the player
-            HealthManager playerHealth = hit.transform.GetComponent<HealthManager>();
-            if (playerHealth != null)
-            {
-                // Apply damage to the player
-                playerHealth.TakeDamage(attackDamage);
-                Debug.Log("Player hit for " + attackDamage + " damage");
-            }
-        }
-    }
     private void ActiveAttacking()
     {
         prevAttack = false;
@@ -175,6 +189,7 @@ public class Zombie_4 : MonoBehaviour
         }
     }
 
+    // Sửa hàm zombieDie() để thêm phần rơi tiền
     private void zombieDie()
     {
         transform.LookAt(LookPoint);
@@ -187,7 +202,7 @@ public class Zombie_4 : MonoBehaviour
 
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
-        
+
         // Kiểm tra tỷ lệ rơi tiền
         if (Random.value <= dropChance)
         {
@@ -215,4 +230,5 @@ public class Zombie_4 : MonoBehaviour
             }
         }
     }
+    
 }

@@ -67,15 +67,15 @@ public class HealthManager : MonoBehaviour
         string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
         if (sceneName.Contains("menu") || sceneName.Contains("login"))
         {
-            Debug.Log("HealthManager: Skipping initialization in menu scene");
             this.enabled = false;
             return;
         }
+        if (!LoadStatsFromGameData()) 
+        {
+            currentHealth = maxHealth;
+            currentStamina = maxStamina;
+        }
 
-        // Khởi tạo giá trị sức khỏe và thể lực
-        currentHealth = maxHealth;
-        currentStamina = maxStamina;
-        
         playerLook = GetComponentInChildren<PlayerLook>();
         
         // Nếu không tìm thấy trong children, tìm trong parent
@@ -128,12 +128,15 @@ public class HealthManager : MonoBehaviour
             return;
             
         currentHealth -= damage;
-       //Debug.Log("Player took damage: " + damage + " | Current health: " + currentHealth);
         
         // Giới hạn không cho health xuống dưới 0
         if (currentHealth < 0) 
             currentHealth = 0;
-        
+        // Thực hiện các hiệu ứng khi bị tấn công
+        if (playerLook != null)
+        {
+            playerLook.TakeDamageEffect();
+        }
         // Cập nhật UI
         UpdateHealthUI();
         
@@ -143,38 +146,24 @@ public class HealthManager : MonoBehaviour
             Die();
         }
 
-        // Thực hiện các hiệu ứng khi bị tấn công
-        if (playerLook != null)
-        {
-            playerLook.TakeDamageEffect();
-        }
-        
+
+
         // Bắt đầu thời gian miễn nhiễm
         isImmune = true;
         immunityTimer = immunityTime;
     }
-
+   
     // Phương thức khi người chơi chết
     void Die()
     {
-        Debug.Log("Player has died!");
         
-        // Unlock cursor so player can click buttons
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        
+
         // Tìm Death Screen Manager để hiển thị màn hình chết
-        DeathScreenManager deathManager = DeathScreenManager.Instance;
-        
-        if (deathManager != null)
-        {
-            deathManager.ShowDeathScreen();
-        }
-        else
-        {
-            Debug.LogWarning("DeathScreenManager không tồn tại trong scene. Vui lòng thêm Death Screen Manager vào scene.");
-        }
-        
+        StartCoroutine(ShowDeathScreenWithDelay());
+
+
         // Vô hiệu hóa điều khiển người chơi
         var playerMovement = GetComponent<PlayerMovementScript>();
         if (playerMovement == null)
@@ -214,7 +203,26 @@ public class HealthManager : MonoBehaviour
                 input.enabled = false;
             }
         }
+        if (ObjectiveManager.Instance != null && ObjectiveManager.Instance.objectiveText != null)
+        {
+            ObjectiveManager.Instance.objectiveText.gameObject.SetActive(false);
+        }
     }
+    private IEnumerator ShowDeathScreenWithDelay()
+    {
+        yield return new WaitForSecondsRealtime(1f); 
+        DeathScreenManager deathManager = DeathScreenManager.Instance;
+
+        if (deathManager != null)
+        {
+            deathManager.ShowDeathScreen();
+        }
+        else
+        {
+            Debug.LogWarning("DeathScreenManager không tồn tại trong scene. Vui lòng thêm Death Screen Manager vào scene.");
+        }
+    }
+
 
     // Phương thức hồi máu
     public void Heal(float healAmount)
@@ -384,7 +392,39 @@ public class HealthManager : MonoBehaviour
             ShowLowHealthEffect();
         }
     }
-    
+    public void SaveStatsToGameData()
+    {
+        if (DataPersistenceManager.instance != null)
+        {
+            GameData data = DataPersistenceManager.instance.GetData();
+            if (data != null)
+            {
+                data.playerHealth = currentHealth;
+                data.playerStamina = currentStamina;
+            }
+        }
+    }
+
+    public bool LoadStatsFromGameData()
+    {
+        if (DataPersistenceManager.instance != null)
+        {
+            GameData data = DataPersistenceManager.instance.GetData();
+            if (data != null)
+            {
+                currentHealth = data.playerHealth;
+                currentStamina = data.playerStamina;
+
+                UpdateHealthUI();
+                UpdateStaminaUI();
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
     // Phương thức để hiển thị hiệu ứng trực quan khi sức khỏe thấp
     private void ShowLowHealthEffect()
     {

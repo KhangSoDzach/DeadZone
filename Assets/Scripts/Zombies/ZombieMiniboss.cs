@@ -1,18 +1,33 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Boss : MonoBehaviour
+public class ZombieMiniboss : MonoBehaviour
 {
+    // Start is called before the first frame update
     void Start()
     {
-        BossHealthUI.Instance.ShowUI(bossName);
-        BossHealthUI.Instance.UpdateHealth(remainHeath, zombieHealth);
-
         remainHeath = zombieHealth;
         zombieAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
 
         TryAssignPlayerReferences();
+        ApplyDifficultyScaling();
+
+    }
+    private void ApplyDifficultyScaling()
+    {
+        float multiplier = 1f;
+
+        if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData() != null)
+        {
+            multiplier = DataPersistenceManager.instance.GetData().difficultyMode;
+        }
+
+        attackDamage *= multiplier;
+        zombieHealth *= multiplier;
+        remainHeath = zombieHealth;
+
+
     }
 
     [Header("Zombie Things")]
@@ -43,7 +58,7 @@ public class Boss : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 15f;
-    private float zombieHealth = 1000f;
+    private float zombieHealth = 250f;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -51,30 +66,25 @@ public class Boss : MonoBehaviour
     public AudioClip idleGroanSound;
 
     [Header("Heavy Attack Settings")]
-    private float heavyAttackTimer = 0;
-    public float heavyAttackDamage = 20f;
-
-    [Header("Jump Attack Settings")]
-    private float jumpAttackTimer = 0;
-    public float jumpAttackDamage = 30f;
+    public int heavyAttackCooldown = 10;
+    private int heavyAttackTimer = 0;
+    public float heavyAttackDamage = 30f;
 
     private float nextSoundTime = 0f;
 
 
-    public string bossName = "The Abyss"; void Update()
+    // Update is called once per frame
+    void Update()
     {
         if (playerBody == null || LookPoint == null)
         {
             TryAssignPlayerReferences();
-            return;
+            return; 
         }
         playerExistenceRadius = Physics.CheckSphere(transform.position, observationRadius, PlayerLayer);
         playerInAttackingRadius = Physics.CheckSphere(transform.position, attackingRadius, PlayerLayer);
         if (!playerExistenceRadius && !playerInAttackingRadius) Guard();
-        if (playerExistenceRadius && !playerInAttackingRadius)
-        {
-            ChasingPlayer();
-        } 
+        if (playerExistenceRadius && !playerInAttackingRadius) ChasingPlayer();
 
         if (playerExistenceRadius && !playerInAttackingRadius)
         {
@@ -85,27 +95,16 @@ public class Boss : MonoBehaviour
                     audioSource.PlayOneShot(idleGroanSound);
                 }
 
-                nextSoundTime = Time.time + 20f;
-            }
-        }
-        if (playerExistenceRadius && !playerInAttackingRadius)
-        {
-            jumpAttackTimer += Time.deltaTime;
-
-            if (jumpAttackTimer >= 15f)
-            {
-                JumpAttacking();
+                nextSoundTime = Time.time + 15f;
             }
         }
         if (playerExistenceRadius && playerInAttackingRadius)
         {
-            jumpAttackTimer += Time.deltaTime;
-            heavyAttackTimer += Time.deltaTime;
-            if (heavyAttackTimer >= 5f)
+            heavyAttackTimer += 1;
+            if (heavyAttackTimer >= 5)
             {
                 HeavyAttacking();
             }
-            
             else
             {
                 AttackPlayer();
@@ -136,6 +135,7 @@ public class Boss : MonoBehaviour
             }
             transform.position = Vector3.MoveTowards(transform.position, guardingPoints[currentPosition].transform.position, Time.deltaTime * zombieSpeed);
 
+            //change zombie facing
             transform.LookAt(guardingPoints[currentPosition].transform.position);
         }
         else
@@ -149,15 +149,13 @@ public class Boss : MonoBehaviour
         observationRadius = 30f;
         if (zombieAgent.SetDestination(playerBody.position))
         {
-            zombieAgent.speed = 2;
+            zombieAgent.speed = 5;
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isWalking", false);
             aniZombie.SetBool("isRunning", true);
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", false);
             aniZombie.SetBool("isHeavyAttack", false);
-            aniZombie.SetBool("isJumpAttack", false);
-
 
 
         }
@@ -166,7 +164,6 @@ public class Boss : MonoBehaviour
             aniZombie.SetBool("isIdle", false);
             aniZombie.SetBool("isWalking", false);
             aniZombie.SetBool("isRunning", false);
-            aniZombie.SetBool("isJumpAttack", false);
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
@@ -178,6 +175,7 @@ public class Boss : MonoBehaviour
 
         if (!prevAttack)
         {
+            //Code the player take damage from player
 
             aniZombie.SetBool("isAttacking", true);
             aniZombie.SetBool("isWalking", false);
@@ -185,7 +183,7 @@ public class Boss : MonoBehaviour
             aniZombie.SetBool("isDead", false);
             zombieAgent.isStopped = true;
 
-            Invoke(nameof(EndReaction), 1f);
+            Invoke(nameof(EndReaction), 1.4f);
 
             Invoke(nameof(ApplyZombieDamage), 0.5f);
 
@@ -199,9 +197,11 @@ public class Boss : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(AttackingRaycastArea.transform.position, AttackingRaycastArea.transform.forward, out hit, attackingRadius))
         {
+            Debug.Log("attac k");
             HealthManager playerHealth = hit.transform.GetComponent<HealthManager>();
             if (playerHealth != null)
             {
+                // Apply damage to the player
                 playerHealth.TakeDamage(attackDamage);
             }
         }
@@ -215,6 +215,7 @@ public class Boss : MonoBehaviour
 
         if (!prevAttack)
         {
+            //Code the player take damage from player
 
             aniZombie.SetBool("isHeavyAttack", true);
             aniZombie.SetBool("isWalking", false);
@@ -225,7 +226,7 @@ public class Boss : MonoBehaviour
 
             Invoke(nameof(EndReaction), 1.5f);
 
-            Invoke(nameof(ApplyHeavyDamage), 1.8f);
+            Invoke(nameof(ApplyHeavyDamage), 1.6f);
 
 
             prevAttack = true;
@@ -236,52 +237,6 @@ public class Boss : MonoBehaviour
 
 
     }
-    private Vector3 jumpTargetPos;
-
-    private void JumpAttacking()
-    {
-        zombieAgent.SetDestination(transform.position);
-        transform.LookAt(LookPoint);
-
-        aniZombie.SetBool("isHeavyAttack", false);
-        aniZombie.SetBool("isJumpAttack", true);
-        aniZombie.SetBool("isWalking", false);
-        aniZombie.SetBool("isAttacking", false);
-        aniZombie.SetBool("isRunning", false);
-        aniZombie.SetBool("isDead", false);
-
-        zombieAgent.isStopped = true;
-
-        Invoke(nameof(EndReaction), 4f);
-
-        jumpTargetPos = playerBody.position;
-
-        StartCoroutine(JumpToTarget(jumpTargetPos, 1.5f));
-
-       
-
-    }
-    private IEnumerator JumpToTarget(Vector3 targetPosition, float duration)
-    {
-        float elapsed = 0f;
-        Vector3 startPos = transform.position;
-
-        while (elapsed < duration)
-        {
-            float t = elapsed / duration;
-            float height = 2f * Mathf.Sin(Mathf.PI * t); 
-            Vector3 midPos = Vector3.Lerp(startPos, targetPosition, t);
-            transform.position = new Vector3(midPos.x, midPos.y + height, midPos.z);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        transform.position = targetPosition;
-
-        ApplyJumpAttackDamage();
-
-    }
-
     void ApplyHeavyDamage()
     {
         heavyAttackTimer = 0;
@@ -296,22 +251,6 @@ public class Boss : MonoBehaviour
             }
         }
     }
-    public void ApplyJumpAttackDamage()
-    {
-        jumpAttackTimer = 0;
-
-        Collider[] hits = Physics.OverlapSphere(transform.position, 2f, PlayerLayer); 
-        foreach (Collider col in hits)
-        {
-            HealthManager playerHealth = col.GetComponent<HealthManager>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(jumpAttackDamage);
-                Debug.Log("Jump attack hit player!");
-            }
-        }
-    }
-
     private void ActiveAttacking()
     {
         prevAttack = false;
@@ -320,7 +259,6 @@ public class Boss : MonoBehaviour
     {
         observationRadius = 30f;
         remainHeath -= takeDamge;
-        BossHealthUI.Instance.UpdateHealth(remainHeath, zombieHealth);
 
         if (remainHeath <= 0)
         {
@@ -331,8 +269,9 @@ public class Boss : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 100 || remainHeath == 200 || remainHeath == 400 || remainHeath == 600 || remainHeath == 800)
+        if (remainHeath <= 50 || remainHeath <= 90 || remainHeath <= 150 || remainHeath <= 200)
         {
+            //Reaction hit
             aniZombie.SetTrigger("isHit");
             zombieAgent.isStopped = true;
 
@@ -367,7 +306,7 @@ public class Boss : MonoBehaviour
             }
             else
             {
-                LookPoint = playerBody;
+                LookPoint = playerBody; 
             }
         }
     }
@@ -387,7 +326,5 @@ public class Boss : MonoBehaviour
         aniZombie.SetBool("isAttacking", false);
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
-        BossHealthUI.Instance.HideUI();
-        audioSource.PlayOneShot(idleGroanSound);
     }
 }

@@ -47,8 +47,6 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         
-        instance = this;
-        DontDestroyOnLoad(this.gameObject);
         
         // Listen for scene changes
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;

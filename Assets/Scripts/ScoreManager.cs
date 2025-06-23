@@ -57,6 +57,8 @@ public class ScoreManager : MonoBehaviour
     
     private void Start()
     {
+        LoadScoreFromGameData();
+
         // One more attempt to find scoreText if needed
         if (scoreText == null || stackMoneyText == null)
         {
@@ -65,7 +67,19 @@ public class ScoreManager : MonoBehaviour
         
         Debug.Log($"ScoreManager initialized with scoreText: {(scoreText != null ? scoreText.name : "null")}, stackMoneyText: {(stackMoneyText != null ? stackMoneyText.name : "null")}");
     }
-    
+  
+    public void LoadScoreFromGameData()
+    {
+        if (DataPersistenceManager.instance != null)
+        {
+            GameData data = DataPersistenceManager.instance.GetData();
+            if (data != null)
+            {
+                SetScore(data.playerScore);
+            }
+        }
+    }
+
     // Find score text in the scene
     public void FindScoreText()
     {

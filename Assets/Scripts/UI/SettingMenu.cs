@@ -137,6 +137,13 @@ public class SettingMenu : MonoBehaviour
 
     private void OnBackToMenu()
     {
+        if (DataPersistenceManager.instance != null)
+        {
+            Debug.Log("ssssss");
+            DataPersistenceManager.instance.SaveGame();
+
+        }
+
         if (settingPanel) settingPanel.SetActive(false);
         if (menuPanel) menuPanel.SetActive(true);
     }

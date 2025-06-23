@@ -49,9 +49,29 @@ public class ShopManagement : MonoBehaviour
 
     void Start()
     {
-        shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 30 });
-        shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 20 });
-        shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 30 });
+        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        foreach (Canvas canvas in canvases)
+        {
+            Transform shopUITransform = canvas.transform.Find("ShopPanel");
+            Transform gunShopPanelTransform = canvas.transform.Find("GunShopPanel");
+
+            if (shopUITransform != null)
+            {
+                mainShopPanel = shopUITransform.gameObject;
+                mainShopPanel.SetActive(false);
+            }
+            if (gunShopPanelTransform != null)
+            {
+                gunShopPanel = gunShopPanelTransform.gameObject;
+                gunShopPanel.SetActive(false);
+                return;
+            }
+        }
+
+       
+        // Initialize the shop items        shopItemsList.Add(new ShopItem { id = 1, name = "First Aid", price = 300 });
+        shopItemsList.Add(new ShopItem { id = 2, name = "Pistol Ammo", price = 200 });
+        shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 300 });
         shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 }); 
         shopItemsList.Add(new ShopItem { id = 5, name = "Weapon Upgrade", price = 0 });
         shopItemsList.Add(new ShopItem { id = 6, name = "M4A1", price = 50 }); // Đổi tên AK-47 thành M4A1
@@ -76,11 +96,7 @@ public class ShopManagement : MonoBehaviour
         // Update the money text with current score
         UpdateMoneyText();
 
-        // Make sure gun shop panel is hidden at start
-        if (gunShopPanel != null)
-        {
-            gunShopPanel.SetActive(false);
-        }
+        
         
         // Set initial shop state
         isShopOpen = mainShopPanel != null && mainShopPanel.activeSelf;
@@ -864,6 +880,7 @@ public class ShopManagement : MonoBehaviour
         // No rifle found
         return false;
     }
+    
 
     // Method to notify pause menu when shop state changes
     private void NotifyPauseMenuOfShopState()

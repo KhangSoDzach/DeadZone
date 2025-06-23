@@ -1,24 +1,41 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ReturnDoorTrigger : MonoBehaviour
 {
     public GameObject instructionUI;
-    public string bossTag = "Boss";                
+    public string bossTag = "Boss";
 
     private bool isPlayerNear = false;
     private bool hasReturned = false;
+    private Transform playerTransform;
 
     void Start()
     {
+        TryFindPlayer();
+
+        if (instructionUI == null)
+        {
+            GameObject foundUI = GameObject.FindGameObjectWithTag("PressE");
+            if (foundUI != null)
+            {
+                instructionUI = foundUI;
+            }
+        }
+
         if (instructionUI != null)
             instructionUI.SetActive(false);
     }
 
     void Update()
     {
+        if (playerTransform == null)
+        {
+            TryFindPlayer(); 
+            return;
+        }
+
         if (isPlayerNear && !hasReturned)
         {
             if (instructionUI != null)
@@ -29,19 +46,22 @@ public class ReturnDoorTrigger : MonoBehaviour
                 if (IsBossDead())
                 {
                     hasReturned = true;
-                    instructionUI.SetActive(false);
+                    if (instructionUI != null)
+                        instructionUI.SetActive(false);
+
                     LoadScene();
-                    ObjectiveManager.Instance.UpdateObjective("Escape the island");
+
+                    if (ObjectiveManager.Instance != null)
+                        ObjectiveManager.Instance.UpdateObjective("Escape the island");
                 }
                 else
                 {
-                    Debug.Log("Boss is still alive. Defeat the boss to leave.");
                 }
             }
         }
     }
 
-    bool IsBossDead()
+    private bool IsBossDead()
     {
         GameObject boss = GameObject.FindGameObjectWithTag(bossTag);
         return boss == null;
@@ -50,7 +70,10 @@ public class ReturnDoorTrigger : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
+        {
             isPlayerNear = true;
+            playerTransform = other.transform;
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -63,9 +86,17 @@ public class ReturnDoorTrigger : MonoBehaviour
         }
     }
 
-    void LoadScene()
+    private void LoadScene()
     {
         SceneManager.LoadScene("FinalScene");
     }
 
+    private void TryFindPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerTransform = player.transform;
+        }
+    }
 }

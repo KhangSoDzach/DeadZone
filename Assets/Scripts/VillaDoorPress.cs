@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class VillaDoorPress : MonoBehaviour
@@ -11,48 +9,81 @@ public class VillaDoorPress : MonoBehaviour
     public float interactDistance = 3f;
     public Transform player;
     public bool isOpen = false;
-    // Start is called before the first frame update
+
     void Start()
     {
-        Instruction.SetActive(false);
-        if (isOpen)
+        if (Instruction == null)
+        {
+            GameObject ui = GameObject.FindGameObjectWithTag("PressE");
+            if (ui != null)
+                Instruction = ui;
+        }
+
+        if (Instruction != null)
+            Instruction.SetActive(false);
+
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
+        }
+
+        if (isOpen && AnimeObject != null && AnimeObject.GetComponent<Animator>() != null)
         {
             AnimeObject.GetComponent<Animator>().Play("VillaDoorOpening");
         }
     }
+
     private void OnTriggerEnter(Collider collision)
     {
-        if (collision.transform.tag == "Player")
+        if (collision.CompareTag("Player") && Instruction != null)
         {
             Instruction.SetActive(true);
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
-        Instruction.SetActive(false);
+        if (other.CompareTag("Player") && Instruction != null)
+        {
+            Instruction.SetActive(false);
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float distance = Vector3.Distance(transform.position, player.position);
-        if (Input.GetKeyDown(KeyCode.E) && distance <= interactDistance)
+        if (player == null)
         {
-            if (!isOpen)
-            {
-
-                Instruction.SetActive(false);
-                AnimeObject.GetComponent<Animator>().Play("VillaDoorOpening");
-                DoorSound.Play();
-                isOpen = true;
-            }
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
             else
-            {
-                Instruction.SetActive(false);
-                AnimeObject.GetComponent<Animator>().Play("VillaDoorClosing");
-                isOpen = false;
-            }
+                return; 
         }
 
+        float distance = Vector3.Distance(transform.position, player.position);
+
+        if (Input.GetKeyDown(KeyCode.E) && distance <= interactDistance)
+        {
+            if (Instruction != null)
+                Instruction.SetActive(false);
+
+            Animator animator = AnimeObject?.GetComponent<Animator>();
+            if (animator != null)
+            {
+                if (!isOpen)
+                {
+                    animator.Play("VillaDoorOpening");
+                    if (DoorSound != null) DoorSound.Play();
+                    isOpen = true;
+                }
+                else
+                {
+                    animator.Play("VillaDoorClosing");
+                    isOpen = false;
+                }
+            }
+        }
     }
 }

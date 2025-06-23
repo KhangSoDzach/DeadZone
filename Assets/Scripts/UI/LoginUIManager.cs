@@ -6,6 +6,8 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 using Scripts.API;
+using System.IO;
+using UnityEngine.Playables;
 
 public class LoginUIManager : MonoBehaviour
 {
@@ -20,7 +22,11 @@ public class LoginUIManager : MonoBehaviour
     [SerializeField] private Button welcomeSettingsButton; // Add settings button
     [SerializeField] private TMP_Text welcomeVersionText;
     [SerializeField] private TMP_Text welcomeUserText; // Add user info text
-    
+    [SerializeField] private GameObject difficultyPanel;
+    [SerializeField] private Button easyButton;
+    [SerializeField] private Button normalButton;
+    [SerializeField] private Button hardButton;
+
     [Header("Login Panel")]
     [SerializeField] private GameObject loginPanel;
     [SerializeField] private TMP_InputField loginUsernameInput;
@@ -56,6 +62,7 @@ public class LoginUIManager : MonoBehaviour
     [SerializeField] private string gameSceneName = "Scene_A";
     [SerializeField] private string menuSceneName = "Menu"; // Thêm cài đặt cho scene menu
     [SerializeField] private string offlineSceneName = "Scene_A";
+    [SerializeField] private string startScene = "Cutscene";
     [SerializeField] private float autoLoginCheckDelay = 1f;
     [SerializeField] private bool debugMode = true;
     
@@ -109,7 +116,10 @@ public class LoginUIManager : MonoBehaviour
         if (welcomeLogoutButton) welcomeLogoutButton.onClick.AddListener(LogoutUser); // Add logout listener
         if (welcomeSettingsButton) welcomeSettingsButton.onClick.AddListener(ShowSettingsPanel); // Add settings listener
         if (optionButton) optionButton.onClick.AddListener(ShowOptionPanel); // Add option button listener
-        
+        if (easyButton) easyButton.onClick.AddListener(() => OnDifficultySelected(0.8f));
+        if (normalButton) normalButton.onClick.AddListener(() => OnDifficultySelected(1.2f));
+        if (hardButton) hardButton.onClick.AddListener(() => OnDifficultySelected(1.7f));
+
         // Login panel buttons
         if (loginSubmitButton) loginSubmitButton.onClick.AddListener(OnLoginButtonClicked);
         if (loginBackButton) loginBackButton.onClick.AddListener(ShowWelcomePanel);
@@ -118,7 +128,21 @@ public class LoginUIManager : MonoBehaviour
         if (registerSubmitButton) registerSubmitButton.onClick.AddListener(OnRegisterButtonClicked);
         if (registerBackButton) registerBackButton.onClick.AddListener(ShowWelcomePanel);
     }
-    
+    private void OnDifficultySelected(float difficulty)
+    {
+        DataPersistenceManager.instance.NewGame();
+        GameData data = DataPersistenceManager.instance.GetData();
+        if (data != null)
+        {
+            data.difficultyMode = difficulty;
+        }
+
+        DataPersistenceManager.instance.SaveGame();
+
+        if (difficultyPanel) difficultyPanel.SetActive(false);
+
+
+    }
     private void SetupUI()
     {
         // Hide error texts
@@ -133,7 +157,8 @@ public class LoginUIManager : MonoBehaviour
         
         // Show welcome panel by default
         ShowWelcomePanel();
-        
+
+
         // Ensure settings panel is hidden
         if (settingsPanel) settingsPanel.SetActive(false);
         // Ensure option panel is hidden
@@ -385,51 +410,175 @@ public class LoginUIManager : MonoBehaviour
     }
       private void ContinueGame()
     {
-        if (!GameAPI.Instance.IsLoggedIn)
+        ShowLoadingPanel("Loading saved game...");
+        string savePath = Application.persistentDataPath + "/save.dat";
+
+        if (GameAPI.Instance.IsLoggedIn)
         {
-            DebugLog("Cannot continue game: User not logged in");
+            DebugLog("Continuing online saved game");
+            StartCoroutine(ContinueGameCoroutine());
+        }
+        else if (File.Exists(savePath))
+        {
+          DataPersistenceManager.instance.LoadGame();
+        }
+        else
+        {
+                DebugLog("No offline save found");
+                ShowWelcomePanel();
+        }
+        
+    }
+
+    private void LoadOfflineContinue()
+    {
+        SceneManager.LoadScene(offlineSceneName);
+    }
+
+    private IEnumerator ContinueGameCoroutine()
+    {
+        // User is already logged in, just load the game scene
+        UpdateLoadingStatus("Loading your saved adventure...");
+        yield return new WaitForSeconds(1f);
+        LoadGameScene(); // Uncomment this line
+    }
+    
+    private void StartOfflineMode()
+    {
+
+        difficultyPanel.SetActive(true);
+
+    }
+    
+     private void CheckForContinueGame()
+    {
+        // This method is now called within UpdateWelcomeUI()
+        DebugLog("Continue game option updated");
+    }
+    
+    private void LoadGameScene()
+    {
+        DebugLog($"Loading game scene: {gameSceneName}");
+        
+        // Make sure the scene name is valid
+        if (string.IsNullOrEmpty(gameSceneName))
+        {
+            DebugLog("Error: Game scene name is not set!");
+            ShowWelcomePanel();
             return;
         }
         
-        DebugLog("Continuing saved game");
-        ShowLoadingPanel("Loading saved game...");
-        StartCoroutine(ContinueGameCoroutine());
-    }
-      // Đảm bảo chỉ cho phép continue khi đã có PlayerData hợp lệ từ server
-    private void UpdateWelcomeUI()
-    {
-        bool isLoggedIn = GameAPI.Instance.IsLoggedIn;
-        bool hasValidPlayerData = isLoggedIn && GameAPI.Instance.PlayerData != null && !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id);
-        bool hasSavedGame = false;
-        if (hasValidPlayerData)
+        // Check if scene exists in build settings
+        if (Application.CanStreamedLevelBeLoaded(gameSceneName))
         {
             hasSavedGame = HasSavedGame();
         }
-        
-        if (welcomeLoginButton) welcomeLoginButton.gameObject.SetActive(!isLoggedIn);
-        if (welcomeRegisterButton) welcomeRegisterButton.gameObject.SetActive(!isLoggedIn);
-        if (welcomePlayOfflineButton) welcomePlayOfflineButton.gameObject.SetActive(!isLoggedIn);
-        
-        if (welcomeNewGameButton) welcomeNewGameButton.gameObject.SetActive(isLoggedIn);
-        if (welcomeContinueButton) welcomeContinueButton.gameObject.SetActive(hasValidPlayerData && hasSavedGame);
-        if (welcomeLogoutButton) welcomeLogoutButton.gameObject.SetActive(isLoggedIn);
-        
-
-        if (welcomeUserText)
+        else
         {
-            if (isLoggedIn && GameAPI.Instance.PlayerData != null)
-            {
-                welcomeUserText.gameObject.SetActive(true);
-                welcomeUserText.text = $"Welcome back, {GameAPI.Instance.PlayerData.username}!";
-            }
-            else
-            {
-                welcomeUserText.gameObject.SetActive(false);
-            }
+            DebugLog($"Error: Scene '{gameSceneName}' not found in build settings!");
+            ShowWelcomePanel();
         }
+    }
+    
+    private void ShowLoginError(string message)
+    {
+        if (loginErrorText)
+        {
+            loginErrorText.gameObject.SetActive(true);
+            loginErrorText.text = message;
+        }
+        DebugLog("Login Error: " + message);
+    }
+    
+    private void ShowRegisterError(string message)
+    {
+        if (registerErrorText)
+        {
+            registerErrorText.gameObject.SetActive(true);
+            registerErrorText.text = message;
+        }
+        DebugLog("Register Error: " + message);
+    }
+    
+    private void DebugLog(string message)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"[LoginUIManager] {message}");
+        }
+    }
+    
+    private void UpdateLoadingStatus(string status)
+    {
+        if (loadingStatusText) loadingStatusText.text = status;
+        DebugLog("Loading: " + status);
+    }
+    
+    private void ShowLoginPanel()
+    {
+        SetActivePanel(loginPanel);
+        if (loginErrorText) loginErrorText.gameObject.SetActive(false);
         
-        DebugLog($"Welcome UI updated - Logged in: {isLoggedIn}, Has saved game: {hasSavedGame}");
-    }    /// <summary>
+        // Load saved username if remember me was checked
+        if (rememberMeToggle && rememberMeToggle.isOn && loginUsernameInput)
+        {
+            loginUsernameInput.text = PlayerPrefs.GetString("LastUsername", "");
+        }
+    }
+    
+    private void ShowRegisterPanel()
+    {
+        SetActivePanel(registerPanel);
+        if (registerErrorText) registerErrorText.gameObject.SetActive(false);
+    }
+    
+    private void ShowWelcomePanel()
+    {
+        SetActivePanel(welcomePanel);
+        UpdateWelcomeUI(); // Update UI when showing welcome panel
+    }
+    
+    private void ShowLoadingPanel(string status = "Loading...")
+    {
+        SetActivePanel(loadingPanel);
+        UpdateLoadingStatus(status);
+        if (loadingProgressBar) loadingProgressBar.value = 0;
+    }
+    
+    private void SetActivePanel(GameObject activePanel)
+    {
+        if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
+        if (loginPanel) loginPanel.SetActive(activePanel == loginPanel);
+        if (registerPanel) registerPanel.SetActive(activePanel == registerPanel);
+        if (loadingPanel) loadingPanel.SetActive(activePanel == loadingPanel);
+        if (settingsPanel) settingsPanel.SetActive(activePanel == settingsPanel);
+        if (optionPanel) optionPanel.SetActive(activePanel == optionPanel);
+    }
+    
+    // Add new methods for UI management
+      /// <summary>
+    /// Update welcome panel UI based on login status
+    /// </summary>
+    private void UpdateWelcomeUI()
+    {
+        bool isLoggedIn = GameAPI.Instance.IsLoggedIn;
+        bool hasOfflineSave = File.Exists(Application.persistentDataPath + "/save.dat");
+
+
+        // Force refresh player data before checking saved game
+        if (isLoggedIn && GameAPI.Instance.PlayerData != null)
+        {
+            StartCoroutine(RefreshPlayerDataAndUpdateUI());
+        }
+        else
+        {
+            UpdateUIBasedOnLoginStatus(isLoggedIn, false);
+         
+
+        }
+    }
+    
+    /// <summary>
     /// Refresh player data from server and update UI
     /// </summary>
     private IEnumerator RefreshPlayerDataAndUpdateUI()
@@ -470,12 +619,15 @@ public class LoginUIManager : MonoBehaviour
     /// </summary>
     private void UpdateUIBasedOnLoginStatus(bool isLoggedIn, bool hasSavedGame)
     {
+        bool hasOfflineSave = System.IO.File.Exists(Application.persistentDataPath + "/save.dat");
+
         if (welcomeLoginButton) welcomeLoginButton.gameObject.SetActive(!isLoggedIn);
         if (welcomeRegisterButton) welcomeRegisterButton.gameObject.SetActive(!isLoggedIn);
         if (welcomePlayOfflineButton) welcomePlayOfflineButton.gameObject.SetActive(!isLoggedIn);
         
         if (welcomeNewGameButton) welcomeNewGameButton.gameObject.SetActive(isLoggedIn);
-        if (welcomeContinueButton) welcomeContinueButton.gameObject.SetActive(isLoggedIn && hasSavedGame);
+        if (welcomeContinueButton)
+            welcomeContinueButton.gameObject.SetActive((isLoggedIn == true && hasSavedGame) || (isLoggedIn == false && hasOfflineSave));
         if (welcomeLogoutButton) welcomeLogoutButton.gameObject.SetActive(isLoggedIn);
         
 

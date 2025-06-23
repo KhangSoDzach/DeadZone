@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BlackDoorPress : MonoBehaviour
@@ -11,52 +9,73 @@ public class BlackDoorPress : MonoBehaviour
     public float interactDistance = 3f;
     public Transform player;
     public bool isOpen = false;
-    // Start is called before the first frame update
+
     void Start()
     {
-        Instruction.SetActive(false);
         if (Instruction == null)
-            Instruction = GameObject.FindWithTag("Instruction");
-
-        if (player == null)
-            player = GameObject.FindWithTag("Player").transform;
+            Instruction = GameObject.FindGameObjectWithTag("PressE");
 
         if (Instruction != null)
             Instruction.SetActive(false);
+
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
+        }
     }
-    private void OnTriggerEnter(Collider collision)
+
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.transform.tag == "Player")
+        if (other.CompareTag("Player") && Instruction != null)
         {
             Instruction.SetActive(true);
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
-        Instruction.SetActive(false);
+        if (other.CompareTag("Player") && Instruction != null)
+        {
+            Instruction.SetActive(false);
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float distance = Vector3.Distance(transform.position, player.position);
-        if (Input.GetKeyDown(KeyCode.E) && distance <= interactDistance)
+        if (player == null)
         {
-            if (!isOpen)
-            {
-
-                Instruction.SetActive(false);
-                AnimeObject.GetComponent<Animator>().Play("BlackDoorOpening");
-                DoorSound.Play();
-                isOpen = true;
-            }
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
             else
-            {
-                Instruction.SetActive(false);
-                AnimeObject.GetComponent<Animator>().Play("BlackDoorClosing");
-                isOpen = false;
-            }
+                return;
         }
 
+        float distance = Vector3.Distance(transform.position, player.position);
+
+        if (Input.GetKeyDown(KeyCode.E) && distance <= interactDistance)
+        {
+            if (Instruction != null)
+                Instruction.SetActive(false);
+
+            if (AnimeObject != null && AnimeObject.GetComponent<Animator>() != null)
+            {
+                Animator animator = AnimeObject.GetComponent<Animator>();
+
+                if (!isOpen)
+                {
+                    animator.Play("BlackDoorOpening");
+                    if (DoorSound != null) DoorSound.Play();
+                }
+                else
+                {
+                    animator.Play("BlackDoorClosing");
+                }
+
+                isOpen = !isOpen;
+            }
+        }
     }
 }

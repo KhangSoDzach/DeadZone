@@ -1,17 +1,19 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class NoteTrigger : MonoBehaviour
 {
-    public GameObject instructionUI; 
-    public GameObject noteUI;        
-    public string noteText;         
+    public GameObject instructionUI;
+    public GameObject noteUI;
+    public string noteText;
 
     private bool isPlayerNear = false;
 
     void Start()
     {
+        TryFindUI();
+
         if (instructionUI != null)
             instructionUI.SetActive(false);
 
@@ -29,12 +31,12 @@ public class NoteTrigger : MonoBehaviour
             }
             else
             {
-                instructionUI.SetActive(false);
+                if (instructionUI != null) instructionUI.SetActive(false);
                 ShowNote();
             }
         }
 
-        if (noteUI.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        if (noteUI != null && noteUI.activeSelf && Input.GetKeyDown(KeyCode.Escape))
         {
             CloseNote();
         }
@@ -42,19 +44,18 @@ public class NoteTrigger : MonoBehaviour
 
     void ShowNote()
     {
-        if (noteUI != null)
-        {
-            noteUI.SetActive(true);
-            Time.timeScale = 0f;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+        if (noteUI == null) return;
 
-            TMPro.TextMeshProUGUI textComponent = noteUI.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-            if (textComponent != null && !string.IsNullOrWhiteSpace(noteText))
-            {
-                textComponent.text = noteText;
-            }
-        }
+        noteUI.SetActive(true);
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        //TextMeshProUGUI textComponent = noteUI.GetComponentInChildren<TextMeshProUGUI>();
+        //if (textComponent != null)
+        //{
+        //    textComponent.text = !string.IsNullOrWhiteSpace(noteText) ? noteText : "(No content)";
+        //}
     }
 
     public void CloseNote()
@@ -85,6 +86,28 @@ public class NoteTrigger : MonoBehaviour
             isPlayerNear = false;
             if (instructionUI != null)
                 instructionUI.SetActive(false);
+        }
+    }
+
+    private void TryFindUI()
+    {
+        if (instructionUI == null)
+        {
+            GameObject pressE = GameObject.FindGameObjectWithTag("PressE");
+            if (pressE != null) instructionUI = pressE;
+        }
+
+        if (noteUI == null)
+        {
+            GameObject foundNote = GameObject.FindGameObjectWithTag("NoteUI");
+            if (foundNote != null)
+            {
+                noteUI = foundNote;
+            }
+            else
+            {
+                noteUI = transform.GetComponentInChildren<Canvas>()?.gameObject;
+            }
         }
     }
 }
