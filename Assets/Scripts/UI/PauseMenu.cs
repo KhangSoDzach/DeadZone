@@ -279,6 +279,7 @@ namespace Scripts.API
         {
             if (optionPanel) optionPanel.SetActive(false);
             if (pauseMenuPanel) pauseMenuPanel.SetActive(true);
+            
         }
 
         // Các hàm chuyển panel (template từ SettingMenu)
@@ -419,6 +420,7 @@ namespace Scripts.API
                 // If no confirmation panel, execute action directly
                 confirmAction?.Invoke();
             }
+            
         }
 
         private void ConfirmAction()
@@ -432,7 +434,8 @@ namespace Scripts.API
         {
             if (confirmationPanel) confirmationPanel.SetActive(false);
             pendingConfirmAction = null;
-        }        public void ReturnToMainMenu()
+        }        
+        public void ReturnToMainMenu()
         {
             // Clear pause state before leaving
             IsGamePaused = false;
@@ -445,14 +448,13 @@ namespace Scripts.API
                     GameSaveManager.Instance.SaveGame();
                 }
             }
-            if (DataPersistenceManager.instance != null)
-            {
-                DataPersistenceManager.instance.SaveGame();
-            }
+            
 
             // Restore time scale
             Time.timeScale = 1f;
-
+            
+            DataPersistenceManager.instance.SaveGame();
+            
             // Use SceneTransitionManager for proper cleanup
             if (SceneTransitionManager.Instance != null)
             {
@@ -481,6 +483,7 @@ namespace Scripts.API
 
             // Restore time scale
             Time.timeScale = 1f;
+            DataPersistenceManager.instance.SaveGame();
 
             Debug.Log("Quitting Game");
 

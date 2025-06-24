@@ -88,59 +88,71 @@ public class DeathScreenManager : MonoBehaviour
     public void ReturnToLastCheckpoint()
     {
         deathScreenPanel.SetActive(false);
+        Time.timeScale = 1f;
 
         if (DataPersistenceManager.instance != null)
         {
             DataPersistenceManager.instance.LoadGame();
-            Debug.Log("[Death] Đã load lại dữ liệu game từ save file.");
         }
         else
         {
-            Debug.LogWarning("Không tìm thấy DataPersistenceManager.");
+            Scene currentScene = SceneManager.GetActiveScene();
+            SceneManager.LoadScene(currentScene.name);
         }
 
-        Scene currentScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(currentScene.name);
+
     }
 
     // Phương thức bắt đầu game mới
     public void StartNewGame()
     {
-        // Reset thời gian và ẩn màn hình chết
+        GameData data = DataPersistenceManager.instance.GetData();
+
+        float diff = data.difficultyMode;
+        deathScreenPanel.SetActive(false);
         Time.timeScale = 1f;
-        if (deathScreenPanel != null)
-            deathScreenPanel.SetActive(false);
 
-        // Xoá dữ liệu game cũ nếu có (PlayerPrefs và PlayerData)
-        // Xoá PlayerPrefs nếu bạn lưu dữ liệu local
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-
-        // Nếu có GameAPI và PlayerData, reset dữ liệu về mặc định
-        if (GameAPI.Instance != null && GameAPI.Instance.PlayerData != null)
+        //DataPersistenceManager.instance.NewGame();
+        if (data != null)
         {
-            var playerData = GameAPI.Instance.PlayerData;
-            playerData.level = 1;
-            playerData.experience = 0;
-            playerData.money = 0;
-            playerData.health = 100f;
-            playerData.kills = 0;
-            playerData.hasKey = false;
-            playerData.checkpoint = null;
-            if (playerData.weapons != null)
-                playerData.weapons.Clear();
-        }
-
-        // Sử dụng SceneTransitionManager để load lại scene gameplay
-        if (SceneTransitionManager.Instance != null)
-        {
-            SceneTransitionManager.Instance.LoadGameplayScene(newGameSceneName);
+            data.difficultyMode = diff;
         }
         else
         {
-            // Nếu không có manager, fallback về SceneManager
-            SceneManager.LoadScene(newGameSceneName);
+            // Xoá dữ liệu game cũ nếu có(PlayerPrefs và PlayerData)
+        // Xoá PlayerPrefs nếu bạn lưu dữ liệu local
+        PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+
+            // Nếu có GameAPI và PlayerData, reset dữ liệu về mặc định
+            if (GameAPI.Instance != null && GameAPI.Instance.PlayerData != null)
+            {
+                var playerData = GameAPI.Instance.PlayerData;
+                playerData.level = 1;
+                playerData.experience = 0;
+                playerData.money = 0;
+                playerData.health = 100f;
+                playerData.kills = 0;
+                playerData.hasKey = false;
+                playerData.checkpoint = null;
+                if (playerData.weapons != null)
+                    playerData.weapons.Clear();
+            }
+
+            // Sử dụng SceneTransitionManager để load lại scene gameplay
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.LoadGameplayScene(newGameSceneName);
+            }
+            else
+            {
+                // Nếu không có manager, fallback về SceneManager
+                SceneManager.LoadScene(newGameSceneName);
+            }
         }
+
+
+        
     }
     
     private System.Collections.IEnumerator ResetOnlinePlayerData()
@@ -175,6 +187,7 @@ public class DeathScreenManager : MonoBehaviour
     // Phương thức quay lại menu chính
     public void ReturnToMainMenu()
     {
+
         // Reset thời gian và ẩn màn hình chết
         Time.timeScale = 1f;
         deathScreenPanel.SetActive(false);

@@ -17,14 +17,27 @@ public class ObjectiveManager : MonoBehaviour
 
     void Start()
     {
-        UpdateObjective("Find key in Clinic Villa");
+        LoadObjectiveFromSave();
     }
-
-    public void UpdateObjective(string message)
+    public void LoadObjectiveFromSave()
     {
-        if (objectiveText != null)
+        if (DataPersistenceManager.instance != null)
         {
-            objectiveText.text = "Objective: " + message;
+            string savedText = DataPersistenceManager.instance.GetData().currentObjectiveText;
+            if (!string.IsNullOrEmpty(savedText))
+            {
+                UpdateObjectiveFromSave(savedText);
+            }
         }
     }
+
+
+    public void UpdateObjectiveFromSave(string message)
+    {
+        if (!string.IsNullOrEmpty(message))
+        {
+            objectiveText.text = message;
+        }
+    }
+
 }

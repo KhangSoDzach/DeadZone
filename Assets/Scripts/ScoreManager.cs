@@ -42,9 +42,7 @@ public class ScoreManager : MonoBehaviour
         {
             Instance = this;
             
-            if (persistBetweenLevels)
-                DontDestroyOnLoad(gameObject);
-            
+                        
             _score = initialScore;
             FindScoreText();
             UpdateScoreUI();
@@ -65,19 +63,16 @@ public class ScoreManager : MonoBehaviour
             FindScoreText();
         }
         
-        Debug.Log($"ScoreManager initialized with scoreText: {(scoreText != null ? scoreText.name : "null")}, stackMoneyText: {(stackMoneyText != null ? stackMoneyText.name : "null")}");
     }
-  
+
     public void LoadScoreFromGameData()
     {
-        if (DataPersistenceManager.instance != null)
-        {
-            GameData data = DataPersistenceManager.instance.GetData();
-            if (data != null)
-            {
-                SetScore(data.playerScore);
-            }
-        }
+        GameData data = DataPersistenceManager.instance.GetData();
+        _score = data.playerScore;
+        SetScore(data.playerScore);
+
+       
+
     }
 
     // Find score text in the scene
@@ -121,7 +116,7 @@ public class ScoreManager : MonoBehaviour
         // Cập nhật scoreText
         if (scoreText != null)
         {
-            scoreText.text = "Money: " + _score.ToString();
+            scoreText.text = "$$$ : " + _score.ToString();
         }
         
         // Cập nhật stackMoneyText

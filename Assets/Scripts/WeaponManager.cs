@@ -697,7 +697,6 @@ public class WeaponManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Không tìm thấy vật phẩm có thể nhặt trong tầm nhìn");
         }
     }
     

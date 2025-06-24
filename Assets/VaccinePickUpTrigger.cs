@@ -4,26 +4,37 @@ public class VaccinePickUpTrigger : MonoBehaviour
 {
     public GameObject vaccineModel;
     public GameObject instructionUI;
-    public GameObject bossObject; 
+    public GameObject bossObject;
+
     private bool isPlayerNear = false;
+    private Transform player;
 
     void Start()
     {
+        TryFindPlayer();
+
+        if (instructionUI == null)
+        {
+            GameObject foundUI = GameObject.FindGameObjectWithTag("PressE");
+            if (foundUI != null)
+                instructionUI = foundUI;
+        }
+
         if (instructionUI != null)
             instructionUI.SetActive(false);
 
         if (bossObject != null)
-        {
             bossObject.SetActive(false);
-        }
-
     }
 
     void Update()
     {
+        if (player == null) TryFindPlayer();
+
         if (isPlayerNear && Input.GetKeyDown(KeyCode.E))
         {
-            InventoryForKey.Instance.PickUpKey();
+            if (InventoryForKey.Instance != null)
+                InventoryForKey.Instance.PickUpKey();
 
             if (vaccineModel != null)
                 vaccineModel.SetActive(false);
@@ -31,9 +42,11 @@ public class VaccinePickUpTrigger : MonoBehaviour
             if (instructionUI != null)
                 instructionUI.SetActive(false);
 
-            bossObject.SetActive(true);
+            if (bossObject != null)
+                bossObject.SetActive(true);
 
-            ObjectiveManager.Instance.UpdateObjective("Get Out");
+            if (ObjectiveManager.Instance != null)
+                ObjectiveManager.Instance.UpdateObjectiveFromSave("Get Out");
 
             gameObject.SetActive(false);
         }
@@ -41,19 +54,28 @@ public class VaccinePickUpTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player") && instructionUI != null)
+        if (other.CompareTag("Player"))
         {
-            instructionUI.SetActive(true);
+            isPlayerNear = true;
+            if (instructionUI != null)
+                instructionUI.SetActive(true);
         }
-        isPlayerNear = true;
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player") && instructionUI != null)
+        if (other.CompareTag("Player"))
         {
-            instructionUI.SetActive(false);
+            isPlayerNear = false;
+            if (instructionUI != null)
+                instructionUI.SetActive(false);
         }
-        isPlayerNear = false;
+    }
+
+    private void TryFindPlayer()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+            player = playerObj.transform;
     }
 }

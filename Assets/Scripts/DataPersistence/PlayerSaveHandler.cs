@@ -14,7 +14,10 @@ public class PlayerSaveHandler : MonoBehaviour
     {
         yield return null;
 
-        Vector3 spawnPos = new Vector3(509.47f, 25.142f, 365.85f); 
+        if (GameObject.FindGameObjectWithTag("Player") != null)
+            yield break;
+
+        Vector3 spawnPos = new Vector3(509.47f, 25.142f, 365.85f);
 
         if (DataPersistenceManager.instance != null)
         {
@@ -26,9 +29,8 @@ public class PlayerSaveHandler : MonoBehaviour
         }
 
         GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-        player.name = "Player"; 
-
-        player.tag = "Player"; 
+        player.name = "Player";
+        player.tag = "Player";
 
         CharacterController controller = player.GetComponent<CharacterController>();
         if (controller != null)
@@ -41,5 +43,8 @@ public class PlayerSaveHandler : MonoBehaviour
         {
             player.transform.position = spawnPos;
         }
+
+        DontDestroyOnLoad(player); 
     }
+
 }

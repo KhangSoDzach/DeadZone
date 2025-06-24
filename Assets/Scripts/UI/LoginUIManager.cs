@@ -67,7 +67,9 @@ public class LoginUIManager : MonoBehaviour
     [SerializeField] private bool debugMode = true;
     
     private bool isInitialized = false;
-      private void Start()
+    private bool hasSavedGame;
+
+    private void Start()
     {
         Initialize();
         // Give GameAPI time to check saved authentication first
@@ -135,9 +137,9 @@ public class LoginUIManager : MonoBehaviour
         if (data != null)
         {
             data.difficultyMode = difficulty;
+            Debug.Log("Do kho" + difficulty);
         }
 
-        DataPersistenceManager.instance.SaveGame();
 
         if (difficultyPanel) difficultyPanel.SetActive(false);
 
@@ -435,13 +437,13 @@ public class LoginUIManager : MonoBehaviour
         SceneManager.LoadScene(offlineSceneName);
     }
 
-    private IEnumerator ContinueGameCoroutine()
-    {
-        // User is already logged in, just load the game scene
-        UpdateLoadingStatus("Loading your saved adventure...");
-        yield return new WaitForSeconds(1f);
-        LoadGameScene(); // Uncomment this line
-    }
+    //private IEnumerator ContinueGameCoroutine()
+    //{
+    //    // User is already logged in, just load the game scene
+    //    UpdateLoadingStatus("Loading your saved adventure...");
+    //    yield return new WaitForSeconds(1f);
+    //    LoadGameScene(); // Uncomment this line
+    //}
     
     private void StartOfflineMode()
     {
@@ -1114,97 +1116,97 @@ public class LoginUIManager : MonoBehaviour
     }
     
     // Bổ sung các hàm UI helper nếu bị thiếu để tránh lỗi "does not exist in the current context"
-    private void ShowWelcomePanel()
-    {
-        SetActivePanel(welcomePanel);
-        UpdateWelcomeUI();
-    }
+    //private void ShowWelcomePanel()
+    //{
+    //    SetActivePanel(welcomePanel);
+    //    UpdateWelcomeUI();
+    //}
 
-    private void ShowLoginPanel()
-    {
-        SetActivePanel(loginPanel);
-        if (loginErrorText) loginErrorText.gameObject.SetActive(false);
-        if (rememberMeToggle && rememberMeToggle.isOn && loginUsernameInput)
-        {
-            loginUsernameInput.text = PlayerPrefs.GetString("LastUsername", "");
-        }
-    }
+    //private void ShowLoginPanel()
+    //{
+    //    SetActivePanel(loginPanel);
+    //    if (loginErrorText) loginErrorText.gameObject.SetActive(false);
+    //    if (rememberMeToggle && rememberMeToggle.isOn && loginUsernameInput)
+    //    {
+    //        loginUsernameInput.text = PlayerPrefs.GetString("LastUsername", "");
+    //    }
+    //}
 
-    private void ShowRegisterPanel()
-    {
-        SetActivePanel(registerPanel);
-        if (registerErrorText) registerErrorText.gameObject.SetActive(false);
-    }
+    //private void ShowRegisterPanel()
+    //{
+    //    SetActivePanel(registerPanel);
+    //    if (registerErrorText) registerErrorText.gameObject.SetActive(false);
+    //}
 
-    private void DebugLog(string message)
-    {
-        if (debugMode)
-        {
-            Debug.Log($"[LoginUIManager] {message}");
-        }
-    }
+    //private void DebugLog(string message)
+    //{
+    //    if (debugMode)
+    //    {
+    //        Debug.Log($"[LoginUIManager] {message}");
+    //    }
+    //}
 
-    private void StartOfflineMode()
-    {
-        ShowLoadingPanel("Starting offline mode...");
-        UpdateLoadingStatus("Loading offline game...");
-        StartCoroutine(LoadOfflineGame());
-    }
+    //private void StartOfflineMode()
+    //{
+    //    ShowLoadingPanel("Starting offline mode...");
+    //    UpdateLoadingStatus("Loading offline game...");
+    //    StartCoroutine(LoadOfflineGame());
+    //}
 
-    private void SetActivePanel(GameObject activePanel)
-    {
-        if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
-        if (loginPanel) loginPanel.SetActive(activePanel == loginPanel);
-        if (registerPanel) registerPanel.SetActive(activePanel == registerPanel);
-        if (loadingPanel) loadingPanel.SetActive(activePanel == loadingPanel);
-        if (settingsPanel) settingsPanel.SetActive(activePanel == settingsPanel);
-        if (optionPanel) optionPanel.SetActive(activePanel == optionPanel);
-    }
+    //private void SetActivePanel(GameObject activePanel)
+    //{
+    //    if (welcomePanel) welcomePanel.SetActive(activePanel == welcomePanel);
+    //    if (loginPanel) loginPanel.SetActive(activePanel == loginPanel);
+    //    if (registerPanel) registerPanel.SetActive(activePanel == registerPanel);
+    //    if (loadingPanel) loadingPanel.SetActive(activePanel == loadingPanel);
+    //    if (settingsPanel) settingsPanel.SetActive(activePanel == settingsPanel);
+    //    if (optionPanel) optionPanel.SetActive(activePanel == optionPanel);
+    //}
 
     // Bổ sung các hàm còn thiếu để tránh lỗi biên dịch
-    private void ShowLoginError(string message)
-    {
-        if (loginErrorText)
-        {
-            loginErrorText.gameObject.SetActive(true);
-            loginErrorText.text = message;
-        }
-        DebugLog("Login Error: " + message);
-    }
+    //private void ShowLoginError(string message)
+    //{
+    //    if (loginErrorText)
+    //    {
+    //        loginErrorText.gameObject.SetActive(true);
+    //        loginErrorText.text = message;
+    //    }
+    //    DebugLog("Login Error: " + message);
+    //}
 
-    private void ShowRegisterError(string message)
-    {
-        if (registerErrorText)
-        {
-            registerErrorText.gameObject.SetActive(true);
-            registerErrorText.text = message;
-        }
-        DebugLog("Register Error: " + message);
-    }
+    //private void ShowRegisterError(string message)
+    //{
+    //    if (registerErrorText)
+    //    {
+    //        registerErrorText.gameObject.SetActive(true);
+    //        registerErrorText.text = message;
+    //    }
+    //    DebugLog("Register Error: " + message);
+    //}
 
-    private void LoadGameScene()
-    {
-        DebugLog($"Loading game scene: {gameSceneName}");
-        if (string.IsNullOrEmpty(gameSceneName))
-        {
-            DebugLog("Error: Game scene name is not set!");
-            ShowWelcomePanel();
-            return;
-        }
-        if (SceneTransitionManager.Instance != null)
-        {
-            SceneTransitionManager.Instance.LoadGameplayScene(gameSceneName);
-        }
-        else if (Application.CanStreamedLevelBeLoaded(gameSceneName))
-        {
-            SceneManager.LoadScene(gameSceneName);
-        }
-        else
-        {
-            DebugLog($"Error: Scene '{gameSceneName}' not found in build settings!");
-            ShowWelcomePanel();
-        }
-    }
+    //private void LoadGameScene()
+    //{
+    //    DebugLog($"Loading game scene: {gameSceneName}");
+    //    if (string.IsNullOrEmpty(gameSceneName))
+    //    {
+    //        DebugLog("Error: Game scene name is not set!");
+    //        ShowWelcomePanel();
+    //        return;
+    //    }
+    //    if (SceneTransitionManager.Instance != null)
+    //    {
+    //        SceneTransitionManager.Instance.LoadGameplayScene(gameSceneName);
+    //    }
+    //    else if (Application.CanStreamedLevelBeLoaded(gameSceneName))
+    //    {
+    //        SceneManager.LoadScene(gameSceneName);
+    //    }
+    //    else
+    //    {
+    //        DebugLog($"Error: Scene '{gameSceneName}' not found in build settings!");
+    //        ShowWelcomePanel();
+    //    }
+    //}
 
     // Ví dụ: Save game lên server cho user hiện tại
     private IEnumerator SaveGameToServer()
@@ -1267,18 +1269,18 @@ public class LoginUIManager : MonoBehaviour
     }
     
     // Đảm bảo chỉ có một bản định nghĩa duy nhất cho các hàm này ở cuối class
-    private void ShowLoadingPanel(string status = "Loading...")
-    {
-        SetActivePanel(loadingPanel);
-        UpdateLoadingStatus(status);
-        if (loadingProgressBar) loadingProgressBar.value = 0;
-    }
+    //private void ShowLoadingPanel(string status = "Loading...")
+    //{
+    //    SetActivePanel(loadingPanel);
+    //    UpdateLoadingStatus(status);
+    //    if (loadingProgressBar) loadingProgressBar.value = 0;
+    //}
 
-    private void UpdateLoadingStatus(string status)
-    {
-        if (loadingStatusText) loadingStatusText.text = status;
-        DebugLog("Loading: " + status);
-    }
+    //private void UpdateLoadingStatus(string status)
+    //{
+    //    if (loadingStatusText) loadingStatusText.text = status;
+    //    DebugLog("Loading: " + status);
+    //}
 
     // Bổ sung lại hàm LoadOfflineGame để tránh lỗi biên dịch
     private IEnumerator LoadOfflineGame()

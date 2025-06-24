@@ -2034,19 +2034,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 311817521}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1224819905}
-        m_TargetAssemblyTypeName: ASyncLoader, Assembly-CSharp
-        m_MethodName: LoadLevelBtn
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Cutscene
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &311817521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3591,19 +3579,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 923762062}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1224819905}
-        m_TargetAssemblyTypeName: ASyncLoader, Assembly-CSharp
-        m_MethodName: LoadLevelBtn
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Cutscene
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &923762062
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5956,19 +5932,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1323703596}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1224819905}
-        m_TargetAssemblyTypeName: ASyncLoader, Assembly-CSharp
-        m_MethodName: LoadLevelBtn
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Cutscene
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1323703596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6931,11 +6895,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameData:
     difficultyMode: 1.2
-    health: 100
+    playerHealth: 100
+    playerStamina: 100
     ammo: 30
     money: 0
     totalAmmo: 120
-    score: 0
+    playerScore: 0
     playerPosition:
       x: 0
       y: 0
@@ -9179,10 +9144,6 @@ PrefabInstance:
     - target: {fileID: 5167763116871069800, guid: a37ddb8d06992b343a0c0b103e1431bb, type: 3}
       propertyPath: m_Name
       value: SettingPanel
-      objectReference: {fileID: 0}
-    - target: {fileID: 5167763116871069800, guid: a37ddb8d06992b343a0c0b103e1431bb, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5167763116871069800, guid: a37ddb8d06992b343a0c0b103e1431bb, type: 3}
       propertyPath: m_IsActive

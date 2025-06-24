@@ -18,13 +18,21 @@ public class KeyPickupTrigger : MonoBehaviour
 
         if (instructionUI != null)
             instructionUI.SetActive(false);
+
+        if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData().hasKey)
+        {
+            if (keyModel != null)
+                keyModel.SetActive(false);
+
+            gameObject.SetActive(false);
+        }
     }
 
     void Update()
     {
-
         if (isPlayerNear && Input.GetKeyDown(KeyCode.E))
         {
+            // Cập nhật trong inventory
             if (InventoryForKey.Instance != null)
                 InventoryForKey.Instance.PickUpKey();
 
@@ -35,7 +43,15 @@ public class KeyPickupTrigger : MonoBehaviour
                 instructionUI.SetActive(false);
 
             if (ObjectiveManager.Instance != null)
-                ObjectiveManager.Instance.UpdateObjective("Unlock a basement door in White Mansion");
+                ObjectiveManager.Instance.UpdateObjectiveFromSave("Unlock a basement door in White Mansion");
+
+            if (DataPersistenceManager.instance != null)
+            {
+                GameData data = DataPersistenceManager.instance.GetData();
+                data.hasKey = true;
+                data.currentObjectiveText = "Unlock a basement door in White Mansion";
+                DataPersistenceManager.instance.SaveGame();
+            }
 
             gameObject.SetActive(false);
         }

@@ -213,7 +213,7 @@ public class Zombie_1 : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if ((remainHeath <= 40 && remainHeath <= 50) || (remainHeath <= 60 && remainHeath <= 80))
+        if ((remainHeath >= 40 && remainHeath <= 50) || (remainHeath >= 60 && remainHeath <= 80))
         {
             //Reaction hit
             aniZombie.SetTrigger("isHit");

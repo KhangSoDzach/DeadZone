@@ -1,17 +1,27 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class SaveObject : MonoBehaviour
 {
-    private static SaveObject instance;
+    public static SaveObject Instance { get; private set; }
 
     void Awake()
     {
-        if (instance == null)
+        if (Instance != null && Instance != this)
         {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
+            Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+    public static void ResetInstance()
+    {
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);
+            Instance = null;
         }
+    }
 
 }

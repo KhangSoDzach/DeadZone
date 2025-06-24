@@ -63,45 +63,52 @@ public class HealthManager : MonoBehaviour
 
     void Start()
     {
-        // Check scene context first
         string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
         if (sceneName.Contains("menu") || sceneName.Contains("login"))
         {
             this.enabled = false;
             return;
         }
-        if (!LoadStatsFromGameData()) 
+
+        StartCoroutine(DelayedUIBind());
+    }
+
+    IEnumerator DelayedUIBind()
+    {
+        yield return null;
+
+        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        foreach (Canvas canvas in canvases)
+        {
+            if (healthBarImage == null)
+            {
+                Transform t = canvas.transform.Find("BorderHealth/HealthBar");
+                if (t != null) healthBarImage = t.GetComponent<Image>();
+            }
+
+
+            if (staminaBarImage == null)
+            {
+                Transform t = canvas.transform.Find("StaminaPanel/StaminaBackground/StaminaFill");
+                if (t != null) staminaBarImage = t.GetComponent<Image>();
+            }
+
+
+        }
+
+        if (!LoadStatsFromGameData())
         {
             currentHealth = maxHealth;
             currentStamina = maxStamina;
         }
 
-        playerLook = GetComponentInChildren<PlayerLook>();
-        
-        // Nếu không tìm thấy trong children, tìm trong parent
-        if (playerLook == null && transform.parent != null)
-        {
-            playerLook = transform.parent.GetComponentInChildren<PlayerLook>();
-        }
-        
-        // Nếu vẫn không tìm thấy, tìm trong toàn bộ GameObject của Player
-        if (playerLook == null)
-        {
-            playerLook = GameObject.FindGameObjectWithTag("Player").GetComponentInChildren<PlayerLook>();
-            if (playerLook != null)
-            {
-                Debug.Log("Found PlayerLook in Player GameObject");
-            }
-        }
-        
-        if (playerLook == null)
-        {
-            Debug.LogWarning("Could not find PlayerLook component. Camera shake and damage effects will not work!");
-        }
-        
+        playerLook = GetComponentInChildren<PlayerLook>() ?? GetComponentInParent<PlayerLook>() ?? GameObject.FindGameObjectWithTag("Player")?.GetComponentInChildren<PlayerLook>();
+
         UpdateHealthUI();
         UpdateStaminaUI();
     }
+
+
 
     // Update is called once per frame
     void Update()
@@ -382,7 +389,7 @@ public class HealthManager : MonoBehaviour
     // Phương thức để thiết lập giá trị sức khỏe một cách rõ ràng (để tải từ dữ liệu đã lưu)
     public void SetHealth(float health)
     {
-        currentHealth = Mathf.Clamp(health, 0f, maxHealth);
+        currentHealth = health;
         UpdateHealthUI();
         
         // Nếu sức khỏe thấp hơn mức cảnh báo, hiển thị hiệu ứng trực quan
@@ -392,33 +399,16 @@ public class HealthManager : MonoBehaviour
             ShowLowHealthEffect();
         }
     }
-    public void SaveStatsToGameData()
-    {
-        if (DataPersistenceManager.instance != null)
-        {
-            GameData data = DataPersistenceManager.instance.GetData();
-            if (data != null)
-            {
-                data.playerHealth = currentHealth;
-                data.playerStamina = currentStamina;
-            }
-        }
-    }
+   
 
     public bool LoadStatsFromGameData()
     {
-        if (DataPersistenceManager.instance != null)
+        GameData data = DataPersistenceManager.instance.GetData();
+        if (data != null)
         {
-            GameData data = DataPersistenceManager.instance.GetData();
-            if (data != null)
-            {
-                currentHealth = data.playerHealth;
-                currentStamina = data.playerStamina;
-
-                UpdateHealthUI();
-                UpdateStaminaUI();
-                return true;
-            }
+            currentHealth = data.playerHealth;
+            UpdateHealthUI();
+            return true;
         }
         return false;
     }

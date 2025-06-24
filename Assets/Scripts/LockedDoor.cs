@@ -6,48 +6,66 @@ public class LockedDoor : MonoBehaviour
     public GameObject instructionUI;
     private bool isPlayerNear = false;
     private bool hasUnlocked = false;
-    private Transform playerTransform; 
+    public Transform playerTransform;
 
     void Start()
     {
         TryFindPlayer();
+
         if (instructionUI == null)
         {
             GameObject foundUI = GameObject.FindGameObjectWithTag("PressE");
             if (foundUI != null)
-            {
                 instructionUI = foundUI;
-            }
         }
 
         if (instructionUI != null)
             instructionUI.SetActive(false);
+
+        if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData().hasKey)
+        {
+            hasUnlocked = true;
+        }
     }
 
     void Update()
     {
         if (playerTransform == null)
         {
-            TryFindPlayer(); 
+            TryFindPlayer();
             return;
         }
 
         if (isPlayerNear && !hasUnlocked)
         {
-            if (instructionUI != null)
-                instructionUI.SetActive(true);
+            //instructionUI?.SetActive(true);
+
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                if (InventoryForKey.Instance != null && InventoryForKey.Instance.hasKey)
+                Debug.Log("Bấm mở khóa cửa");
+
+                //hasUnlocked = true;
+                //instructionUI?.SetActive(false);
+
+                if (DataPersistenceManager.instance != null)
                 {
-                    hasUnlocked = true;
-                    instructionUI.SetActive(false);
-                    LoadScene();
-                    if (ObjectiveManager.Instance != null)
-                        ObjectiveManager.Instance.UpdateObjective("Find the Vaccine");
+                    var data = DataPersistenceManager.instance.GetData();
+                    if (data != null)
+                    {
+                        data.currentObjectiveText = "Find the Vaccine";
+                        DataPersistenceManager.instance.SaveGame();
+                    }
                 }
+
+
+                LoadScene();
+                
             }
+        }
+        else if (!isPlayerNear && instructionUI != null)
+        {
+            instructionUI.SetActive(false);
         }
     }
 
@@ -55,9 +73,7 @@ public class LockedDoor : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            isPlayerNear = false;
-            if (instructionUI != null)
-                instructionUI.SetActive(false);
+            isPlayerNear = true;
         }
     }
 
@@ -66,8 +82,6 @@ public class LockedDoor : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNear = false;
-            if (instructionUI != null)
-                instructionUI.SetActive(false);
         }
     }
 

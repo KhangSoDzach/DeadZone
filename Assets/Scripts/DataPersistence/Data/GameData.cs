@@ -14,7 +14,8 @@ public class GameData
     public int playerScore;
 
     public SerializableVector3 playerPosition;
-
+    public bool hasKey = false;
+    public string currentObjectiveText = "Find key in Clinic Villa";
     public GameData()
     {
         playerHealth = 100f;
@@ -24,7 +25,8 @@ public class GameData
         money = 0;
         playerScore = 0;
         difficultyMode = 1.2f;
+        currentObjectiveText = "Find key in Clinic Villa";
 
-        playerPosition = new Vector3(509.47f, 25.142f, 365.85f);
+    playerPosition = new Vector3(509.47f, 25.142f, 365.85f);
     }
 }

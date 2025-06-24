@@ -49,10 +49,15 @@ public class ReturnDoorTrigger : MonoBehaviour
                     if (instructionUI != null)
                         instructionUI.SetActive(false);
 
+
+                    if (DataPersistenceManager.instance != null)
+                    {
+                        GameData data = DataPersistenceManager.instance.GetData();
+                        data.currentObjectiveText = "Escape the island";
+                        DataPersistenceManager.instance.SaveGame();
+                    }
                     LoadScene();
 
-                    if (ObjectiveManager.Instance != null)
-                        ObjectiveManager.Instance.UpdateObjective("Escape the island");
                 }
                 else
                 {
