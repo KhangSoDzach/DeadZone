@@ -104,9 +104,11 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
-  pickupSound: {fileID: 0}
+  audioSource: {fileID: 0}
+  pickupSound: {fileID: 8300000, guid: 5de1ba430def0b34d9fa11cbedd97ecc, type: 3}
   pickupEffect: {fileID: 0}
   soundVolume: 1
+  floatSpeed: 0
 --- !u!135 &1718280509108951495
 SphereCollider:
   m_ObjectHideFlags: 0
