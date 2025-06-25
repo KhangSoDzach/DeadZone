@@ -9,8 +9,6 @@ public class HealthManager : MonoBehaviour
     public float maxHealth = 100f;
     public float currentHealth;
     
-    private PlayerLook playerLook;
-    
     // Hiệu ứng khi bị tấn công
     public float immunityTime = 1.0f; // Thời gian miễn nhiễm sau mỗi lần bị tấn công
     private float immunityTimer = 0f;
@@ -61,7 +59,12 @@ public class HealthManager : MonoBehaviour
     [Tooltip("Màu khi thanh thể lực còn 10% hoặc thấp hơn")]
     public Color staminaColor10 = new Color(0.7f, 0.7f, 1.0f);       // Xanh dương rất nhạt
 
-    void Start()
+    [Header("Damage Effects")]
+    [SerializeField] private AudioClip playerHurtSound;
+    private AudioSource audioSource;
+    private PlayerLook playerLook; // Reference to PlayerLook component
+
+    void Awake()
     {
         string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
         if (sceneName.Contains("menu") || sceneName.Contains("login"))
@@ -70,7 +73,27 @@ public class HealthManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(DelayedUIBind());
+        // Get or add AudioSource component
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        // Find PlayerLook component
+        playerLook = GetComponent<PlayerLook>();
+        if (playerLook == null)
+        {
+            playerLook = GetComponentInChildren<PlayerLook>();
+        }
+        if (playerLook == null && Camera.main != null)
+        {
+            playerLook = Camera.main.GetComponent<PlayerLook>();
+            if (playerLook == null)
+            {
+                playerLook = Camera.main.GetComponentInParent<PlayerLook>();
+            }
+        }
     }
 
     IEnumerator DelayedUIBind()
@@ -158,6 +181,34 @@ public class HealthManager : MonoBehaviour
         // Bắt đầu thời gian miễn nhiễm
         isImmune = true;
         immunityTimer = immunityTime;
+
+        // Phát âm thanh bị tấn công
+        if (audioSource != null && playerHurtSound != null)
+        {
+            audioSource.clip = playerHurtSound;
+            audioSource.Play();
+        }
+        
+        // Kích hoạt hiệu ứng sát thương trực quan
+        if (playerLook != null)
+        {
+            playerLook.TakeDamageEffect();
+            Debug.Log("Damage effect triggered on PlayerLook");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerLook reference is missing! Cannot show damage effect.");
+            
+            // Try to find PlayerLook as fallback
+            playerLook = FindObjectOfType<PlayerLook>();
+            if (playerLook != null)
+            {
+                playerLook.TakeDamageEffect();
+                Debug.Log("Found PlayerLook and triggered damage effect");
+            }
+        }
+        
+        Debug.Log("Player chịu sát thương: " + damage + ", Health còn lại: " + currentHealth);
     }
    
     // Phương thức khi người chơi chết
@@ -236,7 +287,6 @@ public class HealthManager : MonoBehaviour
     {
         currentHealth += healAmount;
         
-        // Giới hạn không cho health vượt quá máu tối đa
         if (currentHealth > maxHealth)
             currentHealth = maxHealth;
             

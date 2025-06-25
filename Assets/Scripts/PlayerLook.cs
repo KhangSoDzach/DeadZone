@@ -59,15 +59,20 @@ public class PlayerLook : MonoBehaviour
         }
 
         // Kiểm tra lại sau khi tạo
-        if (damageVignette != null && damageCanvas != null)
+        if (damageVignette != null)
         {
             Debug.Log("DamageVignette tồn tại, đang hiển thị viền đỏ");
             damageVignetteAlpha = 0.8f; // Đặt alpha cho hiệu ứng viền đỏ
+            
             // Đảm bảo UI được hiển thị
-            damageCanvas.SetActive(true);
+            if (damageCanvas != null)
+            {
+                damageCanvas.SetActive(true);
+            }
+            
             // Đặt màu và độ trong suốt
             damageVignette.color = new Color(1, 0, 0, damageVignetteAlpha);
-            Debug.Log("Đã đặt màu: " + damageVignette.color + ", Canvas active: " + damageCanvas.activeInHierarchy);
+            Debug.Log("Đã đặt màu: " + damageVignette.color + ", Canvas active: " + (damageCanvas != null ? damageCanvas.activeInHierarchy.ToString() : "null"));
         }
         else
         {
@@ -75,8 +80,12 @@ public class PlayerLook : MonoBehaviour
             string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
             if (sceneName.Contains("menu") || sceneName.Contains("login"))
             {
-                Debug.Log("PlayerLook: Bỏ qua tạo damage effect trong menu scene");
-                return; // Don't create damage effects in menu scenes
+                Debug.Log("PlayerLook: Bỏ qua hiệu ứng damage trong menu scene");
+                return;
+            }
+            else
+            {
+                Debug.LogError("Không thể tạo hiệu ứng damage vignette!");
             }
         }
 
@@ -340,9 +349,46 @@ public class PlayerLook : MonoBehaviour
     // Tạo hiệu ứng viền đỏ nếu chưa có
     private void CreateDamageVignetteEffect()
     {
+        // Nếu đã có canvas nhưng không hoạt động, không cần tạo lại mà chỉ cần đảm bảo vignette được thiết lập
         if (damageCanvas != null)
         {
-            damageCanvas.SetActive(false);  
+            // Đảm bảo vignette được thiết lập ngay cả khi canvas đã tồn tại
+            if (damageVignette == null)
+            {
+                // Tìm hoặc tạo mới đối tượng vignette
+                Transform existingVignette = damageCanvas.transform.Find("DamageVignette");
+                GameObject vignetteObject;
+                
+                if (existingVignette != null)
+                {
+                    vignetteObject = existingVignette.gameObject;
+                    damageVignette = vignetteObject.GetComponent<Image>();
+                }
+                else
+                {
+                    vignetteObject = new GameObject("DamageVignette");
+                    vignetteObject.transform.SetParent(damageCanvas.transform, false);
+                    damageVignette = vignetteObject.AddComponent<Image>();
+                }
+                
+                // Thiết lập vignette
+                if (damageVignette != null)
+                {
+                    RectTransform rectTransform = vignetteObject.GetComponent<RectTransform>();
+                    rectTransform.anchorMin = Vector2.zero;
+                    rectTransform.anchorMax = Vector2.one;
+                    rectTransform.sizeDelta = Vector2.zero;
+                    rectTransform.anchoredPosition = Vector2.zero;
+
+                    Texture2D tex = CreateDamageTexture();
+                    damageSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+
+                    damageVignette.sprite = damageSprite;
+                    damageVignette.color = new Color(1, 0, 0, 0);
+                    damageVignette.type = Image.Type.Sliced;
+                    damageVignette.raycastTarget = false;
+                }
+            }
             return;
         }
 
@@ -380,10 +426,11 @@ public class PlayerLook : MonoBehaviour
             damageVignette.sprite = damageSprite;
             damageVignette.color = new Color(1, 0, 0, 0);
             damageVignette.type = Image.Type.Sliced;
-
             damageVignette.raycastTarget = false;
 
-            damageCanvas.SetActive(false); 
+            // Khởi tạo xong, giữ canvas active nhưng với alpha = 0
+            damageVignetteAlpha = 0f;
+            damageCanvas.SetActive(true);
         }
         catch (System.Exception e)
         {

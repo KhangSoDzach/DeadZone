@@ -225,7 +225,29 @@ public class Zombie_4 : MonoBehaviour
                 // Tạo đồng tiền
                 if (moneyPrefab != null)
                 {
-                    Instantiate(moneyPrefab, transform.position + randomOffset, Quaternion.Euler(0, Random.Range(0, 360), 0));
+                    GameObject coinInstance = Instantiate(moneyPrefab, transform.position + randomOffset, Quaternion.Euler(0, Random.Range(0, 360), 0));
+                    
+                    // Make sure the coin has MoneyPickup component with sound assigned
+                    MoneyPickup pickup = coinInstance.GetComponent<MoneyPickup>();
+                    if (pickup != null)
+                    {
+                        // Ensure audioSource exists
+                        if (pickup.audioSource == null)
+                        {
+                            pickup.audioSource = coinInstance.GetComponent<AudioSource>();
+                            if (pickup.audioSource == null)
+                            {
+                                pickup.audioSource = coinInstance.AddComponent<AudioSource>();
+                            }
+                        }
+                        
+                        // Try to find coin pickup sound in resources and assign to the audioSource
+                        AudioClip coinSound = Resources.Load<AudioClip>("Sounds/CoinPickup");
+                        if (coinSound != null)
+                        {
+                            pickup.audioSource.clip = coinSound;
+                        }
+                    }
                 }
                 else
                 {
