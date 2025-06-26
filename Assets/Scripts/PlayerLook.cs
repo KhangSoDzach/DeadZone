@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Để sử dụng UI elements
-using UnityEngine.Audio; // Để sử dụng AudioMixerGroup
+using UnityEngine.Audio;
+using UnityEngine.SceneManagement; // Để sử dụng AudioMixerGroup
 
 public class PlayerLook : MonoBehaviour
 {
@@ -173,6 +174,24 @@ public class PlayerLook : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (DataPersistenceManager.instance != null)
+        {
+            GameData data = DataPersistenceManager.instance.GetData();
+            Scene currentScene = SceneManager.GetActiveScene();
+
+            if (data != null && data.hasKey && currentScene.name =="Lab_Scene")
+            {
+                SetSensitivity(25f); 
+            }
+            else
+            {
+                SetSensitivity(5f); 
+            }
+        }
+        else
+        {
+            SetSensitivity(5f); 
+        }
         if (cam == null) return;
         
         // Xử lý camera shake

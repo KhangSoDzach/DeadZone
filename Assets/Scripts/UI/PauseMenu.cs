@@ -121,11 +121,7 @@ namespace Scripts.API
             if (saveNotificationPanel) saveNotificationPanel.SetActive(false);
             if (confirmationPanel) confirmationPanel.SetActive(false);
 
-            // Disable save button if not logged in
-            if (saveGameButton && GameAPI.Instance != null)
-            {
-                saveGameButton.interactable = GameAPI.Instance.IsLoggedIn;
-            }
+          
 
             // Option panel UI setup
             SetupOptionPanelUI();
@@ -227,11 +223,7 @@ namespace Scripts.API
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
 
-            // Update save button state
-            if (saveGameButton && GameAPI.Instance != null)
-            {
-                saveGameButton.interactable = GameAPI.Instance.IsLoggedIn;
-            }
+          
 
             Debug.Log("Game Paused");
         }
@@ -360,30 +352,40 @@ namespace Scripts.API
         public void SaveGame()
         {
             // Check if user is logged in first
-            if (!GameAPI.Instance.IsLoggedIn)
+            if (GameAPI.Instance.IsLoggedIn)
             {
-                ShowMessage("You must be logged in to save the game.");
-                return;
+                // Check if data is loaded
+                if (!GameDataSynchronizer.Instance.IsDataLoaded)
+                {
+                    ShowMessage("Loading player data...");
+                    GameDataSynchronizer.Instance.LoadGameData((success, error) => {
+                        if (success)
+                        {
+                            PerformSave();
+                        }
+                        else
+                        {
+                            ShowMessage("Failed to load player data: " + error);
+                        }
+                    });
+                    return;
+                }
+
+                PerformSave();
             }
-            
-            // Check if data is loaded
-            if (!GameDataSynchronizer.Instance.IsDataLoaded)
-            {
-                ShowMessage("Loading player data...");
-                GameDataSynchronizer.Instance.LoadGameData((success, error) => {
-                    if (success)
-                    {
-                        PerformSave();
-                    }
-                    else
-                    {
-                        ShowMessage("Failed to load player data: " + error);
-                    }
-                });
-                return;
+            else {
+                IsGamePaused = false;
+
+                // Restore time scale
+                Time.timeScale = 1f;
+                Cursor.visible = false;
+                Cursor.lockState = CursorLockMode.Locked;
+                DataPersistenceManager.instance.SaveGame();
+
+                pauseMenuPanel.SetActive(false);
             }
-            
-            PerformSave();
+
+
         }
         
         private void PerformSave()

@@ -59,7 +59,7 @@ public class Boss : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 15f;
-    private float zombieHealth = 1000f;
+    private float zombieHealth = 400f;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -72,7 +72,7 @@ public class Boss : MonoBehaviour
 
     [Header("Jump Attack Settings")]
     private float jumpAttackTimer = 0;
-    public float jumpAttackDamage = 30f;
+    public float jumpAttackDamage = 15f;
 
     private float nextSoundTime = 0f;
 
@@ -108,7 +108,7 @@ public class Boss : MonoBehaviour
         {
             jumpAttackTimer += Time.deltaTime;
 
-            if (jumpAttackTimer >= 15f)
+            if (jumpAttackTimer >= 14f)
             {
                 JumpAttacking();
             }
@@ -117,7 +117,7 @@ public class Boss : MonoBehaviour
         {
             jumpAttackTimer += Time.deltaTime;
             heavyAttackTimer += Time.deltaTime;
-            if (heavyAttackTimer >= 5f)
+            if (heavyAttackTimer >= 10f)
             {
                 HeavyAttacking();
             }

@@ -17,6 +17,7 @@ public class ObjectiveManager : MonoBehaviour
 
     void Start()
     {
+
         LoadObjectiveFromSave();
     }
     public void LoadObjectiveFromSave()
@@ -36,7 +37,7 @@ public class ObjectiveManager : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(message))
         {
-            objectiveText.text = message;
+            objectiveText.text ="Objective: "+ message;
         }
     }
 

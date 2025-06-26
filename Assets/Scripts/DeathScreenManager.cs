@@ -88,73 +88,78 @@ public class DeathScreenManager : MonoBehaviour
     public void ReturnToLastCheckpoint()
     {
         deathScreenPanel.SetActive(false);
+
         Time.timeScale = 1f;
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        GameObject oldPlayer = GameObject.FindGameObjectWithTag("Player");
+        if (oldPlayer != null)
+        {
+            Destroy(oldPlayer);
+        }
 
         if (DataPersistenceManager.instance != null)
         {
-            DataPersistenceManager.instance.LoadGame();
+            Scene currentScene = SceneManager.GetActiveScene();
+
+            DataPersistenceManager.instance.LoadGame(currentScene.name);
         }
         else
         {
+            Debug.LogWarning("DataPersistenceManager không tồn tại.");
             Scene currentScene = SceneManager.GetActiveScene();
             SceneManager.LoadScene(currentScene.name);
         }
 
-
     }
 
-    // Phương thức bắt đầu game mới
     public void StartNewGame()
     {
-        GameData data = DataPersistenceManager.instance.GetData();
-
-        float diff = data.difficultyMode;
         deathScreenPanel.SetActive(false);
         Time.timeScale = 1f;
 
-        //DataPersistenceManager.instance.NewGame();
-        if (data != null)
-        {
-            data.difficultyMode = diff;
-        }
-        else
-        {
-            // Xoá dữ liệu game cũ nếu có(PlayerPrefs và PlayerData)
-        // Xoá PlayerPrefs nếu bạn lưu dữ liệu local
-        PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
+        GameData data = DataPersistenceManager.instance?.GetData();
+        float diff = data != null ? data.difficultyMode : 1f;
 
-            // Nếu có GameAPI và PlayerData, reset dữ liệu về mặc định
-            if (GameAPI.Instance != null && GameAPI.Instance.PlayerData != null)
-            {
-                var playerData = GameAPI.Instance.PlayerData;
-                playerData.level = 1;
-                playerData.experience = 0;
-                playerData.money = 0;
-                playerData.health = 100f;
-                playerData.kills = 0;
-                playerData.hasKey = false;
-                playerData.checkpoint = null;
-                if (playerData.weapons != null)
-                    playerData.weapons.Clear();
-            }
+        bool isLoggedIn = GameAPI.Instance != null && GameAPI.Instance.PlayerData != null;
 
-            // Sử dụng SceneTransitionManager để load lại scene gameplay
+        if (isLoggedIn)
+        {
+            var playerData = GameAPI.Instance.PlayerData;
+            playerData.level = 1;
+            playerData.experience = 0;
+            playerData.money = 0;
+            playerData.health = 100f;
+            playerData.kills = 0;
+            playerData.hasKey = false;
+            playerData.checkpoint = null;
+            if (playerData.weapons != null)
+                playerData.weapons.Clear();
+
+
             if (SceneTransitionManager.Instance != null)
             {
                 SceneTransitionManager.Instance.LoadGameplayScene(newGameSceneName);
             }
             else
             {
-                // Nếu không có manager, fallback về SceneManager
                 SceneManager.LoadScene(newGameSceneName);
             }
         }
+        else
+        {
 
+            if (DataPersistenceManager.instance != null)
+            {
+                DataPersistenceManager.instance.NewGame();
+                DataPersistenceManager.instance.GetData().difficultyMode = diff;
+            }
 
-        
+        }
     }
-    
+
+
     private System.Collections.IEnumerator ResetOnlinePlayerData()
     {
         // Reset player data for online users
@@ -184,15 +189,29 @@ public class DeathScreenManager : MonoBehaviour
         SceneManager.LoadScene(newGameSceneName);
     }
 
-    // Phương thức quay lại menu chính
     public void ReturnToMainMenu()
     {
-
-        // Reset thời gian và ẩn màn hình chết
-        Time.timeScale = 1f;
         deathScreenPanel.SetActive(false);
-        
-        // Load scene menu chính
-        SceneManager.LoadScene(mainMenuSceneName);
+
+        Time.timeScale = 1f; 
+        //Cursor.visible = false;
+        //Cursor.lockState = CursorLockMode.Locked;
+
+        GameObject oldPlayer = GameObject.FindGameObjectWithTag("Player");
+        if (oldPlayer != null)
+        {
+            Destroy(oldPlayer);
+        }
+
+
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadMenuScene("Menu");
+        }
+        else
+        {
+            SceneManager.LoadScene("Menu");
+        }
     }
+
 }

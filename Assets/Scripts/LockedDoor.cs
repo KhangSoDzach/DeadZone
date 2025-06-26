@@ -22,44 +22,43 @@ public class LockedDoor : MonoBehaviour
         if (instructionUI != null)
             instructionUI.SetActive(false);
 
-        if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData().hasKey)
-        {
-            hasUnlocked = true;
-        }
+        
     }
 
     void Update()
     {
+
         if (playerTransform == null)
         {
             TryFindPlayer();
             return;
         }
 
-        if (isPlayerNear && !hasUnlocked)
+        if (isPlayerNear)
         {
             //instructionUI?.SetActive(true);
 
-
-            if (Input.GetKeyDown(KeyCode.E))
+            if (DataPersistenceManager.instance != null && DataPersistenceManager.instance.GetData().hasKey)
             {
-                Debug.Log("Bấm mở khóa cửa");
+                hasUnlocked = true;
+            }
 
-                //hasUnlocked = true;
-                //instructionUI?.SetActive(false);
-
-                if (DataPersistenceManager.instance != null)
+            if (Input.GetKeyDown(KeyCode.E)  )
+            {
+                if(hasUnlocked)
+                {if (DataPersistenceManager.instance != null)
                 {
                     var data = DataPersistenceManager.instance.GetData();
                     if (data != null)
                     {
-                        data.currentObjectiveText = "Find the Vaccine";
+                        data.currentObjectiveText = "Objective: Find the Vaccine";
                         DataPersistenceManager.instance.SaveGame();
                     }
                 }
 
 
-                LoadScene();
+                    LoadScene();
+                }
                 
             }
         }

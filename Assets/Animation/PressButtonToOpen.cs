@@ -84,7 +84,6 @@ public class PressButtonToOpen : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E) && distance <= interactDistance)
         {
-            Debug.Log("okkkkk");
             if (Instruction != null)
                 Instruction.SetActive(false);
 

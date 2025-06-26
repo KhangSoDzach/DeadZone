@@ -34,9 +34,8 @@ public class DataPersistenceManager : MonoBehaviour
         SceneManager.LoadScene("Cutscene");
     }
 
-    public void LoadGame()
+    public void LoadGame(string sceneToLoad = "Scene_A")
     {
-        
         if (File.Exists(savePath))
         {
             BinaryFormatter formatter = new BinaryFormatter();
@@ -48,8 +47,9 @@ public class DataPersistenceManager : MonoBehaviour
 
         SceneManager.sceneLoaded += OnSceneLoaded;
 
-        SceneManager.LoadScene("Scene_A");
+        SceneManager.LoadScene(sceneToLoad);
     }
+
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -67,13 +67,10 @@ public class DataPersistenceManager : MonoBehaviour
             if (health != null)
             {
                 health.SetHealth(gameData.playerHealth); 
+
             }
         }
-        InventoryForKey inv = GameObject.FindObjectOfType<InventoryForKey>();
-        if (inv != null)
-        {
-            inv.hasKey = gameData.hasKey;
-        }
+       
 
         if (ObjectiveManager.Instance != null)
         {
@@ -96,18 +93,13 @@ public class DataPersistenceManager : MonoBehaviour
 
             
         }
-        
 
         if (ScoreManager.Instance != null && gameData != null)
         {
             gameData.playerScore = ScoreManager.Instance.currentScore;
 
         }
-        InventoryForKey inv = GameObject.FindObjectOfType<InventoryForKey>();
-        if (inv != null)
-        {
-            gameData.hasKey = inv.hasKey;
-        }
+
 
         if (ObjectiveManager.Instance != null && ObjectiveManager.Instance.objectiveText != null)
         {
@@ -130,7 +122,11 @@ public class DataPersistenceManager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        SaveGame();
+        if ( gameData.playerHealth > 30)
+        {
+            SaveGame();
+
+        }
     }
 
     public GameData GetData() => gameData;

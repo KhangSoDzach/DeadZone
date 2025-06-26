@@ -94,6 +94,7 @@ public class HealthManager : MonoBehaviour
                 playerLook = Camera.main.GetComponentInParent<PlayerLook>();
             }
         }
+        ObjectiveManager.Instance.objectiveText.gameObject.SetActive(true);
     }
 
     IEnumerator DelayedUIBind()
@@ -131,7 +132,10 @@ public class HealthManager : MonoBehaviour
         UpdateStaminaUI();
     }
 
-
+    private void Start()
+    {
+        StartCoroutine(DelayedUIBind());
+    }
 
     // Update is called once per frame
     void Update()
@@ -145,7 +149,7 @@ public class HealthManager : MonoBehaviour
                 isImmune = false;
             }
         }
-        
+
         // Xử lý hồi thể lực
         ManageStaminaRegeneration();
     }
@@ -351,7 +355,7 @@ public class HealthManager : MonoBehaviour
     }
 
     // Cập nhật giao diện hiển thị máu với 10 nấc thang màu
-    void UpdateHealthUI()
+    public void UpdateHealthUI()
     {
         float healthPercentage = currentHealth / maxHealth;
         
