@@ -49,6 +49,7 @@ public class ShopManagement : MonoBehaviour
 
     void Start()
     {
+        DontDestroyOnLoad(gameObject);
         //Canvas[] canvases = FindObjectsOfType<Canvas>(true);
         //foreach (Canvas canvas in canvases)
         //{
@@ -75,7 +76,7 @@ public class ShopManagement : MonoBehaviour
         shopItemsList.Add(new ShopItem { id = 3, name = "Rifle Ammo", price = 70 });
         shopItemsList.Add(new ShopItem { id = 4, name = "Buy gun", price = 0 }); 
         shopItemsList.Add(new ShopItem { id = 5, name = "Weapon Upgrade", price = 0 });
-        shopItemsList.Add(new ShopItem { id = 6, name = "M4A1", price = 450 }); // Đổi tên AK-47 thành M4A1
+        shopItemsList.Add(new ShopItem { id = 6, name = "M4A1", price = 50 }); // Đổi tên AK-47 thành M4A1
         shopItemsList.Add(new ShopItem { id = 7, name = "Character Upgrade", price = 0 });
         shopItemsList.Add(new ShopItem { id = 8, name = "MP5", price = 600 });  // Thêm MP5
         shopItemsList.Add(new ShopItem { id = 9, name = "UZI", price = 800 });  // Thêm UZI

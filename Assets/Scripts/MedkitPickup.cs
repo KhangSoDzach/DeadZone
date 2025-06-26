@@ -62,7 +62,7 @@ public class MedkitPickup : MonoBehaviour
 
             // Hồi máu cho người chơi
             playerHealth.Heal(healAmount);
-            Debug.Log($"Đã sử dụng medkit, hồi {healAmount} máu ({healPercent}%)");
+            // Debug.Log($"Đã sử dụng medkit, hồi {healAmount} máu ({healPercent}%)");
 
             // Phát âm thanh nếu có
             if (pickupSound != null)

@@ -25,31 +25,31 @@ public class WeaponUpgradeManager : MonoBehaviour
     public TextMeshProUGUI ammoCapacityCostText;
     public int ammoCapacityUpgradeAmount = 5;
     public int ammoCapacityBaseCost = 200;
-    public float ammoCapacityCostMultiplier = 1.5f;
+    public float ammoCapacityCostMultiplier = 1.15f;
     
     [Header("Magazine Size Upgrade")]
     public Button magazineSizeButton;
     public TextMeshProUGUI magazineSizeText;
     public TextMeshProUGUI magazineSizeCostText;
     public int magazineSizeUpgradeAmount = 2;
-    public int magazineSizeBaseCost = 300;
-    public float magazineSizeCostMultiplier = 1.5f;
+    public int magazineSizeBaseCost = 200;
+    public float magazineSizeCostMultiplier = 1.15f;
     
     [Header("Damage Upgrade")]
     public Button damageButton;
     public TextMeshProUGUI damageText;
     public TextMeshProUGUI damageCostText;
     public float damageUpgradeAmount = 2f;
-    public int damageBaseCost = 500;
-    public float damageCostMultiplier = 2f;
+    public int damageBaseCost = 200;
+    public float damageCostMultiplier = 1.2f;
     
     [Header("Reload Time Upgrade")]
     public Button reloadTimeButton;
     public TextMeshProUGUI reloadTimeText;
     public TextMeshProUGUI reloadTimeCostText;
     public float reloadTimeUpgradeAmount = 0.1f;
-    public int reloadTimeBaseCost = 400;
-    public float reloadTimeCostMultiplier = 1.75f;
+    public int reloadTimeBaseCost = 200;
+    public float reloadTimeCostMultiplier = 1.25f;
     
     [Header("Navigation Buttons")]
     public Button backToShopButton;
@@ -65,6 +65,7 @@ public class WeaponUpgradeManager : MonoBehaviour
     
     private void Start()
     {
+        DontDestroyOnLoad(gameObject);
         // Initially hide all panels
         if (weaponTypeSelectionPanel)
             weaponTypeSelectionPanel.SetActive(false);

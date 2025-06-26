@@ -92,7 +92,7 @@ public class PickupDisplayManager : MonoBehaviour
     public void ShowMedkitPickup(float healAmount)
     {
         string description = $"Hồi phục: {healAmount}% máu";
-        ShowDisplay("Medkit", description, defaultMedkitIcon);
+        // ShowDisplay("Medkit", description, defaultMedkitIcon);
     }
     
     // Generic display method

@@ -18,32 +18,32 @@ public class CharacterUpgradeManager : MonoBehaviour
     public TextMeshProUGUI healthText;
     public TextMeshProUGUI healthCostText;
     public float healthUpgradeAmount = 10f;
-    public int healthBaseCost = 300;
-    public float healthCostMultiplier = 1.5f;
+    public int healthBaseCost = 100;
+    public float healthCostMultiplier = 1.2f;
     
     [Header("Sprint Time Upgrade")]
     public Button sprintTimeButton;
     public TextMeshProUGUI sprintTimeText;
     public TextMeshProUGUI sprintTimeCostText;
     public float sprintTimeUpgradeAmount = 5f;
-    public int sprintTimeBaseCost = 250;
-    public float sprintTimeCostMultiplier = 1.5f;
+    public int sprintTimeBaseCost = 150;
+    public float sprintTimeCostMultiplier = 1.25f;
     
     [Header("Walk Speed Upgrade")]
     public Button walkSpeedButton;
     public TextMeshProUGUI walkSpeedText;
     public TextMeshProUGUI walkSpeedCostText;
     public float walkSpeedUpgradeAmount = 0.5f;
-    public int walkSpeedBaseCost = 400;
-    public float walkSpeedCostMultiplier = 1.75f;
+    public int walkSpeedBaseCost = 100;
+    public float walkSpeedCostMultiplier = 1.25f;
     
     [Header("Run Speed Upgrade")]
     public Button runSpeedButton;
     public TextMeshProUGUI runSpeedText;
     public TextMeshProUGUI runSpeedCostText;
     public float runSpeedUpgradeAmount = 0.5f;
-    public int runSpeedBaseCost = 500;
-    public float runSpeedCostMultiplier = 2f;
+    public int runSpeedBaseCost = 300;
+    public float runSpeedCostMultiplier = 1.2f;
     
     [Header("Navigation Buttons")]
     public Button backToShopButton;
@@ -59,6 +59,7 @@ public class CharacterUpgradeManager : MonoBehaviour
     private int currentMoney;
       private void Start()
     {
+        DontDestroyOnLoad(gameObject);
         // Check if the panel is assigned
         if (characterUpgradePanel == null)
         {

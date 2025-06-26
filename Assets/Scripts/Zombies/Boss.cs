@@ -59,7 +59,7 @@ public class Boss : MonoBehaviour
 
     [Header("Zombie Health and Damage")]
     public float attackDamage = 15f;
-    private float zombieHealth = 400f;
+    private float zombieHealth = 300f;
     private float remainHeath;
 
     [Header("Zombie Sounds")]
@@ -347,7 +347,7 @@ public class Boss : MonoBehaviour
             aniZombie.SetBool("isAttacking", false);
             aniZombie.SetBool("isDead", true);
         }
-        if (remainHeath == 100 || remainHeath == 200 || remainHeath == 400 || remainHeath == 600 || remainHeath == 800)
+        if (remainHeath < 100 && remainHeath>75 || remainHeath < 150 && remainHeath>125 || remainHeath < 250 && remainHeath>230)
         {
             aniZombie.SetTrigger("isHit");
             zombieAgent.isStopped = true;
