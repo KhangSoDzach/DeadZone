@@ -1244,6 +1244,7 @@ public class LoginUIManager : MonoBehaviour
             ShowWelcomePanel();
             yield break;
         }
+        
         // Kiểm tra các field khác với default
         bool hasProgress = false;
         // Ví dụ: kiểm tra tiền, vị trí, checkpoint, vũ khí, level, ...
@@ -1255,6 +1256,7 @@ public class LoginUIManager : MonoBehaviour
         {
             hasProgress = true;
         }
+        
         if (!hasProgress)
         {
             UpdateLoadingStatus("Bạn chưa có tiến trình nào để tiếp tục! Hãy bắt đầu game mới.");
@@ -1262,10 +1264,13 @@ public class LoginUIManager : MonoBehaviour
             ShowWelcomePanel();
             yield break;
         }
+        
         // Nếu có tiến trình, load đúng dữ liệu đã lưu
         UpdateLoadingStatus("Loading your saved adventure...");
         yield return new WaitForSeconds(0.5f);
-        LoadGameScene();
+        
+        // Fix: Actually load the game scene here
+        SceneManager.LoadScene(gameSceneName);
     }
     
     // Đảm bảo chỉ có một bản định nghĩa duy nhất cho các hàm này ở cuối class
