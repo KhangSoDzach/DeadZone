@@ -13,16 +13,16 @@ public class WeaponPickup : MonoBehaviour
     public bool isAutomatic = true;
     
     [Header("Movement Effect")]
-    public float rotationSpeed = 30f; // Tốc độ xoay
-    public float floatSpeed = 0.5f; // Tốc độ di chuyển lên xuống
-    public float floatHeight = 0.2f; // Độ cao di chuyển lên xuống
+    public float rotationSpeed = 30f;
+    public float floatSpeed = 0.5f;
+    public float floatHeight = 0.2f;
     
     private Vector3 startPosition;
     
-    // Các thuộc tính chi tiết về vũ khí
-    public bool isPistol;            // Có phải súng lục không (vũ khí chính không thể vứt)
-    public float recoilAmount;       // Lượng giật
-    public float baseSpread;         // Độ chính xác cơ bản
+    // Weapon detail properties
+    public bool isPistol;
+    public float recoilAmount;
+    public float baseSpread;
     public GameObject impactEffect;  // Prefab hiệu ứng va chạm
     
     // Tham chiếu đến các components
@@ -30,19 +30,19 @@ public class WeaponPickup : MonoBehaviour
     [HideInInspector] public AudioClip gunshotClip;
     [HideInInspector] public float gunVolume;
     
-    // Thông tin UI
+    // UI info
     [HideInInspector] public string ammoTextPath;
     
-    // Tham chiếu đến vũ khí gameplay prefab gốc
+    // Reference to original gameplay weapon prefab
     [HideInInspector] public GameObject originalWeaponPrefab;
     [HideInInspector] public int originalWeaponIndex = -1;
     
-    // Lưu vị trí gốc để làm hiệu ứng nổi
+    // Store original position for floating effect
     private Vector3 originalPosition;
-    private bool isPickupMode = false; // Thay đổi mặc định thành false
+    private bool isPickupMode = false;
     private bool isInitialized = false;
-
-    // Lưu vị trí của các vũ khí đã vứt xuống để có thể tái sử dụng khi nhặt lại
+    
+    // Store last dropped positions for reusing when picking up again
     private static Dictionary<string, Vector3> lastDroppedPositions = new Dictionary<string, Vector3>();
     
     // Missing variables needed for the script
@@ -86,11 +86,11 @@ public class WeaponPickup : MonoBehaviour
             glow.flickerAmount = 0.08f;
         }
         
-        // Kiểm tra vị trí của vũ khí để quyết định chế độ
+        // Check weapon position to decide mode
         bool isChildOfWeaponHolder = IsChildOfWeaponHolder();
         
         if (!isInitialized) {
-            // Nếu là con của weapon holder, thì đây là vũ khí đang được trang bị
+            // If child of weapon holder, this is an equipped weapon
             SetPickupMode(!isChildOfWeaponHolder);
             isInitialized = true;
         }
@@ -173,11 +173,11 @@ public class WeaponPickup : MonoBehaviour
             // Không tự động bắt đầu hiệu ứng nổi ở đây nữa
             // Hiệu ứng nổi sẽ được bắt đầu sau khi súng rơi xuống đất từ ApplyDropForce
             
-            // Chỉ bắt đầu hiệu ứng nổi nếu không phải là súng vừa được vứt xuống
+            // Only start floating effect if not just dropped
             if (gameObject.activeInHierarchy && (rb == null || rb.velocity.sqrMagnitude < 0.1f))
             {
                 StopAllCoroutines();
-                originalPosition = transform.position; // Lưu vị trí hiện tại
+                originalPosition = transform.position;
                 StartCoroutine(FloatAndRotateEffect());
             }
         }
@@ -271,7 +271,7 @@ public class WeaponPickup : MonoBehaviour
             if (!string.IsNullOrEmpty(weaponName))
             {
                 lastDroppedPositions[weaponName] = originalPosition;
-                Debug.Log($"Đã lưu vị trí cho vũ khí {weaponName}: {originalPosition}");
+                Debug.Log($"Saved position for weapon {weaponName}: {originalPosition}");
             }
             
             // Bắt đầu hiệu ứng nổi và xoay
@@ -472,17 +472,15 @@ public class WeaponPickup : MonoBehaviour
         }
     }
 
-    // Helper method để tìm UI Text từ đường dẫn đã lưu
+    // Helper method to find UI Text from saved path
     private TextMeshProUGUI FindUITextFromPath(string path)
     {
         if (string.IsNullOrEmpty(path)) return null;
-
         GameObject obj = GameObject.Find(path);
         if (obj != null)
         {
             return obj.GetComponent<TextMeshProUGUI>();
         }
-
         TextMeshProUGUI[] texts = Object.FindObjectsOfType<TextMeshProUGUI>();
         foreach (TextMeshProUGUI text in texts)
         {
@@ -491,24 +489,19 @@ public class WeaponPickup : MonoBehaviour
                 return text;
             }
         }
-
         return null;
     }
-
-    // Helper method để lấy đường dẫn đầy đủ của GameObject trong hierarchy
+    // Helper method to get full path of GameObject in hierarchy
     private string GetGameObjectPath(GameObject obj)
     {
         if (obj == null) return "";
-        
         string path = obj.name;
         Transform parent = obj.transform.parent;
-        
         while (parent != null)
         {
             path = parent.name + "/" + path;
             parent = parent.parent;
         }
-        
         return path;
     }
     

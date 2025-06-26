@@ -12,7 +12,7 @@ public class InputManager : MonoBehaviour
     private PlayerLook look;
     private WeaponManager weaponManager;
     
-    // Biến để ngăn duplicate InputManager
+    // Variable to prevent duplicate InputManager
     private static InputManager instance;
     
     // Start is called before the first frame update
@@ -31,7 +31,7 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        // Kiểm tra nếu đã có instance khác
+        // Check if another instance already exists
         if (instance != null && instance != this)
         {
             Debug.LogWarning("Duplicate InputManager detected! Destroying this instance: " + gameObject.name);
@@ -49,15 +49,15 @@ public class InputManager : MonoBehaviour
         
         onFoot.Jump.performed += ctx => movement.Jump();
         
-        // Thêm xử lý sự kiện Sprint
+        // Add Sprint event handling
         onFoot.Sprint.performed += ctx => movement.Sprint(true);
         onFoot.Sprint.canceled += ctx => movement.Sprint(false);
         
-        // Thêm callbacks cho nhặt và vứt vũ khí nếu có WeaponManager
+        // Add callbacks for picking up and dropping weapons if WeaponManager exists
         if (weaponManager != null)
         {
-            // Có thể thêm nút riêng trong InputSystem nếu cần
-            // Hoặc sử dụng các phím mặc định qua Update()
+            // You can add custom input actions in InputSystem if needed
+            // Or use default keys via Update()
         }
     }
     
@@ -92,8 +92,7 @@ public class InputManager : MonoBehaviour
         // Only process weapon input if game is not paused
         if (!PauseMenu.IsGamePaused)
         {
-            // Xử lý nhặt/vứt vũ khí thông qua WeaponManager
-            // Việc này đã được xử lý trong WeaponManager.Update()
+            // Weapon pickup/drop is handled in WeaponManager.Update()
         }
     }
     

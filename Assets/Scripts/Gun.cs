@@ -13,7 +13,7 @@ public class Gun : MonoBehaviour
     public bool isPistol = false;    // Is this a pistol (primary weapon that can't be dropped)
     public int maxAmmo = 30; // Maximum ammo for the gun
     public int currentAmmo; // Current ammo in the gun
-    public int totalAmmo = 120; // Tổng số đạn người chơi mang theo cho loại súng này
+    public int totalAmmo = 120; // Total ammo player carries for this gun type
     public float reloadTime = 2f; // Time it takes to reload
     private bool isReloading = false; // Whether the gun is currently reloading
     public Animator animator; // Animator for reload animation
@@ -43,9 +43,9 @@ public class Gun : MonoBehaviour
     private float lastShotTime;                   // Time when last shot was fired
 
     [Header("Blood Effects")]
-    public GameObject bloodSplatterEffect;  // Hiệu ứng máu bắn tóe
-    public GameObject bloodDecalPrefab;     // Prefab vết máu trên sàn
-    public float bloodDecalLifetime = 10f;  // Thời gian tồn tại của vết máu (giây)
+    public GameObject bloodSplatterEffect;
+    public GameObject bloodDecalPrefab;
+    public float bloodDecalLifetime = 10f;
     public float bloodSplatterChance = 0.8f; // Tỷ lệ xuất hiện hiệu ứng máu (0-1)
 
     [Header("Weapon Progression")]
@@ -185,10 +185,9 @@ public class Gun : MonoBehaviour
             }
         }
         
-        // Kiểm tra hiệu ứng máu
+        // Check blood effect
         if (bloodSplatterEffect == null)
         {
-            // Thử tìm bloodSplatterEffect trong resources
             GameObject defaultBloodEffect = Resources.Load<GameObject>("BloodSplatter");
             if (defaultBloodEffect != null)
             {
@@ -200,11 +199,9 @@ public class Gun : MonoBehaviour
                 Debug.LogWarning("Blood splatter effect not assigned. Blood effects will be disabled.");
             }
         }
-        
-        // Kiểm tra prefab vết máu
+        // Check blood decal prefab
         if (bloodDecalPrefab == null)
         {
-            // Thử tìm bloodDecalPrefab trong resources
             GameObject defaultBloodDecal = Resources.Load<GameObject>("BloodDecal");
             if (defaultBloodDecal != null)
             {
@@ -314,18 +311,17 @@ public class Gun : MonoBehaviour
 
     IEnumerator Reload()
     {
-        // Kiểm tra nếu không còn đạn dự trữ hoặc đã đầy đạn
+        // Check if no reserve ammo or already full
         if (totalAmmo <= 0 || currentAmmo == maxAmmo)
         {
             if (currentAmmo == maxAmmo)
-                Debug.Log("Đạn đã đầy!");
+                Debug.Log("Ammo is full!");
             else
-                Debug.Log("Không còn đạn dự trữ!");
+                Debug.Log("No reserve ammo left!");
             yield break;
         }
-            
         isReloading = true;
-        Debug.Log("Đang nạp đạn...");
+        Debug.Log("Reloading...");
         
         if (animator != null)
             animator.SetBool("Reloading", true); // Play reload animation
@@ -335,24 +331,24 @@ public class Gun : MonoBehaviour
         if (animator != null)
             animator.SetBool("Reloading", false); // Stop reload animation
             
-        // Tính toán số đạn cần nạp
-        int ammoToReload = maxAmmo - currentAmmo; // Số đạn cần để nạp đầy băng
+        // Calculate ammo to reload
+        int ammoToReload = maxAmmo - currentAmmo; // Ammo needed to fully reload
         
-        // Kiểm tra nếu đạn dự trữ không đủ để nạp đầy băng
+        // Check if not enough reserve ammo to fully reload
         if (totalAmmo < ammoToReload)
         {
-            // Nếu đạn dự trữ không đủ, nạp tất cả số đạn dự trữ còn lại
+            // If not enough reserve ammo, reload all remaining reserve ammo
             currentAmmo += totalAmmo;
             totalAmmo = 0;
         }
         else
         {
-            // Nếu đạn dự trữ đủ, nạp đầy băng
+            // If enough reserve ammo, fully reload
             totalAmmo -= ammoToReload;
             currentAmmo = maxAmmo;
         }
         
-        UpdateAmmoUI(); // Cập nhật hiển thị đạn sau khi nạp đạn
+        UpdateAmmoUI(); // Update ammo display after reloading
         isReloading = false;
     }
 
@@ -374,9 +370,9 @@ public class Gun : MonoBehaviour
         if (animator != null)
         {
             if (isPistol)
-                animator.SetTrigger("Pistol_Shoot"); // Súng lục
+                animator.SetTrigger("Pistol_Shoot");
             else
-                animator.SetTrigger("Rifle_Shoot"); // Súng trường
+                animator.SetTrigger("Rifle_Shoot");
         }
 
         currentAmmo--; // Decrease ammo count
@@ -412,7 +408,7 @@ public class Gun : MonoBehaviour
         {
             Debug.Log("Hit: " + hit.transform.name);
             
-            // Kiểm tra nếu bắn trúng zombie
+            // Check if hit zombie
             bool hitZombie = false;
             float damageDealt = 0;
             
@@ -570,76 +566,44 @@ public class Gun : MonoBehaviour
     {
         if (bloodSplatterEffect != null)
         {
-            // Tạo hiệu ứng máu bắn tóe tại điểm va chạm
             GameObject bloodSplatter = Instantiate(bloodSplatterEffect, hit.point, Quaternion.LookRotation(-hit.normal));
-            
-            // Điều chỉnh kích thước hiệu ứng dựa vào sát thương
             float scale = Mathf.Clamp(damageAmount / 30f, 0.5f, 2.0f);
             bloodSplatter.transform.localScale *= scale;
-            
-            // Gắn bloodSplatter vào zombie để nó di chuyển theo
             bloodSplatter.transform.SetParent(hit.transform);
-            
-            // Hủy hiệu ứng sau một khoảng thời gian ngắn hơn
-            Destroy(bloodSplatter, .3f); // Giảm thời gian từ 2f xuống 0.3f
-            
-            // Xoay ngẫu nhiên hiệu ứng máu
+            Destroy(bloodSplatter, .3f);
             bloodSplatter.transform.Rotate(0, 0, Random.Range(0, 360));
         }
         else
         {
             Debug.LogWarning("Blood splatter effect prefab is missing!");
         }
-        
         CreateBloodDecal(hit);
     }
-
     private void CreateBloodDecal(RaycastHit zombieHit)
     {
         if (bloodDecalPrefab == null) return;
-        
-        // Kiểm tra xem có sàn/mặt đất phía dưới không
         RaycastHit floorHit;
         if (Physics.Raycast(zombieHit.point, Vector3.down, out floorHit, 3f))
         {
-            //Create a blood decal at the hit point
             Quaternion decalRotation = Quaternion.FromToRotation(Vector3.up, floorHit.normal);
             GameObject bloodDecal = Instantiate(bloodDecalPrefab, floorHit.point + floorHit.normal * 0.01f, decalRotation);
-            
-            // Adjust the size of the blood decal based on the damage amount
             float randomScale = Random.Range(0.8f, 1.5f);
             bloodDecal.transform.localScale *= randomScale;
-            
-            // Randomly rotate the blood decal for variety
             bloodDecal.transform.Rotate(0, Random.Range(0, 360), 0);
-            
-            // Destroy the blood decal after a certain time
             Destroy(bloodDecal, bloodDecalLifetime);
         }
     }
-
     private void CreateBloodBurstEffect(RaycastHit hit, float damageAmount)
     {
-        // Kiểm tra xem bloodSplatterEffect có chứa ParticleSystem không
         ParticleSystem bloodParticles = bloodSplatterEffect.GetComponent<ParticleSystem>();
-        
         if (bloodParticles != null)
         {
-            // Tạo hiệu ứng particle tại điểm va chạm
             ParticleSystem burstEffect = Instantiate(bloodParticles, hit.point, Quaternion.LookRotation(-hit.normal));
-            
-            // Gắn vào zombie để di chuyển theo
             burstEffect.transform.SetParent(hit.transform);
-            
-            // Điều chỉnh số lượng particle dựa vào sát thương
             var mainModule = burstEffect.main;
             mainModule.startSizeMultiplier *= Mathf.Clamp(damageAmount / 20f, 0.7f, 1.5f);
-            
-            // Phát một lần duy nhất, không lặp lại
             burstEffect.Stop();
             burstEffect.Play();
-            
-            // Hủy particle system sau khi nó hoàn thành
             Destroy(burstEffect.gameObject, burstEffect.main.duration + 0.1f);
         }
     }

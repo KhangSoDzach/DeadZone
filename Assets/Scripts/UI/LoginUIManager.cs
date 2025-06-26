@@ -60,7 +60,7 @@ public class LoginUIManager : MonoBehaviour
     
     [Header("Settings")]
     [SerializeField] private string gameSceneName = "Scene_A";
-    [SerializeField] private string menuSceneName = "Menu"; // Thêm cài đặt cho scene menu
+    [SerializeField] private string menuSceneName = "Menu"; 
     [SerializeField] private string offlineSceneName = "Scene_A";
     [SerializeField] private string startScene = "Cutscene";
     [SerializeField] private float autoLoginCheckDelay = 1f;
@@ -247,7 +247,7 @@ public class LoginUIManager : MonoBehaviour
         StartCoroutine(LoginCoroutine(username, password));
     }
     
-    // Khi đăng nhập thành công, luôn lấy PlayerData từ server
+
     private IEnumerator LoginCoroutine(string username, string password)
     {
         bool loginSuccess = false;
@@ -721,31 +721,25 @@ public class LoginUIManager : MonoBehaviour
         }
 
         DebugLog("Starting new game for logged in user");
-        // ShowLoadingPanel("Starting new game...");
-
-        // Reset dữ liệu local (PlayerPrefs)
+        // Reset local data (PlayerPrefs)
         PlayerPrefs.DeleteAll();
-        PlayerPrefs.DeleteKey("LastUserData"); // Xóa luôn dữ liệu save cũ trước khi reset PlayerData
+        PlayerPrefs.DeleteKey("LastUserData");
         PlayerPrefs.Save();
 
-        // Reset PlayerData trong RAM/cache
+        // Reset PlayerData in RAM/cache
         GameAPI.Instance.GetType().GetProperty("PlayerData").SetValue(GameAPI.Instance, null, null);
 
         // Reset player data for new game
         StartCoroutine(ResetPlayerDataAndStartGame());
     }
     
-    /// <summary>
-    /// Reset player data and start new game
-    /// </summary>
     private System.Collections.IEnumerator ResetPlayerDataAndStartGame()
     {
         DebugLog("Starting new game reset process...");
         
-        ShowLoadingPanel("Đang tạo game mới...");
-        UpdateLoadingStatus("Đang xác minh trạng thái đăng nhập...");
+        ShowLoadingPanel("Creating new game...");
+        UpdateLoadingStatus("Verifying login status...");
         
-        // Verify user is still logged in
         if (!GameAPI.Instance.IsLoggedIn)
         {
             DebugLog("Error: User not logged in during new game creation");
@@ -753,8 +747,7 @@ public class LoginUIManager : MonoBehaviour
             yield break;
         }
         
-        // Double-check by fetching fresh player data
-        UpdateLoadingStatus("Đang tải dữ liệu người dùng hiện tại...");
+        UpdateLoadingStatus("Loading current user data...");
         bool dataLoaded = false;
         string errorMsg = "";
         
@@ -766,45 +759,36 @@ public class LoginUIManager : MonoBehaviour
         if (!dataLoaded)
         {
             DebugLog("Failed to load player data for new game: " + errorMsg);
-            UpdateLoadingStatus("Không thể tải dữ liệu người dùng");
+            UpdateLoadingStatus("Cannot load user data");
             yield return new WaitForSeconds(1f);
             ShowWelcomePanel();
             yield break;
         }
         
-        // Verify we have valid player data
         var playerData = GameAPI.Instance.PlayerData;
         if (playerData == null || string.IsNullOrEmpty(playerData.id) || string.IsNullOrEmpty(playerData.username))
         {
             DebugLog($"Invalid player data - ID: '{playerData?.id}', Username: '{playerData?.username}'");
-            UpdateLoadingStatus("Dữ liệu người dùng không hợp lệ");
+            UpdateLoadingStatus("Invalid user data");
             yield return new WaitForSeconds(1f);
             ShowWelcomePanel();
             yield break;
         }
         
-        UpdateLoadingStatus("Đang xoá tất cả tiến trình game cũ...");
+        UpdateLoadingStatus("Deleting all previous game progress...");
         
-        // Lưu lại thông tin người dùng cần giữ
         string originalId = playerData.id;
         string originalUsername = playerData.username;
         string originalEmail = playerData.email;
         
-        // Reset triệt để tất cả dữ liệu game - cách tiếp cận mới
-        // Chúng ta sẽ cập nhật trực tiếp vào đối tượng PlayerData hiện có
-        
-        // Reset các thuộc tính game
         playerData.level = 1;
         playerData.experience = 0;
         playerData.money = 0;
         playerData.health = 100f;
         playerData.kills = 0;
         playerData.hasKey = false;
-        
-        // Reset checkpoint - quan trọng để bảo đảm không có điểm lưu trước đó
         playerData.checkpoint = null;
         
-        // Reset danh sách vũ khí
         if (playerData.weapons == null)
         {
             playerData.weapons = new List<WeaponData>();
@@ -814,17 +798,13 @@ public class LoginUIManager : MonoBehaviour
             playerData.weapons.Clear();
         }
         
-        // Bảo đảm thông tin định danh vẫn được giữ nguyên
         playerData.id = originalId;
         playerData.username = originalUsername;
         playerData.email = originalEmail;
-        
-        // Cập nhật ngày đăng nhập cuối
         playerData.lastLoginDate = System.DateTime.Now.ToString("o");
         
-        DebugLog($"Đã reset hoàn toàn dữ liệu game cho người chơi: {playerData.username}");
+        DebugLog($"Game data fully reset for player: {playerData.username}");
         
-        // Verify login state one more time before saving
         if (!GameAPI.Instance.IsLoggedIn)
         {
             DebugLog("Error: Lost login state during data reset");
@@ -832,9 +812,8 @@ public class LoginUIManager : MonoBehaviour
             yield break;
         }
         
-        UpdateLoadingStatus("Đang lưu dữ liệu game mới...");
+        UpdateLoadingStatus("Saving new game data...");
         
-        // Sử dụng GameAPI có sẵn để lưu dữ liệu đã reset
         bool saveSuccess = false;
         string errorMessage = "";
         
@@ -845,28 +824,25 @@ public class LoginUIManager : MonoBehaviour
         
         if (saveSuccess)
         {
-            UpdateLoadingStatus("Đã tạo game mới! Đang tải...");
+            UpdateLoadingStatus("New game created! Loading...");
             yield return new WaitForSeconds(1f);
 
-            // Force một lần refresh cuối cùng để đảm bảo dữ liệu được cập nhật đúng
             yield return StartCoroutine(GameAPI.Instance.ForceRefreshPlayerData((refreshSuccess, refreshError) => {
                 if (!refreshSuccess) {
-                    DebugLog("Cảnh báo: Không thể refresh dữ liệu sau khi tạo game mới: " + refreshError);
+                    DebugLog("Warning: Could not refresh data after creating new game: " + refreshError);
                 }
                 else {
-                    DebugLog("Dữ liệu game mới đã được tải thành công từ server");
+                    DebugLog("New game data loaded successfully from server");
                 }
             }));
 
-            // Sau khi refresh, update lại UI để đảm bảo trạng thái đúng
             UpdateWelcomeUI();
-            // Load lại scene game
             LoadGameScene();
         }
         else
         {
             DebugLog("Failed to save new game data: " + errorMessage);
-            UpdateLoadingStatus("Không thể lưu game mới, vẫn tiếp tục tải game...");
+            UpdateLoadingStatus("Could not save new game, still loading game...");
             yield return new WaitForSeconds(1f);
             LoadGameScene();
         }

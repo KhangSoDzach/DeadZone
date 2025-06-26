@@ -6,21 +6,18 @@ using UnityEngine.UI;
 public class StaminaBar : MonoBehaviour
 {
     [Header("UI Components")]
-    public Image staminaBarImage; // Hình ảnh thanh thể lực
-    public Text staminaText; // Text hiển thị giá trị thể lực (nếu cần)
+    public Image staminaBarImage;
+    public Text staminaText;
     
     [Header("References")]
-    public HealthManager healthManager; // Tham chiếu đến HealthManager
+    public HealthManager healthManager;
     
     [Header("Animation")]
-    public float animationSpeed = 5f; // Tốc độ animation khi thay đổi giá trị thanh
-    private float targetFill; // Giá trị mục tiêu cần đạt được
-    
-    // Các màu sắc được kế thừa từ HealthManager
+    public float animationSpeed = 5f;
+    private float targetFill;
     
     void Start()
     {
-        // Nếu chưa gán HealthManager, tự động tìm trong scene
         if (healthManager == null)
         {
             healthManager = FindObjectOfType<HealthManager>();
@@ -41,26 +38,21 @@ public class StaminaBar : MonoBehaviour
             
             if (healthManager != null)
             {
-                // Gán references cho HealthManager để nó cũng có thể cập nhật UI này
                 healthManager.staminaBarImage = staminaBarImage;
                 healthManager.staminaText = staminaText;
             }
             else
             {
-                // Check if we're in a gameplay scene before showing warning
                 string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
                 if (!sceneName.Contains("menu") && !sceneName.Contains("login"))
                 {
-                    Debug.LogWarning("Không tìm thấy HealthManager trong scene. Thanh thể lực sẽ không hoạt động.");
+                    Debug.LogWarning("HealthManager not found in scene. Stamina bar will not work.");
                 }
-                
-                // Vô hiệu hóa component này nếu không có HealthManager
                 this.enabled = false;
                 return;
             }
         }
         
-        // Thiết lập giá trị ban đầu - chỉ khi có HealthManager
         if (healthManager != null && staminaBarImage != null)
         {
             targetFill = healthManager.currentStamina / healthManager.maxStamina;
@@ -75,16 +67,11 @@ public class StaminaBar : MonoBehaviour
     
     void Update()
     {
-        // Cập nhật giao diện thanh thể lực mỗi frame với hiệu ứng mượt mà
         if (healthManager != null && staminaBarImage != null)
         {
             targetFill = healthManager.currentStamina / healthManager.maxStamina;
             staminaBarImage.fillAmount = Mathf.Lerp(staminaBarImage.fillAmount, targetFill, Time.deltaTime * animationSpeed);
-            
-            // Cập nhật màu sắc
             UpdateColor();
-            
-            // Cập nhật text nếu có
             if (staminaText != null)
             {
                 staminaText.text = Mathf.Round(healthManager.currentStamina).ToString() + " / " + healthManager.maxStamina.ToString();
@@ -92,7 +79,6 @@ public class StaminaBar : MonoBehaviour
         }
     }
     
-    // Cập nhật màu sắc dựa trên lượng thể lực còn lại
     private void UpdateColor()
     {
         if (healthManager != null && staminaBarImage != null)

@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; // Để sử dụng UI elements
+using UnityEngine.UI;
 using UnityEngine.Audio;
-using UnityEngine.SceneManagement; // Để sử dụng AudioMixerGroup
+using UnityEngine.SceneManagement;
 
 public class PlayerLook : MonoBehaviour
 {
@@ -12,85 +12,76 @@ public class PlayerLook : MonoBehaviour
     public float xSensitivity = 100f;
     public float ySensitivity = 100f;
 
-    // Thêm các biến cho camera shake
+    // Camera shake variables
     private Vector3 originalPosition;
     private float shakeIntensity = 0.2f;
     private float shakeDuration = 0.3f;
     private float shakeTimer = 0f;
     private bool isShaking = false;
 
-    // Thêm biến cho hiệu ứng viền đỏ
+    // Red vignette effect variables
     public Image damageVignette;
     private float damageVignetteAlpha = 0f;
     private float damageVignetteSpeed = 2.5f;
     private GameObject damageCanvas;
     private Sprite damageSprite;
     
-    // Thêm biến âm thanh khi bị thương
     [Header("Damage Audio")]
     public AudioSource audioSource;
-    public AudioClip[] damageSounds; // Mảng các âm thanh khi bị thương
-    public AudioMixerGroup audioMixerGroup; // Mixer group để điều chỉnh âm lượng
+    public AudioClip[] damageSounds;
+    public AudioMixerGroup audioMixerGroup;
     [Range(0f, 1f)]
-    public float damageVolume = 0.7f; // Âm lượng mặc định
+    public float damageVolume = 0.7f;
 
-    // Thêm biến cho hiệu ứng giật khi bắn
-    private float currentRecoilX = 0f;      // Recoil on X axis (left-right)
-    private float currentRecoilY = 0f;      // Recoil on Y axis (up-down)
-    private float maxRecoilY = 5f;          // Maximum vertical recoil
-    private float maxRecoilX = 2f;          // Maximum horizontal recoil
-    private float recoilRecoverySpeed = 2f; // Recovery speed
-    private float recoilBuildup = 0.5f;     // How fast recoil builds up during sustained fire
-    private float horizontalRecoilFactor = 0.3f; // How much horizontal vs vertical recoil
-    private bool isFiring = false;          // Track if player is actively firing
+    // Recoil variables
+    private float currentRecoilX = 0f;
+    private float currentRecoilY = 0f;
+    private float maxRecoilY = 5f;
+    private float maxRecoilX = 2f;
+    private float recoilRecoverySpeed = 2f;
+    private float recoilBuildup = 0.5f;
+    private float horizontalRecoilFactor = 0.3f;
+    private bool isFiring = false;
 
-      public void TakeDamageEffect()
+    public void TakeDamageEffect()
     {
-        
         if (cam != null)
             originalPosition = cam.transform.localPosition;
         isShaking = true;
         shakeTimer = shakeDuration;
         shakeIntensity = 0.2f;
 
-        // Kiểm tra nếu hiệu ứng viền đỏ chưa được tạo hoặc không tồn tại
+        // Check if vignette effect needs to be created
         if (damageVignette == null || damageCanvas == null)
         {
             CreateDamageVignetteEffect();
         }
 
-        // Kiểm tra lại sau khi tạo
+        // Check again after creation
         if (damageVignette != null)
         {
-            Debug.Log("DamageVignette tồn tại, đang hiển thị viền đỏ");
-            damageVignetteAlpha = 0.8f; // Đặt alpha cho hiệu ứng viền đỏ
-            
-            // Đảm bảo UI được hiển thị
+            Debug.Log("DamageVignette exists, showing red border");
+            damageVignetteAlpha = 0.8f;
             if (damageCanvas != null)
             {
                 damageCanvas.SetActive(true);
             }
-            
-            // Đặt màu và độ trong suốt
             damageVignette.color = new Color(1, 0, 0, damageVignetteAlpha);
-            Debug.Log("Đã đặt màu: " + damageVignette.color + ", Canvas active: " + (damageCanvas != null ? damageCanvas.activeInHierarchy.ToString() : "null"));
+            Debug.Log("Set color: " + damageVignette.color + ", Canvas active: " + (damageCanvas != null ? damageCanvas.activeInHierarchy.ToString() : "null"));
         }
         else
         {
-            // Nếu không thể tạo damage effect (có thể do không ở gameplay scene)
             string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
             if (sceneName.Contains("menu") || sceneName.Contains("login"))
             {
-                Debug.Log("PlayerLook: Bỏ qua hiệu ứng damage trong menu scene");
+                Debug.Log("PlayerLook: Skipping damage effect in menu scene");
                 return;
             }
             else
             {
-                Debug.LogError("Không thể tạo hiệu ứng damage vignette!");
+                Debug.LogError("Could not create damage vignette effect!");
             }
         }
-
-        // Phát âm thanh khi bị thương
         PlayDamageSound();
     }
     

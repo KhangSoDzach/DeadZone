@@ -23,7 +23,7 @@ public class GameAPI : MonoBehaviour
     }
     
     [Header("API Settings")]
-    private const string API_URL = "http://localhost:5000/api"; // Hoặc IP server của bạn
+    private const string API_URL = "http://localhost:5000/api";
     [SerializeField] private float requestTimeout = 30f;
     [SerializeField] private bool debugMode = true;
     
@@ -1269,10 +1269,7 @@ public class GameAPI : MonoBehaviour
         }));
     }
     
-    /// <summary>
-    /// Force refresh player data by clearing cache and loading fresh from server
-    /// This ensures we get 100% fresh data from server, not cached data
-    /// </summary>
+
     public IEnumerator ForceRefreshPlayerData(Action<bool, string> onComplete = null)
     {
         DebugLog("Force refreshing player data - clearing cache and loading fresh from server...");

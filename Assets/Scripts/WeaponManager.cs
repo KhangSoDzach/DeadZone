@@ -685,12 +685,12 @@ public class WeaponManager : MonoBehaviour
                     
                     if (playerHealth != null)
                     {
-                        // Sử dụng medkit
+                        // Use medkit
                         childMedkit.Use(playerHealth);
                     }
                     else
                     {
-                        Debug.LogError("Không tìm thấy HealthManager trên người chơi!");
+                        Debug.LogError("HealthManager not found on player!");
                     }
                 }
             }
@@ -700,20 +700,20 @@ public class WeaponManager : MonoBehaviour
         }
     }
     
-    // Thêm vũ khí từ GameObject đã tồn tại vào kho đồ
+    // Add weapon from existing GameObject to inventory
     public void AddWeaponToInventory(GameObject weaponObject)
     {
         if (weaponObject == null)
         {
-            Debug.LogError("weaponObject là null!");
+            Debug.LogError("weaponObject is null!");
             return;
         }
         
-        // Lấy hoặc thêm WeaponPickup component
+        // Get or add WeaponPickup component
         WeaponPickup pickup = weaponObject.GetComponent<WeaponPickup>();
         if (pickup == null)
         {
-            Debug.LogError("Không tìm thấy WeaponPickup component!");
+            Debug.LogError("WeaponPickup component not found!");
             return;
         }
         

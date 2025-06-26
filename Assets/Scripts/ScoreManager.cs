@@ -10,7 +10,7 @@ public class ScoreManager : MonoBehaviour
     
     [Header("UI References")]
     public Text scoreText;
-    public Text stackMoneyText; // Thêm reference cho StackMoney Text
+    public Text stackMoneyText; 
     
     [Header("Settings")]
     public int initialScore = 0;
