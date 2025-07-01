@@ -140,10 +140,21 @@ public class LoginUIManager : MonoBehaviour
             Debug.Log("Do kho" + difficulty);
         }
 
-
         if (difficultyPanel) difficultyPanel.SetActive(false);
 
-
+        // Kiểm tra xem user có đăng nhập không
+        if (GameAPI.Instance.IsLoggedIn)
+        {
+            // Nếu đã đăng nhập, reset player data và load game scene
+            DebugLog("Starting new online game with difficulty: " + difficulty);
+            StartCoroutine(ResetPlayerDataAndStartNewGame(difficulty));
+        }
+        else
+        {
+            // Nếu chưa đăng nhập (offline mode), load offline scene
+            DebugLog("Starting offline game with difficulty: " + difficulty);
+            SceneManager.LoadScene(offlineSceneName);
+        }
     }
     private void SetupUI()
     {
@@ -185,8 +196,23 @@ public class LoginUIManager : MonoBehaviour
                             !string.IsNullOrEmpty(GameAPI.Instance.PlayerData.id))
                         {
                             DebugLog("Fresh player data loaded after auto-login");
-                            UpdateWelcomeUI();
-                            ShowWelcomePanel();
+                            
+                            // Kiểm tra xem user đã có save game chưa
+                            bool hasSavedGame = HasSavedGame();
+                            
+                            if (hasSavedGame)
+                            {
+                                // Nếu đã có save game, về welcome panel
+                                UpdateWelcomeUI();
+                                ShowWelcomePanel();
+                            }
+                            else
+                            {
+                                // Nếu chưa có save game, hiện difficulty panel
+                                SetActivePanel(welcomePanel);
+                                UpdateWelcomeUI();
+                                if (difficultyPanel) difficultyPanel.SetActive(true);
+                            }
                         }
                         else
                         {
@@ -272,8 +298,23 @@ public class LoginUIManager : MonoBehaviour
                 DebugLog($"User data loaded: {GameAPI.Instance.PlayerData?.username} (ID: {GameAPI.Instance.PlayerData?.id})");
                 UpdateLoadingStatus("Login complete!");
                 yield return new WaitForSeconds(0.5f);
-                ShowWelcomePanel();
-                StartCoroutine(RefreshPlayerDataAndUpdateUI());
+                
+                // Kiểm tra xem user đã có save game chưa
+                bool hasSavedGame = HasSavedGame();
+                
+                if (hasSavedGame)
+                {
+                    // Nếu đã có save game, về welcome panel
+                    ShowWelcomePanel();
+                    StartCoroutine(RefreshPlayerDataAndUpdateUI());
+                }
+                else
+                {
+                    // Nếu chưa có save game, hiện difficulty panel để bắt đầu game mới
+                    SetActivePanel(welcomePanel);
+                    UpdateWelcomeUI();
+                    if (difficultyPanel) difficultyPanel.SetActive(true);
+                }
             }
             else
             {
@@ -473,7 +514,8 @@ public class LoginUIManager : MonoBehaviour
         // Check if scene exists in build settings
         if (Application.CanStreamedLevelBeLoaded(gameSceneName))
         {
-            hasSavedGame = HasSavedGame();
+            // Load the game scene directly
+            SceneManager.LoadScene(gameSceneName);
         }
         else
         {
@@ -720,17 +762,19 @@ public class LoginUIManager : MonoBehaviour
             return;
         }
 
-        DebugLog("Starting new game for logged in user");
-        // Reset local data (PlayerPrefs)
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.DeleteKey("LastUserData");
-        PlayerPrefs.Save();
-
-        // Reset PlayerData in RAM/cache
-        GameAPI.Instance.GetType().GetProperty("PlayerData").SetValue(GameAPI.Instance, null, null);
-
-        // Reset player data for new game
-        StartCoroutine(ResetPlayerDataAndStartGame());
+        DebugLog("Starting new game for logged in user - showing difficulty selection");
+        
+        // Hiển thị difficulty panel giống như offline mode
+        if (difficultyPanel) 
+        {
+            difficultyPanel.SetActive(true);
+        }
+        else
+        {
+            DebugLog("Warning: Difficulty panel not found, starting with default difficulty");
+            // Nếu không có difficulty panel, bắt đầu với độ khó mặc định (normal = 1.2f)
+            OnDifficultySelected(1.2f);
+        }
     }
     
     private System.Collections.IEnumerator ResetPlayerDataAndStartGame()
@@ -1268,5 +1312,140 @@ public class LoginUIManager : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
         SceneManager.LoadScene(offlineSceneName);
+    }
+
+    /// <summary>
+    /// Reset player data and start new game with selected difficulty
+    /// </summary>
+    private IEnumerator ResetPlayerDataAndStartNewGame(float difficulty)
+    {
+        DebugLog("Starting new game reset process with difficulty: " + difficulty);
+        
+        ShowLoadingPanel("Creating new game...");
+        UpdateLoadingStatus("Verifying login status...");
+        
+        if (!GameAPI.Instance.IsLoggedIn)
+        {
+            DebugLog("Error: User not logged in during new game creation");
+            ShowWelcomePanel();
+            yield break;
+        }
+        
+        UpdateLoadingStatus("Loading current user data...");
+        bool dataLoaded = false;
+        string errorMsg = "";
+        
+        yield return StartCoroutine(GameAPI.Instance.GetPlayerData((success, error) => {
+            dataLoaded = success;
+            errorMsg = error;
+        }));
+        
+        if (!dataLoaded)
+        {
+            DebugLog("Failed to load player data for new game: " + errorMsg);
+            UpdateLoadingStatus("Cannot load user data");
+            yield return new WaitForSeconds(1f);
+            ShowWelcomePanel();
+            yield break;
+        }
+        
+        var playerData = GameAPI.Instance.PlayerData;
+        if (playerData == null || string.IsNullOrEmpty(playerData.id) || string.IsNullOrEmpty(playerData.username))
+        {
+            DebugLog($"Invalid player data - ID: '{playerData?.id}', Username: '{playerData?.username}'");
+            UpdateLoadingStatus("Invalid user data");
+            yield return new WaitForSeconds(1f);
+            ShowWelcomePanel();
+            yield break;
+        }
+        
+        UpdateLoadingStatus("Resetting game progress...");
+        
+        // Reset local data (PlayerPrefs)
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.DeleteKey("LastUserData");
+        PlayerPrefs.Save();
+        
+        // Backup original user info
+        string originalId = playerData.id;
+        string originalUsername = playerData.username;
+        string originalEmail = playerData.email;
+        
+        // Reset all game progress
+        playerData.level = 1;
+        playerData.experience = 0;
+        playerData.money = 0;
+        playerData.health = 100f;
+        playerData.kills = 0;
+        playerData.hasKey = false;
+        playerData.checkpoint = null;
+        
+        if (playerData.weapons == null)
+        {
+            playerData.weapons = new List<WeaponData>();
+        }
+        else
+        {
+            playerData.weapons.Clear();
+        }
+        
+        // Restore user info
+        playerData.id = originalId;
+        playerData.username = originalUsername;
+        playerData.email = originalEmail;
+        playerData.lastLoginDate = System.DateTime.Now.ToString("o");
+        
+        // Set the selected difficulty in GameData
+        DataPersistenceManager.instance.NewGame();
+        GameData gameData = DataPersistenceManager.instance.GetData();
+        if (gameData != null)
+        {
+            gameData.difficultyMode = difficulty;
+            DebugLog($"Difficulty set to: {difficulty}");
+        }
+        
+        DebugLog($"Game data fully reset for player: {playerData.username} with difficulty: {difficulty}");
+        
+        if (!GameAPI.Instance.IsLoggedIn)
+        {
+            DebugLog("Error: Lost login state during data reset");
+            ShowWelcomePanel();
+            yield break;
+        }
+        
+        UpdateLoadingStatus("Saving new game data...");
+        
+        bool saveSuccess = false;
+        string errorMessage = "";
+        
+        yield return StartCoroutine(GameAPI.Instance.SavePlayerData((success, error) => {
+            saveSuccess = success;
+            errorMessage = error;
+        }));
+        
+        if (saveSuccess)
+        {
+            UpdateLoadingStatus("New game created! Loading...");
+            yield return new WaitForSeconds(1f);
+
+            yield return StartCoroutine(GameAPI.Instance.ForceRefreshPlayerData((refreshSuccess, refreshError) => {
+                if (!refreshSuccess) {
+                    DebugLog("Warning: Could not refresh data after creating new game: " + refreshError);
+                }
+                else {
+                    DebugLog("New game data loaded successfully from server");
+                }
+            }));
+
+            UpdateWelcomeUI();
+            LoadGameScene();
+        }
+        else
+        {
+            DebugLog("Failed to save new game data: " + errorMessage);
+            UpdateLoadingStatus("Could not save new game, still loading game...");
+            yield return new WaitForSeconds(1f);
+            LoadGameScene();
+        }
     }
 }
