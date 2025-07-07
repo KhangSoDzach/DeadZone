@@ -28,6 +28,7 @@ public class AuthUIManager : MonoBehaviour
     
     [Header("Settings")]
     public string gameSceneName = "MainHub";
+    public string startSceneName = "Cutscene";
     
     private void Start()
     {
@@ -201,6 +202,8 @@ public class AuthUIManager : MonoBehaviour
     
     private void LoadGameScene()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene(gameSceneName);
+        // Load start scene (cutscene) for new game experience
+        string sceneToLoad = !string.IsNullOrEmpty(startSceneName) ? startSceneName : gameSceneName;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneToLoad);
     }
 }

@@ -269,9 +269,30 @@ public class Zombie_1 : MonoBehaviour
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
 
+        // Check if we're in Endless scene and notify the UI
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Endless")
+        {
+            // Simple approach: find EndlessUI game object and call methods via SendMessage
+            GameObject endlessUI = GameObject.Find("EndlessUI");
+            if (endlessUI != null)
+            {
+                endlessUI.SendMessage("AddKill", SendMessageOptions.DontRequireReceiver);
+            }
+        }
+
         if (Random.value <= dropChance)
         {
             int coinCount = Random.Range(minCoinsDropped, maxCoinsDropped + 1);
+            
+            // Notify EndlessUI of coins in Endless mode
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Endless")
+            {
+                GameObject endlessUI = GameObject.Find("EndlessUI");
+                if (endlessUI != null)
+                {
+                    endlessUI.SendMessage("AddCoins", coinCount, SendMessageOptions.DontRequireReceiver);
+                }
+            }
             
             for (int i = 0; i < coinCount; i++)
             {

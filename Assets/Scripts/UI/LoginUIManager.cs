@@ -18,6 +18,7 @@ public class LoginUIManager : MonoBehaviour
     [SerializeField] private Button welcomePlayOfflineButton;
     [SerializeField] private Button welcomeContinueButton;
     [SerializeField] private Button welcomeNewGameButton; // Add new game button
+    [SerializeField] private Button welcomeEndlessModeButton; // Add endless mode button
     [SerializeField] private Button welcomeLogoutButton; // Add logout button
     [SerializeField] private Button welcomeSettingsButton; // Add settings button
     [SerializeField] private TMP_Text welcomeVersionText;
@@ -115,6 +116,7 @@ public class LoginUIManager : MonoBehaviour
         if (welcomePlayOfflineButton) welcomePlayOfflineButton.onClick.AddListener(StartOfflineMode);
         if (welcomeContinueButton) welcomeContinueButton.onClick.AddListener(ContinueGame);
         if (welcomeNewGameButton) welcomeNewGameButton.onClick.AddListener(StartNewGame); // Add new game listener
+        if (welcomeEndlessModeButton) welcomeEndlessModeButton.onClick.AddListener(StartEndlessMode); // Add endless mode listener
         if (welcomeLogoutButton) welcomeLogoutButton.onClick.AddListener(LogoutUser); // Add logout listener
         if (welcomeSettingsButton) welcomeSettingsButton.onClick.AddListener(ShowSettingsPanel); // Add settings listener
         if (optionButton) optionButton.onClick.AddListener(ShowOptionPanel); // Add option button listener
@@ -151,9 +153,9 @@ public class LoginUIManager : MonoBehaviour
         }
         else
         {
-            // Nếu chưa đăng nhập (offline mode), load offline scene
+            // Nếu chưa đăng nhập (offline mode), load start scene (cutscene)
             DebugLog("Starting offline game with difficulty: " + difficulty);
-            SceneManager.LoadScene(offlineSceneName);
+            SceneManager.LoadScene(startScene);
         }
     }
     private void SetupUI()
@@ -475,7 +477,8 @@ public class LoginUIManager : MonoBehaviour
 
     private void LoadOfflineContinue()
     {
-        SceneManager.LoadScene(offlineSceneName);
+        // For continue game, load the main game scene, not cutscene
+        SceneManager.LoadScene(gameSceneName);
     }
 
     //private IEnumerator ContinueGameCoroutine()
@@ -501,25 +504,27 @@ public class LoginUIManager : MonoBehaviour
     
     private void LoadGameScene()
     {
-        DebugLog($"Loading game scene: {gameSceneName}");
+        // Always load the start scene (cutscene) for new games
+        string sceneToLoad = startScene;
+        DebugLog($"Loading start scene: {sceneToLoad}");
         
         // Make sure the scene name is valid
-        if (string.IsNullOrEmpty(gameSceneName))
+        if (string.IsNullOrEmpty(sceneToLoad))
         {
-            DebugLog("Error: Game scene name is not set!");
+            DebugLog("Error: Start scene name is not set!");
             ShowWelcomePanel();
             return;
         }
         
         // Check if scene exists in build settings
-        if (Application.CanStreamedLevelBeLoaded(gameSceneName))
+        if (Application.CanStreamedLevelBeLoaded(sceneToLoad))
         {
-            // Load the game scene directly
-            SceneManager.LoadScene(gameSceneName);
+            // Load the start scene (cutscene)
+            SceneManager.LoadScene(sceneToLoad);
         }
         else
         {
-            DebugLog($"Error: Scene '{gameSceneName}' not found in build settings!");
+            DebugLog($"Error: Scene '{sceneToLoad}' not found in build settings!");
             ShowWelcomePanel();
         }
     }
@@ -774,6 +779,37 @@ public class LoginUIManager : MonoBehaviour
             DebugLog("Warning: Difficulty panel not found, starting with default difficulty");
             // Nếu không có difficulty panel, bắt đầu với độ khó mặc định (normal = 1.2f)
             OnDifficultySelected(1.2f);
+        }
+    }
+    
+    /// <summary>
+    /// Start Endless Mode - goes directly to Endless scene
+    /// </summary>
+    private void StartEndlessMode()
+    {
+        DebugLog("Starting Endless Mode...");
+        
+        // Check if user is logged in or playing offline
+        if (!GameAPI.Instance.IsLoggedIn)
+        {
+            DebugLog("Starting Endless Mode in offline mode");
+        }
+        else
+        {
+            DebugLog("Starting Endless Mode for logged in user");
+        }
+        
+        // Load Endless scene directly
+        ShowLoadingPanel("Loading Endless Mode...");
+        UpdateLoadingStatus("Entering endless battle...");
+        
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadGameplayScene("Endless");
+        }
+        else
+        {
+            SceneManager.LoadScene("Endless");
         }
     }
     
@@ -1311,7 +1347,8 @@ public class LoginUIManager : MonoBehaviour
     private IEnumerator LoadOfflineGame()
     {
         yield return new WaitForSeconds(1f);
-        SceneManager.LoadScene(offlineSceneName);
+        // For new game, always start from cutscene
+        SceneManager.LoadScene(startScene);
     }
 
     /// <summary>

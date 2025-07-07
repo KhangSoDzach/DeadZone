@@ -70,6 +70,12 @@ public class ZombieMiniboss : MonoBehaviour
     private int heavyAttackTimer = 0;
     public float heavyAttackDamage = 30f;
 
+    [Header("Money Drop Settings")]
+    public GameObject moneyPrefab;          // Prefab đồng tiền
+    public float dropChance = 0.9f;         // Tỷ lệ rơi tiền (0-1)
+    public int minCoinsDropped = 5;         // Số lượng đồng tiền tối thiểu
+    public int maxCoinsDropped = 10;        // Số lượng đồng tiền tối đa
+
     private float nextSoundTime = 0f;
 
 
@@ -326,5 +332,68 @@ public class ZombieMiniboss : MonoBehaviour
         aniZombie.SetBool("isAttacking", false);
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
+        
+        // Endless Mode: Cập nhật kill count và coin cho UI
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Endless")
+        {
+            GameObject endlessUI = GameObject.Find("EndlessUI");
+            if (endlessUI != null)
+            {
+                endlessUI.SendMessage("OnZombieKilled", SendMessageOptions.DontRequireReceiver);
+                
+                // Tính số coin sẽ rớt dựa trên difficulty
+                int coinCount = Random.Range(minCoinsDropped, maxCoinsDropped + 1);
+                endlessUI.SendMessage("OnCoinsEarned", coinCount, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+        
+        // Kiểm tra tỷ lệ rơi tiền
+        if (Random.value <= dropChance)
+        {
+            // Xác định số lượng đồng tiền rơi ra
+            int coinCount = Random.Range(minCoinsDropped, maxCoinsDropped + 1);
+            
+            for (int i = 0; i < coinCount; i++)
+            {
+                // Tạo vị trí rơi ngẫu nhiên xung quanh zombie
+                Vector3 randomOffset = new Vector3(
+                    Random.Range(-1f, 1f),
+                    0.1f,  // Đặt cao hơn một chút so với mặt đất
+                    Random.Range(-1f, 1f)
+                );
+                
+                // Tạo đồng tiền
+                if (moneyPrefab != null)
+                {
+                    GameObject coinInstance = Instantiate(moneyPrefab, transform.position + randomOffset, Quaternion.Euler(0, Random.Range(0, 360), 0));
+                    
+                    // Make sure the coin has MoneyPickup component with sound assigned
+                    MoneyPickup pickup = coinInstance.GetComponent<MoneyPickup>();
+                    if (pickup != null)
+                    {
+                        // Ensure audioSource exists
+                        if (pickup.audioSource == null)
+                        {
+                            pickup.audioSource = coinInstance.GetComponent<AudioSource>();
+                            if (pickup.audioSource == null)
+                            {
+                                pickup.audioSource = coinInstance.AddComponent<AudioSource>();
+                            }
+                        }
+                        
+                        // Try to find coin pickup sound in resources and assign to the audioSource
+                        AudioClip coinSound = Resources.Load<AudioClip>("Sounds/CoinPickup");
+                        if (coinSound != null)
+                        {
+                            pickup.audioSource.clip = coinSound;
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("Money prefab not assigned to zombie miniboss!");
+                }
+            }
+        }
     }
 }

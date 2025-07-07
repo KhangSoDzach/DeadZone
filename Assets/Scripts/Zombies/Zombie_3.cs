@@ -265,6 +265,20 @@ public class Zombie_3 : MonoBehaviour
         aniZombie.SetBool("isDead", true);
         Object.Destroy(gameObject, 5.0f);
         
+        // Endless Mode: Cập nhật kill count và coin cho UI
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Endless")
+        {
+            GameObject endlessUI = GameObject.Find("EndlessUI");
+            if (endlessUI != null)
+            {
+                endlessUI.SendMessage("OnZombieKilled", SendMessageOptions.DontRequireReceiver);
+                
+                // Tính số coin sẽ rớt dựa trên difficulty
+                int coinCount = Random.Range(minCoinsDropped, maxCoinsDropped + 1);
+                endlessUI.SendMessage("OnCoinsEarned", coinCount, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+        
         // Kiểm tra tỷ lệ rơi tiền
         if (Random.value <= dropChance)
         {
