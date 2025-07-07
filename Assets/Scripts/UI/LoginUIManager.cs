@@ -679,6 +679,9 @@ public class LoginUIManager : MonoBehaviour
             welcomeContinueButton.gameObject.SetActive((isLoggedIn == true && hasSavedGame) || (isLoggedIn == false && hasOfflineSave));
         if (welcomeLogoutButton) welcomeLogoutButton.gameObject.SetActive(isLoggedIn);
         
+        // Endless Mode button should always be visible for both logged in and offline users
+        if (welcomeEndlessModeButton) welcomeEndlessModeButton.gameObject.SetActive(true);
+        
 
         if (welcomeUserText)
         {
@@ -803,13 +806,36 @@ public class LoginUIManager : MonoBehaviour
         ShowLoadingPanel("Loading Endless Mode...");
         UpdateLoadingStatus("Entering endless battle...");
         
+        // Add a small delay to show the loading message
+        StartCoroutine(LoadEndlessSceneCoroutine());
+    }
+    
+    /// <summary>
+    /// Coroutine to load Endless scene with proper loading feedback
+    /// </summary>
+    private IEnumerator LoadEndlessSceneCoroutine()
+    {
+        yield return new WaitForSeconds(0.5f);
+        
+        // Try to use SceneTransitionManager if available, otherwise use direct scene loading
         if (SceneTransitionManager.Instance != null)
         {
             SceneTransitionManager.Instance.LoadGameplayScene("Endless");
         }
         else
         {
-            SceneManager.LoadScene("Endless");
+            // Check if Endless scene exists in build settings
+            if (Application.CanStreamedLevelBeLoaded("Endless"))
+            {
+                SceneManager.LoadScene("Endless");
+            }
+            else
+            {
+                DebugLog("Error: Endless scene not found in build settings!");
+                UpdateLoadingStatus("Error: Endless scene not found!");
+                yield return new WaitForSeconds(2f);
+                ShowWelcomePanel();
+            }
         }
     }
     
