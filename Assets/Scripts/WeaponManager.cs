@@ -700,7 +700,7 @@ public class WeaponManager : MonoBehaviour
         }
     }
     
-    // Add weapon from existing GameObject to inventory
+
     public void AddWeaponToInventory(GameObject weaponObject)
     {
         if (weaponObject == null)
@@ -709,7 +709,7 @@ public class WeaponManager : MonoBehaviour
             return;
         }
         
-        // Get or add WeaponPickup component
+
         WeaponPickup pickup = weaponObject.GetComponent<WeaponPickup>();
         if (pickup == null)
         {

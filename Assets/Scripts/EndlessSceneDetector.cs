@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Simple script to detect if we're in Endless scene and enable/disable EndlessManager
-/// </summary>
 public class EndlessSceneDetector : MonoBehaviour
 {
     [Header("Scene Detection")]

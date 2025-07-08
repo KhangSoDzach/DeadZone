@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Manages infinite ammo for pistols in Endless mode
-/// This script automatically detects all pistols in the scene and enables infinite ammo
-/// </summary>
+
 public class EndlessAmmoManager : MonoBehaviour
 {
     [Header("Endless Mode Settings")]
@@ -30,9 +27,7 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Check if current scene is an endless mode scene
-    /// </summary>
+
     void CheckEndlessMode()
     {
         string currentSceneName = SceneManager.GetActiveScene().name;
@@ -51,9 +46,7 @@ public class EndlessAmmoManager : MonoBehaviour
         DebugLog($"Not in endless mode. Current scene: {currentSceneName}");
     }
     
-    /// <summary>
-    /// Setup infinite ammo for all pistols in the scene
-    /// </summary>
+
     IEnumerator SetupInfiniteAmmo()
     {
         // Wait a frame to ensure all weapons are initialized
@@ -98,9 +91,7 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Monitor for new weapons that might be spawned during gameplay
-    /// </summary>
+
     IEnumerator MonitorForNewWeapons()
     {
         while (true)
@@ -127,9 +118,8 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Manually enable infinite ammo for all weapons
-    /// </summary>
+
+
     [ContextMenu("Enable Infinite Ammo")]
     public void EnableInfiniteAmmo()
     {
@@ -141,9 +131,7 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Manually disable infinite ammo for all weapons
-    /// </summary>
+
     [ContextMenu("Disable Infinite Ammo")]
     public void DisableInfiniteAmmo()
     {
@@ -161,9 +149,7 @@ public class EndlessAmmoManager : MonoBehaviour
         DebugLog("Infinite reserve ammo disabled for all weapons");
     }
     
-    /// <summary>
-    /// Toggle infinite ammo on/off
-    /// </summary>
+
     public void ToggleInfiniteAmmo()
     {
         if (enableInfiniteAmmo)
@@ -176,9 +162,7 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Set whether only pistols should have infinite ammo
-    /// </summary>
+
     public void SetPistolOnlyMode(bool pistolOnly)
     {
         onlyForPistols = pistolOnly;
@@ -191,9 +175,7 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Add a new endless scene name to the detection list
-    /// </summary>
+
     public void AddEndlessSceneName(string sceneName)
     {
         System.Array.Resize(ref endlessSceneNames, endlessSceneNames.Length + 1);
@@ -201,9 +183,7 @@ public class EndlessAmmoManager : MonoBehaviour
         DebugLog($"Added new endless scene name: {sceneName}");
     }
     
-    /// <summary>
-    /// Get status information about the ammo manager
-    /// </summary>
+
     public string GetStatus()
     {
         return $"Endless Mode: {isEndlessMode}\n" +
@@ -213,9 +193,6 @@ public class EndlessAmmoManager : MonoBehaviour
                $"Scene: {SceneManager.GetActiveScene().name}";
     }
     
-    /// <summary>
-    /// Debug logging with manager name
-    /// </summary>
     void DebugLog(string message)
     {
         if (debugMode)
@@ -224,9 +201,6 @@ public class EndlessAmmoManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Draw status information in the editor
-    /// </summary>
     void OnGUI()
     {
         if (debugMode && Application.isEditor)

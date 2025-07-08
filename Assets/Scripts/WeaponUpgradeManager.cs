@@ -55,10 +55,9 @@ public class WeaponUpgradeManager : MonoBehaviour
     public Button backToShopButton;
     public Button backToWeaponTypeButton;
     
-    // Reference to the shop management for returning to shop
+
     private ShopManagement shopManager;
-    
-    // Current selected weapon and player money
+
     private Gun currentWeapon;
     private int currentMoney;
     private bool isPistol;
@@ -66,14 +65,14 @@ public class WeaponUpgradeManager : MonoBehaviour
     private void Start()
     {
         DontDestroyOnLoad(gameObject);
-        // Initially hide all panels
+
         if (weaponTypeSelectionPanel)
             weaponTypeSelectionPanel.SetActive(false);
             
         if (weaponUpgradePanel)
             weaponUpgradePanel.SetActive(false);
             
-        // Add listeners to buttons
+
         if (pistolButton)
             pistolButton.onClick.AddListener(() => SelectWeaponType(true));
             
@@ -99,18 +98,18 @@ public class WeaponUpgradeManager : MonoBehaviour
         if (reloadTimeButton)
             reloadTimeButton.onClick.AddListener(() => UpgradeReloadTime());
     }
-    // Show the weapon type selection panel
+
     public void ShowWeaponTypeSelection(int playerMoney, ShopManagement shop)
     {
         currentMoney = playerMoney;
         shopManager = shop;
         
-        // Check if player has weapons in the WeaponHolder
+
         bool hasPistol = false;
         bool hasRifle = false;
         bool hasActiveRifle = false;
         
-        // Find the WeaponManager to access the WeaponHolder
+
         WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
         if (weaponManager != null && weaponManager.weaponHolder != null)
         {
@@ -351,10 +350,10 @@ public class WeaponUpgradeManager : MonoBehaviour
         
         if (currentMoney >= cost)
         {
-            // Apply upgrade
+
             currentWeapon.maxAmmo += magazineSizeUpgradeAmount;
             
-            // Deduct cost
+
             currentMoney -= cost;
             if (shopManager != null)
             {
@@ -366,22 +365,22 @@ public class WeaponUpgradeManager : MonoBehaviour
                 shopManager.UpdateMoneyText();
             }
             
-            // Show notification
+
             if (shopManager != null)
             {
                 shopManager.ShowNotification("Magazine Size Upgraded!");
             }
             
-            // Update UI
+
             UpdateMoneyDisplay();
             UpdateMagazineSizeUI();
             
-            // Also update the ammo UI
+
             currentWeapon.UpdateAmmoUI();
         }
     }
     
-    // Upgrade damage
+
     private void UpgradeDamage()
     {
         if (currentWeapon == null) return;
@@ -418,7 +417,7 @@ public class WeaponUpgradeManager : MonoBehaviour
         }
     }
     
-    // Upgrade reload time (decrease it)
+
     private void UpgradeReloadTime()
     {
         if (currentWeapon == null) return;
@@ -428,12 +427,12 @@ public class WeaponUpgradeManager : MonoBehaviour
         
         if (currentMoney >= cost && currentWeapon.reloadTime > 0.5f)
         {
-            // Apply upgrade (reduce reload time)
+
             currentWeapon.reloadTime -= reloadTimeUpgradeAmount;
-            // Make sure it doesn't go below minimum
+
             currentWeapon.reloadTime = Mathf.Max(0.5f, currentWeapon.reloadTime);
             
-            // Deduct cost
+
             currentMoney -= cost;
             if (shopManager != null)
             {
@@ -444,8 +443,8 @@ public class WeaponUpgradeManager : MonoBehaviour
                 }
                 shopManager.UpdateMoneyText();
             }
-            
-            // Show notification
+
+
             if (shopManager != null)
             {
                 shopManager.ShowNotification("Reload Time Improved!");
@@ -457,7 +456,7 @@ public class WeaponUpgradeManager : MonoBehaviour
         }
     }
     
-    // Return to weapon type selection panel
+
     private void BackToWeaponTypeSelection()
     {
         if (weaponTypeSelectionPanel && weaponUpgradePanel)
@@ -467,12 +466,12 @@ public class WeaponUpgradeManager : MonoBehaviour
         }
     }
     
-    // Return to shop
+
     private void BackToShop()
     {
         if (shopManager != null)
         {
-            // Hide upgrade panels
+
             if (weaponTypeSelectionPanel)
                 weaponTypeSelectionPanel.SetActive(false);
                 

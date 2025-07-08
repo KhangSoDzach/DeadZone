@@ -5,9 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Manager for Endless Mode - handles continuous zombie spawning, difficulty scaling, and notifications
-/// </summary>
+
 public class EndlessManager : MonoBehaviour
 {
     [Header("Endless Mode Settings")]
@@ -37,7 +35,7 @@ public class EndlessManager : MonoBehaviour
     [SerializeField] private TMP_Text difficultyLevelText;
     [SerializeField] private float notificationDisplayTime = 3f;
     
-    // Private variables
+
     private float currentDifficultyMultiplier;
     private float gameStartTime;
     private float lastDifficultyIncrease;
@@ -47,7 +45,6 @@ public class EndlessManager : MonoBehaviour
     private Coroutine spawnCoroutine;
     private Coroutine difficultyCoroutine;
     
-    // Singleton pattern
     public static EndlessManager Instance { get; private set; }
     
     private void Awake()
@@ -73,7 +70,7 @@ public class EndlessManager : MonoBehaviour
     {
         Debug.Log("Initializing Endless Mode...");
         
-        // Find player
+
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -89,7 +86,7 @@ public class EndlessManager : MonoBehaviour
         gameStartTime = Time.time;
         lastDifficultyIncrease = Time.time;
         currentDifficultyLevel = 1;
-          // Start spawning and difficulty scaling
+
         if (spawnCoroutine == null)
         {
             spawnCoroutine = StartCoroutine(ContinuousZombieSpawning());
@@ -100,10 +97,10 @@ public class EndlessManager : MonoBehaviour
             difficultyCoroutine = StartCoroutine(DifficultyScaling());
         }
 
-        // Enhance vision for all existing zombies in Endless Mode
+
         StartCoroutine(InitialVisionEnhancement());
 
-        // Update initial UI
+
         UpdateUI();
 
         Debug.Log("Endless Mode initialized successfully!");
@@ -117,12 +114,8 @@ public class EndlessManager : MonoBehaviour
         CleanupDeadZombies();
         CheckAndEnhanceZombieVision();
         
-        DebugZombieVision(); // Call debug method
+        DebugZombieVision(); 
     }
-    
-    /// <summary>
-    /// Continuous zombie spawning coroutine
-    /// </summary>
     private IEnumerator ContinuousZombieSpawning()
     {
         while (isEndlessMode)
@@ -137,9 +130,6 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Difficulty scaling coroutine
-    /// </summary>
     private IEnumerator DifficultyScaling()
     {
         while (isEndlessMode)
@@ -153,50 +143,45 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Spawn a random zombie near the player
-    /// </summary>
+
     private void SpawnZombie()
     {
         if (zombiePrefabs.Length == 0 || playerTransform == null) return;
         
-        // Choose random zombie type
+
         GameObject zombiePrefab = zombiePrefabs[Random.Range(0, zombiePrefabs.Length)];
         
-        // Find spawn position around player
+
         Vector3 spawnPosition = GetRandomSpawnPosition();
         
         // Spawn zombie
         GameObject zombie = Instantiate(zombiePrefab, spawnPosition, Quaternion.identity);
         
-        // Scale zombie based on current difficulty
+
         ApplyDifficultyToZombie(zombie);
         
-        // Add to active zombies list
+
         activeZombies.Add(zombie);
         
         Debug.Log($"Spawned {zombie.name} at difficulty level {currentDifficultyLevel}");
     }
     
-    /// <summary>
-    /// Get random spawn position around player
-    /// </summary>
+
     private Vector3 GetRandomSpawnPosition()
     {
         if (playerTransform == null) return Vector3.zero;
         
-        // If spawn points are defined, use them
+
         if (spawnPoints != null && spawnPoints.Length > 0)
         {
             Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
             return spawnPoint.position;
         }
         
-        // Otherwise, spawn randomly around player
+ 
         Vector2 randomCircle = Random.insideUnitCircle * spawnRangeFromPlayer;
         Vector3 spawnPosition = playerTransform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
-        
-        // Make sure spawn position is on ground
+
         if (Physics.Raycast(spawnPosition + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f))
         {
             spawnPosition.y = hit.point.y;
@@ -205,12 +190,10 @@ public class EndlessManager : MonoBehaviour
         return spawnPosition;
     }
     
-    /// <summary>
-    /// Apply difficulty scaling to zombie
-    /// </summary>
+
     private void ApplyDifficultyToZombie(GameObject zombie)
     {
-        // Apply difficulty scaling similar to existing zombie scripts
+
         var zombie1 = zombie.GetComponent<Zombie_1>();
         var zombie2 = zombie.GetComponent<Zombie_2>();
         var zombie3 = zombie.GetComponent<Zombie_3>();
@@ -218,7 +201,7 @@ public class EndlessManager : MonoBehaviour
         var zombieMiniboss = zombie.GetComponent<ZombieMiniboss>();
         var boss = zombie.GetComponent<Boss>();
         
-        // Apply scaling based on zombie type
+
         if (zombie1 != null)
         {
             ApplyEndlessScaling(zombie1, currentDifficultyMultiplier);
@@ -253,9 +236,7 @@ public class EndlessManager : MonoBehaviour
         Debug.Log($"Applied Endless Mode scaling and enhanced vision to {zombie.name}");
     }
     
-    /// <summary>
-    /// Apply endless mode scaling to different zombie types
-    /// </summary>
+
     private void ApplyEndlessScaling(MonoBehaviour zombie, float multiplier)
     {
         // Use reflection to access fields and modify them
@@ -314,10 +295,7 @@ public class EndlessManager : MonoBehaviour
             remainHealthField.SetValue(zombie, healthField.GetValue(zombie));
         }
     }
-    
-    /// <summary>
-    /// Increase difficulty level
-    /// </summary>
+
     private void IncreaseDifficulty()
     {
         currentDifficultyLevel++;
@@ -336,10 +314,7 @@ public class EndlessManager : MonoBehaviour
         
         Debug.Log($"Difficulty increased! Level: {currentDifficultyLevel}, Multiplier: {currentDifficultyMultiplier:F1}");
     }
-    
-    /// <summary>
-    /// Show difficulty increase notification
-    /// </summary>
+
     private void ShowDifficultyNotification()
     {
         if (difficultyNotificationPanel != null && difficultyNotificationText != null)
@@ -350,9 +325,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Coroutine to show and hide notification
-    /// </summary>
+
     private IEnumerator ShowNotificationCoroutine()
     {
         if (difficultyNotificationPanel != null)
@@ -363,9 +336,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Update UI elements
-    /// </summary>
+
     private void UpdateUI()
     {
         // Update survival time
@@ -384,9 +355,6 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Clean up dead/destroyed zombies from the list
-    /// </summary>
     private void CleanupDeadZombies()
     {
         for (int i = activeZombies.Count - 1; i >= 0; i--)
@@ -398,9 +366,6 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Check and enhance zombie vision if they are too far from player
-    /// </summary>
     private void CheckAndEnhanceZombieVision()
     {
         if (playerTransform == null) return;
@@ -431,9 +396,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Enhance zombie vision to maximum for better player detection
-    /// </summary>
+
     private void EnhanceZombieVisionToMax(GameObject zombie)
     {
         var zombie1 = zombie.GetComponent<Zombie_1>();
@@ -470,9 +433,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Enhance zombie vision radius
-    /// </summary>
+
     private void EnhanceZombieVision(GameObject zombie)
     {
         var zombie1 = zombie.GetComponent<Zombie_1>();
@@ -509,9 +470,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Debug method to check zombie vision values
-    /// </summary>
+
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     private void DebugZombieVision()
     {
@@ -541,9 +500,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Set zombie vision radius using reflection
-    /// </summary>
+
     private void SetZombieVision(MonoBehaviour zombie, float radius)
     {
         var type = zombie.GetType();
@@ -555,9 +512,7 @@ public class EndlessManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Enhanced vision for all existing zombies when entering Endless Mode
-    /// </summary>
+
     private IEnumerator InitialVisionEnhancement()
     {
         yield return new WaitForSeconds(0.5f); // Wait a bit for zombies to initialize
@@ -570,10 +525,7 @@ public class EndlessManager : MonoBehaviour
         // Continue enhancing vision for newly spawned zombies
         yield return null;
     }
-    
-    /// <summary>
-    /// Enhance vision for all zombies in the scene
-    /// </summary>
+
     private void EnhanceAllZombiesVision()
     {
         // Find all zombie types in scene
@@ -618,33 +570,24 @@ public class EndlessManager : MonoBehaviour
         Debug.Log($"Enhanced vision applied to all zombies. Vision radius: {(forceMaxVisionForAll ? enhancedVisionRadius : endlessModeBaseVision)}");
     }
 
-    /// <summary>
-    /// Get current difficulty multiplier (for external use)
-    /// </summary>
     public float GetCurrentDifficultyMultiplier()
     {
         return currentDifficultyMultiplier;
     }
-    
-    /// <summary>
-    /// Get survival time in seconds
-    /// </summary>
+
     public float GetSurvivalTime()
     {
         return Time.time - gameStartTime;
     }
     
-    /// <summary>
-    /// Get current difficulty level
-    /// </summary>
+
     public int GetDifficultyLevel()
     {
         return currentDifficultyLevel;
     }
     
-    /// <summary>
-    /// Stop endless mode (for cleanup)
-    /// </summary>
+
+
     public void StopEndlessMode()
     {
         isEndlessMode = false;
