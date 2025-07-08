@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // Import for UI components
 using Scripts;
-using TMPro;using Scripts.API; // Add this using statement
+using TMPro;
+using Scripts.API; // Add this using statement
+using UnityEngine.SceneManagement; // Add this for scene management
 
 public class Gun : MonoBehaviour
 {
@@ -53,8 +55,14 @@ public class Gun : MonoBehaviour
     public int currentLevel = 1;              // Current upgrade level of the weapon
     public int maxLevel = 5;                  // Maximum level the weapon can be upgraded to
 
+    [Header("Endless Mode Settings")]
+    private bool isEndlessMode = false;       // Flag to check if we're in Endless mode
+    private bool hasInfiniteAmmo = false;     // Flag for infinite ammo in Endless mode
+
     void Start()
     {
+        // Check if we're in Endless mode
+        CheckEndlessMode();
         
         currentAmmo = maxAmmo; // Initialize ammo
         
@@ -65,6 +73,27 @@ public class Gun : MonoBehaviour
         
         currentSpread = baseSpread;
         lastShotTime = -10f; // Initialize to ensure we start with base spread
+    }
+    
+    /// <summary>
+    /// Check if we're in Endless mode and set infinite ammo for pistols
+    /// </summary>
+    void CheckEndlessMode()
+    {
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        isEndlessMode = currentSceneName.Equals("Endless", System.StringComparison.OrdinalIgnoreCase);
+        
+        // In Endless mode, pistols have infinite reserve ammo
+        if (isEndlessMode && isPistol)
+        {
+            hasInfiniteAmmo = true;
+            totalAmmo = 999999; // Set very high total ammo (effectively infinite)
+            Debug.Log($"[Gun] Infinite reserve ammo enabled for pistol '{weaponName}' in Endless mode");
+        }
+        else
+        {
+            hasInfiniteAmmo = false;
+        }
     }
     
     // New method to ensure all required components exist
@@ -258,7 +287,7 @@ public class Gun : MonoBehaviour
             return; // Prevent shooting while reloading
         }
 
-        if (currentAmmo <= 0)
+        if (currentAmmo <= 0 && !hasInfiniteAmmo)
         {
             StartCoroutine(Reload());
             return;
@@ -299,7 +328,7 @@ public class Gun : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            StartCoroutine(Reload()); // Start reloading when pressing "R"
+            StartCoroutine(Reload()); // Start reloading when pressing "R" 
         }
 
         // Recover spread when not shooting
@@ -311,8 +340,8 @@ public class Gun : MonoBehaviour
 
     IEnumerator Reload()
     {
-        // Check if no reserve ammo or already full
-        if (totalAmmo <= 0 || currentAmmo == maxAmmo)
+        // Check if no reserve ammo or already full (skip total ammo check in infinite mode)
+        if ((!hasInfiniteAmmo && totalAmmo <= 0) || currentAmmo == maxAmmo)
         {
             if (currentAmmo == maxAmmo)
                 Debug.Log("Ammo is full!");
@@ -334,18 +363,28 @@ public class Gun : MonoBehaviour
         // Calculate ammo to reload
         int ammoToReload = maxAmmo - currentAmmo; // Ammo needed to fully reload
         
-        // Check if not enough reserve ammo to fully reload
-        if (totalAmmo < ammoToReload)
+        if (hasInfiniteAmmo)
         {
-            // If not enough reserve ammo, reload all remaining reserve ammo
-            currentAmmo += totalAmmo;
-            totalAmmo = 0;
+            // In infinite ammo mode, just fill up the magazine without reducing total ammo
+            currentAmmo = maxAmmo;
+            Debug.Log("Reloaded with infinite reserve ammo!");
         }
         else
         {
-            // If enough reserve ammo, fully reload
-            totalAmmo -= ammoToReload;
-            currentAmmo = maxAmmo;
+            // Normal reload logic
+            // Check if not enough reserve ammo to fully reload
+            if (totalAmmo < ammoToReload)
+            {
+                // If not enough reserve ammo, reload all remaining reserve ammo
+                currentAmmo += totalAmmo;
+                totalAmmo = 0;
+            }
+            else
+            {
+                // If enough reserve ammo, fully reload
+                totalAmmo -= ammoToReload;
+                currentAmmo = maxAmmo;
+            }
         }
         
         UpdateAmmoUI(); // Update ammo display after reloading
@@ -360,7 +399,8 @@ public class Gun : MonoBehaviour
             return;
         }
         
-        if (currentAmmo <= 0)
+        // Check ammo only if not in infinite ammo mode
+        if (!hasInfiniteAmmo && currentAmmo <= 0)
         {
             Debug.Log("Out of ammo!");
             return;
@@ -375,7 +415,17 @@ public class Gun : MonoBehaviour
                 animator.SetTrigger("Rifle_Shoot");
         }
 
-        currentAmmo--; // Decrease ammo count
+        // Only decrease ammo if not in infinite ammo mode
+        if (!hasInfiniteAmmo)
+        {
+            currentAmmo--; // Decrease ammo count
+        }
+        else
+        {
+            // In infinite ammo mode, still decrease current ammo but keep total ammo infinite
+            currentAmmo--;
+        }
+        
         UpdateAmmoUI(); // Update the ammo display after shooting
         gunshotSound.Play(); // Play the gunshot sound
         muzzleFlash.Play(); // Play the muzzle flash effect
@@ -498,7 +548,14 @@ public class Gun : MonoBehaviour
         // Update ammo UI if available
         if (ammoText != null)
         {
-            ammoText.text = currentAmmo + " / " + totalAmmo;
+            if (hasInfiniteAmmo)
+            {
+                ammoText.text = currentAmmo + " / ∞"; // Show current ammo with infinity symbol for reserve
+            }
+            else
+            {
+                ammoText.text = currentAmmo + " / " + totalAmmo;
+            }
         }
     }
     
@@ -560,6 +617,44 @@ public class Gun : MonoBehaviour
     public void SetDamage(float newDamage)
     {
         damage = newDamage;
+    }
+
+    /// <summary>
+    /// Enable or disable infinite ammo mode
+    /// </summary>
+    public void SetInfiniteAmmo(bool enabled)
+    {
+        hasInfiniteAmmo = enabled;
+        
+        if (hasInfiniteAmmo)
+        {
+            // In infinite ammo mode, set a very high total ammo value
+            totalAmmo = 999999; // Effectively infinite
+            currentAmmo = maxAmmo;
+            Debug.Log($"[Gun] Infinite reserve ammo enabled for {weaponName}");
+        }
+        else
+        {
+            Debug.Log($"[Gun] Infinite ammo disabled for {weaponName}");
+        }
+        
+        UpdateAmmoUI();
+    }
+    
+    /// <summary>
+    /// Check if infinite ammo is currently enabled
+    /// </summary>
+    public bool IsInfiniteAmmoEnabled()
+    {
+        return hasInfiniteAmmo;
+    }
+    
+    /// <summary>
+    /// Force refresh endless mode check (useful when switching scenes)
+    /// </summary>
+    public void RefreshEndlessMode()
+    {
+        CheckEndlessMode();
     }
 
     private void CreateBloodEffects(RaycastHit hit, float damageAmount)
